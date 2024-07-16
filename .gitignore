@@ -1,1 +1,22 @@
-/target
+# Rust build artifacts
+/target/
+**/*.rs.bk  # Backup files
+**/*.rlib  # Rust library files
+
+# Cargo files
+/Cargo.lock  # If you want to ignore the lock file (optional)
+/Cargo.toml.bk  # Backup of Cargo.toml
+
+# IDE or editor files
+*.swp  # Vim swap files
+*.swo  # Vim swap files
+.idea/  # JetBrains IDE files
+.vscode/  # Visual Studio Code files
+*.iml  # IntelliJ IDEA files
+
+# Node.js dependencies (if using npm)
+node_modules/
+
+# WASM output
+*.wasm
+*.wasm.map
