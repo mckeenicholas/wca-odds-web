@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8" />
+    <title>hello-wasm example</title>
+  </head>
+  <body>
+    <script type="module">
+      import init, { generate } from "./pkg/odds_web.js";
+      init().then(() => {
+        console.time('Execution Time');
+        generate();
+        console.timeEnd('Execution Time');
+      });
+    </script>
+  </body>
+</html>
