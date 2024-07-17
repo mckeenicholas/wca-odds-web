@@ -53,7 +53,7 @@ const getinfo = async (persons, startDate) => {
     )
   ).flat();
 
-  console.time("Runtime")
+  console.time("Runtime");
 
   var compDate = {};
 
@@ -67,12 +67,16 @@ const getinfo = async (persons, startDate) => {
     // console.log(dates)
   }
 
-  console.timeEnd("Runtime")
-
-
+  console.timeEnd("Runtime");
 };
 
-const persons = ["2015MCKE02", "2015COHE02", "2012PARK03", "2007STRO01", "2016KOLA02"];
+const persons = [
+  "2015MCKE02",
+  "2015COHE02",
+  "2012PARK03",
+  "2007STRO01",
+  "2016KOLA02",
+];
 const months = 12;
 
 let startDate = new Date();
