@@ -1,17 +1,13 @@
 <!doctype html>
-<html lang="en-US">
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <title>hello-wasm example</title>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Vue + TS</title>
   </head>
   <body>
-    <script type="module">
-      import init, { generate } from "./pkg/odds_web.js";
-      init().then(() => {
-        console.time('Execution Time');
-        generate();
-        console.timeEnd('Execution Time');
-      });
-    </script>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
