@@ -34,6 +34,7 @@ const route = useRoute();
 const wcif = ref<wcif | null>(null);
 const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<string>("");
+const simCount = ref<number>(10000);
 
 const defaultShownNum = 64;
 const defaultSelectedNum = 16;
@@ -106,6 +107,7 @@ const runSimulation = () => {
     name: wcif.value.name,
     event: selectedEventId.value,
     competitors: eventSelectedCompetitors.join(","),
+    simCount: simCount.value.toString(),
   });
   const url = `/simulation?${queryParams.toString()}`;
   window.location.href = url;
@@ -146,7 +148,12 @@ watch(
       </Select>
       <div class="border rounded-md my-2 p-2 flex items-center space-x-4">
         <Label for="simCount">Number of simulations:</Label>
-        <Input placeholder="100000" class="min-w-16 max-w-36" id="simCount" />
+        <Input
+          placeholder="100000"
+          class="min-w-16 max-w-36"
+          id="simCount"
+          v-model="simCount"
+        />
         <Label for="useDNF">Include DNF rate in calculations:</Label>
         <Checkbox id="useDNF" />
         <div class="flex flex-grow justify-end">
@@ -161,9 +168,15 @@ watch(
             :key="person.id"
             class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
           >
-            <span :class="{ 'text-muted-foreground': !person.selected }">{{
-              person.name
-            }}</span>
+            <span :class="{ 'text-muted-foreground': !person.selected }">
+              <a
+                @click.stop
+                :href="`https://worldcubeassociation.org/persons/${person.id}`"
+                class="hover:underline"
+              >
+                {{ person.name }}
+              </a></span
+            >
             <Checkbox
               v-model:checked="person.selected"
               @click.stop

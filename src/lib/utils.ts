@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import exp from "constants";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -58,6 +59,25 @@ export type WCAevent =
   | "sq1"
   | "444bf"
   | "555bf";
+
+export const eventInfo = {
+  333: { attempts: 5, format: "a" },
+  222: { attempts: 5, format: "a" },
+  444: { attempts: 5, format: "a" },
+  555: { attempts: 5, format: "a" },
+  666: { attempts: 3, format: "m" },
+  777: { attempts: 3, format: "m" },
+  "333bf": { attempts: 3, format: "b" },
+  "333fm": { attempts: 3, format: "m" },
+  "333oh": { attempts: 5, format: "a" },
+  minx: { attempts: 5, format: "a" },
+  pyram: { attempts: 5, format: "a" },
+  clock: { attempts: 5, format: "a" },
+  skewb: { attempts: 5, format: "a" },
+  sq1: { attempts: 5, format: "a" },
+  "444bf": { attempts: 3, format: "b" },
+  "555bf": { attempts: 3, format: "b" },
+};
 
 interface Registration {
   wcaRegistrationId: number;

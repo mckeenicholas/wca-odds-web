@@ -1,50 +1,127 @@
 <script setup lang="ts">
+import { useRouter } from "vue-router";
 import { onMounted } from "vue";
-
 import init, { simulate } from "../../build/odds_web.js";
+import { fetchWCAInfo } from "@/lib/utils.js";
+import { eventInfo, WCAevent } from "@/lib/utils.js";
 
-onMounted(() => {
-  const solves = [
-    665, 572, 527, 698, 526, 550, 580, 540, 486, 649, 556, 535, 526, 475, 516,
-    540, 552, 582, 531, 415, 507, 708, 514, 618, 539, 729, 553, 518, 534, 532,
-    555, 588, 595, 483, 721, 661, 476, 500, 454, 649, 669, 505, 671, 466, 501,
-    673, 634, 562, 575, 505, 517, 505, 557, 694, 516, 504, 675, 665, 510, 554,
-    486, 767, 588, 537, 558, 501, 462, 463, 523, 562, 530, 515, 512, 572, 576,
-    571, 485, 506, 555, 829, 664, 413, 458, 723, 686, 592, 584, 459, 540, 493,
-    786, 526, 583, 965, 551, 640, 741, 564, 651, 655, 705, 521, 512, 573, 590,
-    550, 548, 554, 856, 532, 564, 591, 519, 526, 511, 543, 540, 494, 423, 568,
-    524, 731, 770, 668, 567, 597, 559, 538, 646, 598, 565, 487, 593, 602, 633,
-    592, 611, 585, 538, 404, 589, 484, 378, 596, 612, 574, 698, 539, 442, 579,
-    722, 582, 570, 624, 458, 466, 779, 706, 493, 748, 630, 637, 620, 714, 637,
-    560, 633, 519, 564, 450, 519, 446, 567, 643, 847, 616, 481, 638, 464, 614,
-    730, 599, 620, 511, 504, 604, 392, 535, 421, 574, 571, 501, 472, 485, 544,
-    593, 581, 648, 566, 526, 429, 487, 489, 693, 728, 510, 483, 570, 624, 510,
-    539, 584, 776, 537, 532, 539, 471, 627, 863, 488, 367, 463, 561, 689, 559,
-    626, 651, 545, 547, 488, 546, 534, 603, 593, 697, 439, 652, 760, 531, 366,
-    544, 630, 686, 557, 693, 725, 508, 580, 565, 505, 600, 572, 482, 561, 461,
-    577, 534, 551, 878, 672, 550, 596, 585, 683, 488, 472, 382, 543, 579, 533,
-    545, 710, 630, 528, 498, 455, 581, 662, 668, 426, 572, 642, 490, 450, 503,
-    413, 518, 417, 516, 527, 458, 544, 480, 503, 550, 414, 516, 494, 536, 599,
-    525, 581, 478, 599, 517, 535, 596, 526, 531, 532, 587, 549, 581, 510, 462,
-    661, 568, 511, 561, 543, 562, 499, 495, 667, 494, 499, 655, 447, 523, 441,
-    508, 581, 701, 428, 519, 602, 586, 549, 530, 542, 590, 563, 512, 511, 567,
-    379, 437, 485, 533, 501, 645, 602, 775, 625, 489, 643, 652, 578, 619, 492,
-    570, 488, 590, 574, 540, 678, 447, 594, 400, 575, 571, 636, 549, 610, 481,
-    548, 625, 572, 528, 538, 590, 522, 480, 585, 479,
-  ];
+const router = useRouter();
+const { competitors, event, name, simCount } = router.currentRoute.value.query;
 
-  let res = [];
+if (!competitors || !event || !name || !simCount) {
+  throw new Error("One or more required parameters are null or undefined.");
+}
 
-  for (let i = 0; i < 16; i++) {
-    res.push(solves);
+const competitorsList = competitors?.toString().split(",");
+
+type Competition = {
+  results: any;
+  id: string;
+  date: string;
+};
+
+type Competitor = {
+  id: any;
+  results: { [key: string]: any };
+};
+
+const getYearsFromDate = (startDate: Date) => {
+  let today = new Date();
+
+  let years = [];
+  for (
+    let year = startDate.getFullYear();
+    year <= today.getFullYear();
+    year++
+  ) {
+    years.push(year);
   }
 
-  const test = { results: res };
-  init().then(() => {
-    console.time("Simulation time");
-    const response = simulate(test, 10000, "m");
-    console.timeEnd("Simulation time");
+  return years;
+};
+
+const filterCompetitions = (
+  competitions: Competition[],
+  competitors: Competitor[],
+  event: WCAevent,
+  startDate: Date,
+) => {
+  const numSolves = eventInfo[event].attempts;
+  const compDate: { [key: string]: string } = {};
+
+  competitions.forEach((comp) => {
+    compDate[comp.id] = comp.date;
   });
+
+  const results = competitors.flatMap((person) => {
+    const results = Object.entries(person.results)
+      .filter(
+        ([key, values]) => new Date(compDate[key]) > startDate && values[event],
+      )
+      .flatMap(([_, values]) =>
+        values[event]?.flatMap((round: { solves: number[] }) =>
+          round.solves.slice(0, numSolves).filter((solve) => solve !== 0),
+        ),
+      );
+    return results.length ? [{ id: person.id, results: results }] : [];
+  });
+  return results;
+};
+
+const fetchData = async (
+  persons: string[],
+  event: WCAevent,
+  startDate: Date,
+) => {
+  const years = getYearsFromDate(startDate);
+
+  const results = await Promise.all(
+    persons.map(
+      async (person) =>
+        await fetchWCAInfo(
+          `https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/persons/${person}.json`,
+        ),
+    ),
+  );
+
+  const competitions = (
+    await Promise.all(
+      years.map(async (year) => {
+        const response = await fetchWCAInfo(
+          `https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/competitions/${year}.json`,
+        );
+        return response.items.map((comp: { id: any; date: { from: any } }) => {
+          return { id: comp.id, date: comp.date.from };
+        });
+      }),
+    )
+  ).flat();
+
+  return filterCompetitions(competitions, results, event, startDate);
+};
+
+const runSimulation = (
+  results: { id: string; results: number[] }[],
+  simCount: number,
+  event: WCAevent,
+) => {
+  init().then(() => {
+    const result_times = results.map((result) => result.results);
+    const simulation_results = simulate(
+      { results: result_times },
+      simCount,
+      eventInfo[event].format,
+    );
+    console.log(simulation_results);
+  });
+};
+
+onMounted(async () => {
+  const months = 12;
+  let startDate = new Date();
+  startDate.setMonth(new Date().getMonth() - months);
+  const data = await fetchData(competitorsList, event as WCAevent, startDate);
+  runSimulation(data, parseInt(simCount.toString()), event);
 });
 </script>
 

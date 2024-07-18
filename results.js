@@ -61,10 +61,22 @@ const getinfo = async (persons, startDate) => {
     compDate[comp.id] = comp.date;
   }
 
+  const wcaEvent = "777";
+  const numSolves = 3;
+
   for (const person of response) {
     const results = person.results;
-    const dates = Object.keys(results).map((key) => compDate[key]);
-    // console.log(dates)
+    const dates = Object.entries(results)
+      .filter(
+        ([key, values]) =>
+          new Date(compDate[key]) > startDate && values[wcaEvent],
+      )
+      .flatMap(([_, values]) =>
+        values[wcaEvent]?.flatMap((round) =>
+          round.solves.slice(0, numSolves).filter((solve) => solve !== 0),
+        ),
+      ); // Map to return the values
+    console.log(dates);
   }
 
   console.timeEnd("Runtime");
