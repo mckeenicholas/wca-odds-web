@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import init, { simulate } from "../../build/odds_web.js";
 import { fetchWCAInfo } from "@/lib/utils.js";
 import { eventInfo, WCAevent } from "@/lib/types.js";
@@ -9,13 +9,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { defaultColors } from "../components/ui/chart/index.js";
-import ResultHistogram from "@/components/charts/ResultHistogram.vue";
+import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
+import { generateColors } from "@/lib/histogram.js";
+import FullHistogram from "@/components/charts/FullHistogram.vue";
+import { Icon } from "@iconify/vue";
+import Checkbox from "@/components/ui/checkbox/Checkbox.vue";
 
 const router = useRouter();
-const simulation_results = ref<any>(null);
-const loading = ref<boolean>(true);
-const colors = ref<string[]>([""]);
 
 const { competitors, event, name, simCount, monthCutoff } =
   router.currentRoute.value.query;
@@ -25,6 +25,12 @@ if (!competitors || !event || !name || !simCount || !monthCutoff) {
 }
 
 const competitorsList = competitors?.toString().split(",");
+
+const simulation_results = ref<any>(null);
+const loading = ref<boolean>(true);
+const colors = ref<string[]>([""]);
+const bounds = ref<{ max: number; min: number }>({ max: 0, min: 100 });
+const selected = ref<boolean[]>(new Array(competitorsList.length).fill(true));
 
 type Competition = {
   results: any;
@@ -129,6 +135,12 @@ const runSimulation = (
       eventInfo[event].format,
     );
     simulation_results.value = raw_results.map((item: any, idx: number) => {
+      const maxBound = (item.mu + 6 * item.sigma) / 100;
+      const minBound = Math.max((item.mu - 4 * item.sigma) / 100, 0);
+
+      bounds.value.max = Math.max(maxBound, bounds.value.max);
+      bounds.value.min = Math.min(minBound, bounds.value.min);
+
       return {
         name: results[idx].name,
         id: results[idx].id,
@@ -140,9 +152,19 @@ const runSimulation = (
       };
     });
 
-    colors.value = defaultColors(raw_results.length);
+    colors.value = generateColors(raw_results.length);
   });
 };
+
+const fullHistData = computed(() => {
+  return simulation_results.value.filter(
+    (_: any, idx: number) => selected.value[idx],
+  );
+});
+
+const renderColors = computed(() => {
+  return colors.value.filter((_: any, idx: number) => selected.value[idx]);
+});
 
 onMounted(async () => {
   let startDate = new Date();
@@ -154,42 +176,73 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col items-center justify-center my-10">
-    <div v-if="simulation_results" class="border rounded-md min-w-[70vw]">
-      <div class="flex justify-between py-2 px-4">
-        <div class="flex-1 text-left">Name</div>
-        <div class="flex-1 text-center">Chance of winning</div>
-        <div class="flex-1 text-center">Chance of podiuming</div>
-        <div class="flex-1 text-center">Expected rank</div>
+    <div v-if="simulation_results" class="min-w-[70vw]">
+      <div class="border rounded-md my-2 py-2 px-4">
+        <FullHistogram
+          :data="fullHistData"
+          :min="bounds.min"
+          :max="bounds.max"
+          :colors="renderColors"
+          :key="selected.filter((item) => item).length"
+        />
       </div>
-      <hr class="mx-2" />
-      <ol>
-        <li
-          v-for="(result, idx) in simulation_results"
-          :key="result.id"
-          class="p-1 hover:bg-secondary rounded-md"
-        >
-          <Collapsible>
-            <CollapsibleTrigger as-child>
-              <div class="flex justify-between p-2 cursor-pointer">
-                <div class="flex-1 text-left">
-                  {{ result.name }}
+      <div class="border rounded-md">
+        <div class="flex justify-between py-2 px-4">
+          <div class="flex-1 text-left">Name</div>
+          <div class="flex-1 text-center">Chance of winning</div>
+          <div class="flex-1 text-center">Chance of podiuming</div>
+          <div class="flex-1 text-center">Expected rank</div>
+          <div class="w-2"></div>
+        </div>
+        <hr class="mx-2" />
+        <ol>
+          <li
+            v-for="(result, idx) in simulation_results"
+            :key="result.id"
+            class="p-1 hover:bg-secondary rounded-md"
+          >
+            <Collapsible>
+              <CollapsibleTrigger as-child>
+                <div class="flex justify-between p-2 cursor-pointer">
+                  <div class="flex-1 text-left">
+                    <div class="flex flex-row">
+                      <div class="flex flex-col justify-center">
+                        <Icon
+                          icon="radix-icons:dot-filled"
+                          class="scale-150"
+                          :style="{ color: colors[idx] }"
+                        />
+                      </div>
+                      {{ result.name }}
+                    </div>
+                  </div>
+                  <div class="flex-1 text-center">{{ result.wins }}%</div>
+                  <div class="flex-1 text-center">{{ result.podiums }}%</div>
+                  <div class="flex-1 text-center">{{ result.podiums }}%</div>
+                  <Checkbox v-model:checked="selected[idx]" @click.stop />
                 </div>
-                <div class="flex-1 text-center">{{ result.wins }}%</div>
-                <div class="flex-1 text-center">{{ result.podiums }}%</div>
-                <div class="flex-1 text-center">{{ result.podiums }}%</div>
-              </div>
-            </CollapsibleTrigger>
-            <CollapsibleContent class="space-y-2">
-              <ResultHistogram
-                :mu="result.mu"
-                :sigma="result.sigma"
-                :tau="result.tau"
-                :color="colors[idx]"
-              />
-            </CollapsibleContent>
-          </Collapsible>
-        </li>
-      </ol>
+              </CollapsibleTrigger>
+              <CollapsibleContent class="space-y-2">
+                <IndividualHistogram
+                  :mu="result.mu"
+                  :sigma="result.sigma"
+                  :tau="result.tau"
+                  :color="colors[idx]"
+                  :min="bounds.min"
+                  :max="bounds.max"
+                  class="border rounded-md m-2 p-2"
+                />
+                <div class="my-10 mx-6 text-lg flex flex-row space-x-4">
+                  <div>&mu; = {{ result.mu }}</div>
+                  <div>&sigma; = {{ result.sigma }}</div>
+                  <div>&tau; = {{ result.tau }}</div>
+                </div>
+                <hr class="mx-2" />
+              </CollapsibleContent>
+            </Collapsible>
+          </li>
+        </ol>
+      </div>
     </div>
     <div v-else-if="loading">Fetching data...</div>
     <div v-else>Calculating...</div>

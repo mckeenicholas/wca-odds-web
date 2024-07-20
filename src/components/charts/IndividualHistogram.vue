@@ -2,22 +2,16 @@
 import { AreaChart } from "@/components/ui/chart-area";
 import getHistValues from "@/lib/histogram";
 
-const {
-  mu,
-  sigma,
-  tau,
-  color,
-  max = 10,
-} = defineProps<{
+const { mu, sigma, tau, color, max, min } = defineProps<{
   mu: number;
   sigma: number;
   tau: number;
   color: string;
-  max: string;
+  min: number;
+  max: number;
 }>();
 
-const data = getHistValues(mu, sigma, tau, 0, max);
-console.log(color, data);
+const data = getHistValues(mu, sigma, tau, min, max);
 </script>
 
 <template>
