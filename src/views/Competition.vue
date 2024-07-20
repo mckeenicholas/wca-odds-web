@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import { watch, ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import {
-  fetchWCAInfo,
-  wcif,
-  wcifEvent,
-  eventNames,
-  WCAEvent,
-} from "@/lib/utils";
+import { fetchWCAInfo } from "@/lib/utils";
+import { wcif, wcifEvent, eventNames, WCAEvent } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,6 +15,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import {
+  NumberField,
+  NumberFieldContent,
+  NumberFieldDecrement,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@/components/ui/number-field";
 
 interface EventRegistration {
   [key: string]: {
@@ -35,6 +37,7 @@ const wcif = ref<wcif | null>(null);
 const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<string>("");
 const simCount = ref<number>(10000);
+const monthCount = ref<number>(12);
 
 const defaultShownNum = 64;
 const defaultSelectedNum = 16;
@@ -106,8 +109,9 @@ const runSimulation = () => {
   const queryParams = new URLSearchParams({
     name: wcif.value.name,
     event: selectedEventId.value,
-    competitors: eventSelectedCompetitors.join(","),
     simCount: simCount.value.toString(),
+    monthCutoff: monthCount.value.toString(),
+    competitors: eventSelectedCompetitors.join(","),
   });
   const url = `/simulation?${queryParams.toString()}`;
   window.location.href = url;
@@ -154,6 +158,23 @@ watch(
           id="simCount"
           v-model="simCount"
         />
+        <Label for="resultCutoff">Using results from past</Label>
+        <NumberField
+          v-model="monthCount"
+          :default-value="18"
+          :min="1"
+          id="resultCutoff"
+          class="w-24"
+        >
+          <NumberFieldContent>
+            <NumberFieldDecrement />
+            <NumberFieldInput />
+            <NumberFieldIncrement />
+          </NumberFieldContent>
+        </NumberField>
+        <Label for="resultCutoff">{{
+          monthCount === 1 ? "month" : "months"
+        }}</Label>
         <Label for="useDNF">Include DNF rate in calculations:</Label>
         <Checkbox id="useDNF" />
         <div class="flex flex-grow justify-end">
@@ -186,5 +207,6 @@ watch(
         </ol>
       </ScrollArea>
     </div>
+    <div v-else></div>
   </div>
 </template>

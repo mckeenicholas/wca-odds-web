@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { fetchWCAInfo } from "../lib/utils";
+import { fetchWCAInfo } from "@/lib/utils";
 
 interface Competition {
   start_date: string;
@@ -39,9 +39,13 @@ const fetchCompetitions = async (query: string) => {
       response !== null
         ? response
             .filter(
-              (competition) => new Date(competition.start_date) > new Date(),
+              (competition: { start_date: string }) =>
+                new Date(competition.start_date) > new Date(),
             )
-            .sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
+            .sort(
+              (a: { start_date: string }, b: { start_date: string }) =>
+                new Date(a.start_date) - new Date(b.start_date),
+            )
         : [];
   } else {
     results.value = [];
