@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, ref, onMounted, computed } from "vue";
+import { watch, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { fetchWCAInfo } from "../lib/utils";
 import { wcif, WCAevent, eventNames } from "../lib/types";
@@ -21,6 +21,7 @@ import {
   NumberFieldIncrement,
   NumberFieldInput,
 } from "../components/ui/number-field";
+import { useQuery } from "@tanstack/vue-query";
 
 interface EventRegistration {
   [key: string]: {
@@ -32,7 +33,6 @@ interface EventRegistration {
 }
 
 const route = useRoute();
-const wcifResponse = ref<wcif | null>(null);
 const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<string>("");
 const simCount = ref<number>(10000);
@@ -41,73 +41,79 @@ const monthCount = ref<number>(12);
 const defaultShownNum = 64;
 const defaultSelectedNum = 16;
 
-const fetchCompetitors = async (compid: string) => {
-  const response = await fetchWCAInfo<wcif>(
-    `https://api.worldcubeassociation.org/competitions/${compid}/wcif/public`,
-  );
-  wcifResponse.value = response;
-  selectedEventId.value = response!.events[0].id;
-  if (response) {
-    let competitorsByEvent: EventRegistration = {};
-    response.persons.map(
-      (person: {
-        personalBests: any;
-        registration: {
-          status: string;
-          isCompeting: any;
-          eventIds: WCAevent[];
-        };
-        wcaId: any;
-        name: string;
-      }) => {
-        if (
-          person.registration?.status === "accepted" &&
-          person.registration?.isCompeting &&
-          person.wcaId
-        ) {
-          person.registration.eventIds.forEach((event: WCAevent) => {
-            if (!competitorsByEvent[event]) {
-              competitorsByEvent[event] = [];
-            }
-            const worldRank = person.personalBests.find(
-              (personalBest: { eventId: any }) =>
-                personalBest.eventId === event,
-            )?.worldRanking;
-            if (worldRank) {
-              competitorsByEvent[event].push({
-                id: person.wcaId,
-                name: person.name,
-                rank: worldRank,
-                selected: false,
-              });
-            }
-          });
-        }
-      },
-    );
+const { isPending, isError, data, error } = useQuery({
+  queryKey: ["competition", route.params.id],
+  queryFn: () =>
+    fetchWCAInfo<wcif>(
+      `https://api.worldcubeassociation.org/competitions/${route.params.id}/wcif/public`,
+    ),
+});
 
-    Object.values(competitorsByEvent).forEach((competitors) => {
-      competitors.sort((a, b) => a.rank - b.rank);
-      competitors.forEach(
-        (competitor, index) =>
-          (competitor.selected = index < defaultSelectedNum),
-      );
-      competitors.splice(defaultShownNum); // Keep only the top n competitors
-    });
-
-    selectedCompetitors.value = competitorsByEvent;
+watch(data, () => {
+  const response = data.value;
+  if (isError.value || !response) {
+    return;
   }
-};
+
+  selectedEventId.value = response.events[0].id;
+  let competitorsByEvent: EventRegistration = {};
+  response.persons.map(
+    (person: {
+      personalBests: any;
+      registration: {
+        status: string;
+        isCompeting: any;
+        eventIds: WCAevent[];
+      };
+      wcaId: any;
+      name: string;
+    }) => {
+      if (
+        person.registration?.status === "accepted" &&
+        person.registration?.isCompeting &&
+        person.wcaId
+      ) {
+        person.registration.eventIds.forEach((event: WCAevent) => {
+          if (!competitorsByEvent[event]) {
+            competitorsByEvent[event] = [];
+          }
+          const worldRank = person.personalBests.find(
+            (personalBest: { eventId: any }) => personalBest.eventId === event,
+          )?.worldRanking;
+          if (worldRank) {
+            competitorsByEvent[event].push({
+              id: person.wcaId,
+              name: person.name,
+              rank: worldRank,
+              selected: false,
+            });
+          }
+        });
+      }
+    },
+  );
+
+  Object.values(competitorsByEvent).forEach((competitors) => {
+    competitors.sort((a, b) => a.rank - b.rank);
+    competitors.forEach(
+      (competitor, index) => (competitor.selected = index < defaultSelectedNum),
+    );
+    competitors.splice(defaultShownNum);
+  });
+
+  console.log(competitorsByEvent);
+  selectedCompetitors.value = competitorsByEvent;
+});
 
 const runSimulation = () => {
-  if (wcifResponse.value) {
+  if (data.value) {
     const eventSelectedCompetitors = selectedCompetitors.value[
       selectedEventId.value
     ]
       .filter((item) => item.selected)
       .map((item) => item.id);
     const queryParams = new URLSearchParams({
-      name: wcifResponse.value.name,
+      name: data.value.name,
       event: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
@@ -118,33 +124,22 @@ const runSimulation = () => {
   }
 };
 
-onMounted(() => {
-  const initialId = route.params.id;
-  if (initialId) {
-    fetchCompetitors(initialId as string);
-  }
-});
-
-watch(
-  () => route.params.id,
-  (newId, _) => {
-    console.log(newId);
-    fetchCompetitors(newId as string);
-  },
-);
-
 const eventIds = computed(() => {
-  return wcifResponse.value
-    ? wcifResponse.value.events.map((event: { id: WCAevent }) => event.id)
+  return data.value
+    ? data.value.events.map((event: { id: WCAevent }) => event.id)
     : [];
 });
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center">
-    <div v-if="wcifResponse">
+    <div v-if="isPending">Loading...</div>
+    <div v-else-if="isError || !data?.name">
+      Error fetching data: {{ error }}
+    </div>
+    <div v-else>
       <h1 class="text-center text-2xl font-bold m-4">
-        {{ wcifResponse.name }}
+        {{ data.name }}
       </h1>
       <Select v-model="selectedEventId">
         <SelectTrigger class="ms-0">
@@ -215,6 +210,5 @@ const eventIds = computed(() => {
         </ol>
       </div>
     </div>
-    <div v-else></div>
   </div>
 </template>
