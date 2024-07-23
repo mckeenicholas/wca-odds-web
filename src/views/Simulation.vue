@@ -134,7 +134,6 @@ const runSimulation = (
   simCount: number,
   event: WCAevent,
 ) => {
-  console.log(results);
   init().then(() => {
     const result_times = results.map((result) => result.results);
     const raw_results = simulate(
@@ -170,7 +169,6 @@ const runSimulation = (
         ranks: item.ranks,
       };
     });
-    console.log(simulation_results.value);
     colors.value = generateColors(raw_results.length);
   });
 };

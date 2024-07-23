@@ -43,8 +43,6 @@ const handleSearch = () => {
 </script>
 
 <template>
-  {{ isFetching }}
-  {{ input }}
   <div class="flex flex-col items-center justify-center">
     <div>
       <h1 class="text-center text-xl m-2">Find a competition</h1>

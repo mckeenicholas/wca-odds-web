@@ -101,7 +101,6 @@ watch(data, () => {
     competitors.splice(defaultShownNum);
   });
 
-  console.log(competitorsByEvent);
   selectedCompetitors.value = competitorsByEvent;
 });
 
