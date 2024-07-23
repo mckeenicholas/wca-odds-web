@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { AreaChart } from "@/components/ui/chart-area";
-import getHistValues from "@/lib/histogram";
+import { AreaChart } from "../ui/chart-area";
+import getHistValues from "../../lib/histogram";
 
 const { min, max, data, colors } = defineProps<{
   min: number;
@@ -31,7 +31,7 @@ const categories = data.map((item) => item.name);
 </script>
 
 <template>
-  <div class="max-w-[90vw]">
+  <div class="my-10 mx-4">
     <AreaChart
       :data="chartData"
       index="name"

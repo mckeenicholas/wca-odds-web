@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { fetchWCAInfo } from "@/lib/utils";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Skeleton } from "../components/ui/skeleton";
+import { fetchWCAInfo } from "../lib/utils";
 
 interface Competition {
   start_date: string;
@@ -44,7 +43,8 @@ const fetchCompetitions = async (query: string) => {
             )
             .sort(
               (a: { start_date: string }, b: { start_date: string }) =>
-                new Date(a.start_date) - new Date(b.start_date),
+                new Date(a.start_date).getTime() -
+                new Date(b.start_date).getTime(),
             )
         : [];
   } else {
@@ -67,7 +67,7 @@ watch(input, (newVal) => {
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
-      <h1 class="text-center">Search for a competition</h1>
+      <h1 class="text-center text-xl m-2">Find a competition</h1>
       <div class="flex flex-row space-x-4 min-w-[70vw]">
         <Input
           v-model="input"
@@ -87,7 +87,7 @@ watch(input, (newVal) => {
       </div>
       <div v-else>
         <div v-if="results.length" class="mt-4">
-          <ScrollArea class="h-[70vh] rounded-md border">
+          <div class="border rounded-md max-h-[75vh] overflow-y-scroll">
             <ol class="mx-1 py-1">
               <li
                 v-for="result in results"
@@ -108,14 +108,14 @@ watch(input, (newVal) => {
                 </a>
               </li>
             </ol>
-          </ScrollArea>
+          </div>
         </div>
         <div v-else-if="input">No results found.</div>
       </div>
     </div>
     <div class="mt-4 items-center justify-center">
       <a href="/custom">
-        <Button> Add competitors manually </Button>
+        <Button> Or select competitors manually </Button>
       </a>
     </div>
   </div>

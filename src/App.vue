@@ -1,13 +1,14 @@
 <script setup lang="ts">
+import "./assets/index.css";
 import { useColorMode } from "@vueuse/core";
 import { Icon } from "@iconify/vue";
-import { Button } from "@/components/ui/button";
+import { Button } from "./components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "./components/ui/dropdown-menu";
 
 const mode = useColorMode();
 </script>
@@ -39,3 +40,14 @@ const mode = useColorMode();
     <RouterView />
   </main>
 </template>
+
+<style lang="css">
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 4px;
+}
+</style>

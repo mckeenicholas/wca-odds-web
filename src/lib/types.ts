@@ -57,7 +57,7 @@ export const eventInfo = {
 
 interface Registration {
   wcaRegistrationId: number;
-  eventIds: string[];
+  eventIds: WCAevent[];
   status: string;
   isCompeting: boolean;
 }
@@ -65,6 +65,7 @@ interface Registration {
 interface Person {
   name: string;
   wcaId: string;
+  personalBests: any;
   registration: Registration;
 }
 

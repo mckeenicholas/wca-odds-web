@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build:wasm": "wasm-pack build --target web --out-dir build",
+    "build:wasm": "wasm-pack build --target web --out-dir wasm",
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
@@ -22,7 +22,8 @@
     "tailwind-merge": "^2.4.0",
     "tailwindcss-animate": "^1.0.7",
     "vue": "^3.4.31",
-    "vue-router": "^4.4.0"
+    "vue-router": "^4.4.0",
+    "vue-window-size": "^2.0.0"
   },
   "devDependencies": {
     "@iconify-json/radix-icons": "^1.1.14",

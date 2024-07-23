@@ -1,27 +1,26 @@
 <script setup lang="ts">
-import { watch, ref, onMounted } from "vue";
+import { watch, ref, onMounted, computed } from "vue";
 import { useRoute } from "vue-router";
-import { fetchWCAInfo } from "@/lib/utils";
-import { wcif, wcifEvent, eventNames, WCAEvent } from "@/lib/types";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Checkbox } from "@/components/ui/checkbox";
+import { fetchWCAInfo } from "../lib/utils";
+import { wcif, WCAevent, eventNames } from "../lib/types";
+import { Checkbox } from "../components/ui/checkbox";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+} from "../components/ui/select";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Label } from "../components/ui/label";
 import {
   NumberField,
   NumberFieldContent,
   NumberFieldDecrement,
   NumberFieldIncrement,
   NumberFieldInput,
-} from "@/components/ui/number-field";
+} from "../components/ui/number-field";
 
 interface EventRegistration {
   [key: string]: {
@@ -33,7 +32,7 @@ interface EventRegistration {
 }
 
 const route = useRoute();
-const wcif = ref<wcif | null>(null);
+const wcifResponse = ref<wcif | null>(null);
 const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<string>("");
 const simCount = ref<number>(10000);
@@ -46,8 +45,8 @@ const fetchCompetitors = async (compid: string) => {
   const response = await fetchWCAInfo<wcif>(
     `https://api.worldcubeassociation.org/competitions/${compid}/wcif/public`,
   );
-  wcif.value = response;
-  selectedEventId.value = response.events[0].id;
+  wcifResponse.value = response;
+  selectedEventId.value = response!.events[0].id;
   if (response) {
     let competitorsByEvent: EventRegistration = {};
     response.persons.map(
@@ -56,17 +55,17 @@ const fetchCompetitors = async (compid: string) => {
         registration: {
           status: string;
           isCompeting: any;
-          eventIds: WCAEvent[];
+          eventIds: WCAevent[];
         };
         wcaId: any;
-        name: any;
+        name: string;
       }) => {
         if (
           person.registration?.status === "accepted" &&
           person.registration?.isCompeting &&
           person.wcaId
         ) {
-          person.registration.eventIds.forEach((event: WCAEvent) => {
+          person.registration.eventIds.forEach((event: WCAevent) => {
             if (!competitorsByEvent[event]) {
               competitorsByEvent[event] = [];
             }
@@ -101,20 +100,22 @@ const fetchCompetitors = async (compid: string) => {
 };
 
 const runSimulation = () => {
-  const eventSelectedCompetitors = selectedCompetitors.value[
-    selectedEventId.value
-  ]
-    .filter((item) => item.selected)
-    .map((item) => item.id);
-  const queryParams = new URLSearchParams({
-    name: wcif.value.name,
-    event: selectedEventId.value,
-    simCount: simCount.value.toString(),
-    monthCutoff: monthCount.value.toString(),
-    competitors: eventSelectedCompetitors.join(","),
-  });
-  const url = `/simulation?${queryParams.toString()}`;
-  window.location.href = url;
+  if (wcifResponse.value) {
+    const eventSelectedCompetitors = selectedCompetitors.value[
+      selectedEventId.value
+    ]
+      .filter((item) => item.selected)
+      .map((item) => item.id);
+    const queryParams = new URLSearchParams({
+      name: wcifResponse.value.name,
+      event: selectedEventId.value,
+      simCount: simCount.value.toString(),
+      monthCutoff: monthCount.value.toString(),
+      competitors: eventSelectedCompetitors.join(","),
+    });
+    const url = `/simulation?${queryParams.toString()}`;
+    window.location.href = url;
+  }
 };
 
 onMounted(() => {
@@ -131,21 +132,26 @@ watch(
     fetchCompetitors(newId as string);
   },
 );
+
+const eventIds = computed(() => {
+  return wcifResponse.value
+    ? wcifResponse.value.events.map((event: { id: WCAevent }) => event.id)
+    : [];
+});
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center">
-    <div v-if="wcif">
-      <h1 class="text-center">{{ wcif.name }}</h1>
+    <div v-if="wcifResponse">
+      <h1 class="text-center text-2xl font-bold m-4">
+        {{ wcifResponse.name }}
+      </h1>
       <Select v-model="selectedEventId">
         <SelectTrigger class="ms-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem
-            v-for="event of wcif.events.map((event: wcifEvent) => event.id)"
-            :value="event"
-          >
+          <SelectItem v-for="event of eventIds" :value="event">
             {{ eventNames[event] }}
           </SelectItem>
         </SelectContent>
@@ -181,7 +187,9 @@ watch(
           <Button @click="runSimulation">Run Simulation</Button>
         </div>
       </div>
-      <ScrollArea class="h-[85vh] rounded-md border min-w-[70vw]">
+      <div
+        class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll"
+      >
         <ol>
           <li
             v-for="person in selectedCompetitors[selectedEventId]"
@@ -205,7 +213,7 @@ watch(
             />
           </li>
         </ol>
-      </ScrollArea>
+      </div>
     </div>
     <div v-else></div>
   </div>

@@ -33,11 +33,12 @@ const range = (min: number, max: number) => {
   return result;
 };
 
-const cdf = (x: number, mu: number, sigma: number, lambda: number) => {
-  return (
+const pdf = (x: number, mu: number, sigma: number, lambda: number) => {
+  return Math.min(
     (lambda / 2) *
-    Math.exp((lambda / 2) * (2 * mu + lambda * sigma * sigma - 2 * x)) *
-    erfc((mu + lambda * sigma * sigma - x) / (Math.sqrt(2) * sigma))
+      Math.exp((lambda / 2) * (2 * mu + lambda * sigma * sigma - 2 * x)) *
+      erfc((mu + lambda * sigma * sigma - x) / (Math.sqrt(2) * sigma)),
+    1,
   );
 };
 
@@ -48,9 +49,9 @@ const getHistValues = (
   min: number,
   max: number,
 ) => {
-  const lambda = Math.min(1 / tau, 10);
+  const lambda = Math.min(5 / tau, 5);
   return range(min, max).map((x) => {
-    return { name: x, probability: cdf(x, mu, sigma, lambda) * 100 };
+    return { name: x, probability: pdf(x, mu, sigma, lambda) * 100 };
   });
 };
 

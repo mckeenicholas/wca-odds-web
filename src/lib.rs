@@ -13,9 +13,15 @@ pub struct Competitors {
 pub struct PersonData {
     pub wins: i32,
     pub podiums: i32,
+    pub mean: f64,
+    pub gamma: f64,
+    pub stdev: f64,
     pub mu: f64,
     pub sigma: f64,
     pub tau: f64,
+    pub dnf_rate: f64,
+    pub avg_rank: f64,
+    pub ranks: Vec<i32>,
 }
 
 #[derive(Serialize)]
@@ -23,10 +29,9 @@ pub struct ReturnData {
     pub persons: Vec<PersonData>,
 }
 
-fn find_lowest_indices(vec: &[i32], count: usize) -> Vec<usize> {
+fn find_lowest_indices(vec: &[i32]) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..vec.len()).collect();
     indices.sort_by_key(|&i| vec[i]);
-    indices.truncate(count);
     indices
 }
 
@@ -85,7 +90,7 @@ pub fn simulate(
         .results
         .iter()
         .map(|result| {
-            let result_no_dnf: Vec<i32> = result.iter().filter(|&&x| x != -1).copied().collect();
+            let result_no_dnf: Vec<i32> = result.iter().filter(|&&x| x > 0).copied().collect();
             let num_dnf = result.iter().filter(|&&x| x == -1).count();
             let dnf_rate: f64 = num_dnf as f64 / result.len() as f64;
 
@@ -94,7 +99,7 @@ pub fn simulate(
 
             let trimmed_results: Vec<i32> = result_no_dnf
                 .iter()
-                .filter(|&&x| x < (sample_mean + sample_dev * 3.0) as i32)
+                .filter(|&&x| x <= (sample_mean + sample_dev * 3.0) as i32)
                 .copied()
                 .collect();
             let trimmed_mean = mean(&trimmed_results);
@@ -112,18 +117,20 @@ pub fn simulate(
                 (trimmed_dev.powi(2) * (1.0 - (gamma_trimmed / 2.0).powf(2.0 / 3.0))).sqrt();
             let tau = trimmed_dev * (gamma_trimmed / 2.0).powf(1.0 / 3.0);
 
-            (mu, sigma, tau, dnf_rate)
+            (sample_mean, sample_dev, gamma, mu, sigma, tau, dnf_rate)
         })
         .collect();
 
     let mut win_count = vec![0; num_competitors];
     let mut pod_count = vec![0; num_competitors];
+    let mut total_rank = vec![0; num_competitors];
+    let mut rank_dist = vec![vec![0; num_competitors]; num_competitors];
 
     for _ in 0..simulations {
         let mut averages = Vec::with_capacity(num_competitors);
 
         for i in 0..num_competitors {
-            let (mu, sigma, tau, dnf_rate) = results[i];
+            let (_, _, _, mu, sigma, tau, dnf_rate) = results[i];
 
             let mut average: Vec<i32> = (0..num_attempts)
                 .map(|_| random_exgauss(mu, sigma, tau, dnf_rate) as i32)
@@ -133,24 +140,34 @@ pub fn simulate(
             averages.push(avg);
         }
 
-        let lowest_index = find_lowest_indices(&averages, 1)[0];
-        win_count[lowest_index] += 1;
-
-        let lowest_pod_indices = find_lowest_indices(&averages, 3);
-        for index in lowest_pod_indices {
+        let lowest_pod_indices = find_lowest_indices(&averages);
+        win_count[lowest_pod_indices[0]] += 1;
+        for &index in lowest_pod_indices.iter().take(3) {
             pod_count[index] += 1;
+        }
+
+        for i in 0..num_competitors {
+            total_rank[i] += lowest_pod_indices[i] + 1;
+            rank_dist[lowest_pod_indices[i]][i] += 1;
         }
     }
 
     let mut output = Vec::with_capacity(num_competitors);
+
     for i in 0..num_competitors {
-        let (mu, sigma, tau, _) = results[i];
+        let (sample_mean, sample_dev, gamma, mu, sigma, tau, dnf_rate) = results[i];
         let person_data = PersonData {
             wins: win_count[i],
             podiums: pod_count[i],
+            mean: sample_mean,
+            stdev: sample_dev,
+            gamma: gamma,
             mu: mu,
             sigma: sigma,
             tau: tau,
+            dnf_rate: dnf_rate,
+            avg_rank: total_rank[i] as f64 / simulations as f64,
+            ranks: rank_dist[i].clone(),
         };
         output.push(person_data);
     }
