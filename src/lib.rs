@@ -31,7 +31,7 @@ pub struct ReturnData {
 
 fn find_lowest_indices(vec: &[i32]) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..vec.len()).collect();
-    indices.sort_by_key(|&i| vec[i]);
+    indices.sort_unstable_by_key(|&i| vec[i]);
     indices
 }
 
@@ -57,7 +57,7 @@ fn random_exgauss(mu: f64, sample_dev: f64, tau: f64, dnf_rate: f64) -> f64 {
 }
 
 fn calc_wca_average(average: &mut [i32], format: char) -> i32 {
-    average.sort();
+    average.sort_unstable();
     if format == 'a' {
         (average[1] / 3) + (average[2] / 3) + (average[3] / 3)
     } else if format == 'm' {
@@ -152,24 +152,25 @@ pub fn simulate(
         }
     }
 
-    let mut output = Vec::with_capacity(num_competitors);
+    let output: Vec<_> = (0..num_competitors)
+        .into_iter()
+        .map(|i| {
+            let (sample_mean, sample_dev, gamma, mu, sigma, tau, dnf_rate) = results[i];
+            PersonData {
+                wins: win_count[i],
+                podiums: pod_count[i],
+                mean: sample_mean,
+                stdev: sample_dev,
+                gamma: gamma,
+                mu: mu,
+                sigma: sigma,
+                tau: tau,
+                dnf_rate: dnf_rate,
+                avg_rank: total_rank[i] as f64 / simulations as f64,
+                ranks: rank_dist[i].clone(),
+            }
+        })
+        .collect();
 
-    for i in 0..num_competitors {
-        let (sample_mean, sample_dev, gamma, mu, sigma, tau, dnf_rate) = results[i];
-        let person_data = PersonData {
-            wins: win_count[i],
-            podiums: pod_count[i],
-            mean: sample_mean,
-            stdev: sample_dev,
-            gamma: gamma,
-            mu: mu,
-            sigma: sigma,
-            tau: tau,
-            dnf_rate: dnf_rate,
-            avg_rank: total_rank[i] as f64 / simulations as f64,
-            ranks: rank_dist[i].clone(),
-        };
-        output.push(person_data);
-    }
     Ok(serde_wasm_bindgen::to_value(&output)?)
 }

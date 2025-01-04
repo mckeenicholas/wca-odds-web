@@ -78,3 +78,14 @@ export interface wcif {
   events: wcifEvent[];
   persons: Person[];
 }
+
+export interface Competition {
+  id: string;
+  date: string;
+}
+
+export interface Competitor {
+  name: string;
+  id: string;
+  results: { [key: string]: any };
+}

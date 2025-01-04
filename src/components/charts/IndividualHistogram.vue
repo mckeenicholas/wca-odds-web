@@ -12,7 +12,6 @@ const { mu, sigma, tau, color, max, min } = defineProps<{
 }>();
 
 const data = getHistValues(mu, sigma, tau, min, max);
-console.log(data);
 </script>
 
 <template>

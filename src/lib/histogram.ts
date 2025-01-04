@@ -50,6 +50,7 @@ const getHistValues = (
   max: number,
 ) => {
   const lambda = Math.min(5 / tau, 5);
+
   return range(min, max).map((x) => {
     return { name: x, probability: pdf(x, mu, sigma, lambda) * 100 };
   });

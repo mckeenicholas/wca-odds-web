@@ -22,6 +22,7 @@ import {
   NumberFieldInput,
 } from "../components/ui/number-field";
 import { useQuery } from "@tanstack/vue-query";
+import LoadingMessage from "../components/custom/LoadingMessage.vue";
 
 interface EventRegistration {
   [key: string]: {
@@ -132,7 +133,9 @@ const eventIds = computed(() => {
 
 <template>
   <div class="flex flex-col items-center justify-center">
-    <div v-if="isPending">Loading...</div>
+    <div v-if="isPending" class="text-2xl m-4">
+      <LoadingMessage message="Loading WCA Data" />
+    </div>
     <div v-else-if="isError || !data?.name">
       Error fetching data: {{ error }}
     </div>
@@ -175,8 +178,8 @@ const eventIds = computed(() => {
         <Label for="resultCutoff">{{
           monthCount === 1 ? "month" : "months"
         }}</Label>
-        <Label for="useDNF">Include DNF rate in calculations:</Label>
-        <Checkbox id="useDNF" />
+        <!-- <Label for="useDNF">Include DNF rate in calculations:</Label>
+        <Checkbox id="useDNF" /> -->
         <div class="flex flex-grow justify-end">
           <Button @click="runSimulation">Run Simulation</Button>
         </div>

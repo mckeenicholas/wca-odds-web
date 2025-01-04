@@ -2,7 +2,7 @@
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { simulate } from "../../wasm/odds_web.js";
-import { fetchWCAInfo } from "../lib/utils.js";
+import { fetchData } from "../lib/utils.js";
 import { eventInfo, WCAevent } from "../lib/types.js";
 import IndividualHistogram from "../components/charts/IndividualHistogram.vue";
 import { generateColors } from "../lib/histogram.js";
@@ -11,11 +11,13 @@ import RankHistogram from "../components/charts/RankHistogram.vue";
 import PieChart from "../components/charts/PieChart.vue";
 import { Icon } from "@iconify/vue";
 import Expandable from "../components/custom/Expandable.vue";
+import ResultInfo from "../components/custom/ResultInfo.vue";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../components/ui/collapsible";
+import LoadingMessage from "../components/custom/LoadingMessage.vue";
 
 const router = useRouter();
 
@@ -34,150 +36,74 @@ const colors = ref<string[]>([""]);
 const bounds = ref<{ max: number; min: number }>({ max: 0, min: 100 });
 const selected = ref<boolean[]>(new Array(competitorsList.length).fill(true));
 
-type Competition = {
-  results: any;
-  id: string;
-  date: string;
-};
-
-type Competitor = {
-  name: any;
-  id: any;
-  results: { [key: string]: any };
-};
-
-const getYearsFromDate = (startDate: Date) => {
-  let today = new Date();
-
-  let years = [];
-  for (
-    let year = startDate.getFullYear();
-    year <= today.getFullYear();
-    year++
-  ) {
-    years.push(year);
-  }
-
-  return years;
-};
-
-const filterCompetitions = (
-  competitions: Competition[],
-  competitors: Competitor[],
-  event: WCAevent,
-  startDate: Date,
-) => {
-  const numSolves = eventInfo[event].attempts;
-  const compDate: { [key: string]: string } = {};
-
-  competitions.forEach((comp) => {
-    compDate[comp.id] = comp.date;
-  });
-
-  const results = competitors.flatMap((person) => {
-    const results = Object.entries(person.results)
-      .filter(
-        ([key, values]) => new Date(compDate[key]) > startDate && values[event],
-      )
-      .flatMap(([_, values]) =>
-        values[event]?.flatMap((round: { solves: number[] }) =>
-          round.solves.slice(0, numSolves).filter((solve) => solve !== 0),
-        ),
-      );
-    return results.length
-      ? [{ id: person.id, name: person.name, results: results }]
-      : [];
-  });
-  return results;
-};
-
-const fetchData = async (
-  persons: string[],
-  event: WCAevent,
-  startDate: Date,
-) => {
-  const years = getYearsFromDate(startDate);
-
-  const results = await Promise.all(
-    persons.map(
-      async (person) =>
-        await fetchWCAInfo(
-          `https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/persons/${person}.json`,
-        ),
-    ),
-  );
-
-  const competitions = (
-    await Promise.all(
-      years.map(async (year) => {
-        const response = await fetchWCAInfo<{ items: any[] }>(
-          `https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/competitions/${year}.json`,
-        );
-        return response?.items.map((comp: { id: any; date: { from: any } }) => {
-          return { id: comp.id, date: comp.date.from };
-        });
-      }),
-    )
-  ).flat();
-
-  loading.value = false;
-  return filterCompetitions(
-    competitions as Competition[],
-    results as Competitor[],
-    event,
-    startDate,
-  );
-};
-
-const runSimulation = (
+const runSimulation = async (
   results: { id: string; name: string; results: number[] }[],
   simCount: number,
   event: WCAevent,
 ) => {
-  init().then(() => {
-    const result_times = results.map((result) => result.results);
-    const raw_results = simulate(
-      { results: result_times },
-      simCount,
-      eventInfo[event].format,
-    );
-    simulation_results.value = raw_results.map((item: any, idx: number) => {
-      const maxBound = (item.mu + 6 * item.sigma) / 100;
-      const minBound = Math.max((item.mu - 4 * item.sigma) / 100, 0);
+  await init();
 
-      if (!isNaN(maxBound)) {
-        bounds.value.max = Math.max(maxBound, bounds.value.max);
-      }
+  const resultTimes = results.map((result) => result.results);
+  const rawResults = simulate(
+    { results: resultTimes },
+    simCount,
+    eventInfo[event].format,
+  );
 
-      if (!isNaN(minBound)) {
-        bounds.value.min = Math.min(minBound, bounds.value.min);
-      }
-
-      return {
-        name: results[idx].name,
-        id: results[idx].id,
-        wins: parseFloat(((item.wins / simCount) * 100).toFixed(2)),
-        podiums: parseFloat(((item.podiums / simCount) * 100).toFixed(2)),
-        mean: parseFloat((item.mean / 100).toFixed(4)),
-        stdev: parseFloat((item.stdev / 100).toFixed(4)),
-        gamma: parseFloat((item.gamma / 100).toFixed(4)),
-        mu: parseFloat((item.mu / 100).toFixed(4)),
-        sigma: parseFloat((item.sigma / 100).toFixed(4)),
-        tau: parseFloat((item.tau / 100).toFixed(4)),
-        dnfRate: parseFloat(item.dnf_rate.toFixed(4)) * 100,
-        avgRank: parseFloat(item.avg_rank.toFixed(4)),
-        ranks: item.ranks,
-      };
-    });
-    colors.value = generateColors(raw_results.length);
-  });
+  updateSimulationResults(rawResults, results, simCount);
+  colors.value = generateColors(rawResults.length);
 };
 
+const updateSimulationResults = (
+  rawResults: any[],
+  results: { id: string; name: string }[],
+  simCount: number,
+) => {
+  simulation_results.value = rawResults
+    .map((item, idx) => transformResult(item, results[idx], simCount))
+    .sort((a, b) => b.wins - a.wins);
+};
+
+const transformResult = (
+  item: any,
+  result: { id: string; name: string },
+  simCount: number,
+) => {
+  const maxBound = (item.mu + 6 * item.sigma) / 100;
+  const minBound = Math.max((item.mu - 4 * item.sigma) / 100, 0);
+
+  if (!isNaN(maxBound)) bounds.value.max = Math.max(maxBound, bounds.value.max);
+  if (!isNaN(minBound)) bounds.value.min = Math.min(minBound, bounds.value.min);
+
+  return {
+    name: result.name,
+    id: result.id,
+    wins: toPercentage(item.wins, simCount),
+    podiums: toPercentage(item.podiums, simCount),
+    mean: toDecimal(item.mean / 100),
+    stdev: toDecimal(item.stdev / 100),
+    gamma: toDecimal(Math.max(item.gamma / 100, 0)),
+    mu: toDecimal(item.mu / 100),
+    sigma: toDecimal(item.sigma / 100),
+    tau: toDecimal(Math.max(item.tau / 100, 0)),
+    dnfRate: toDecimal(item.dnf_rate * 100),
+    avgRank: toDecimal(item.avg_rank),
+    ranks: item.ranks,
+  };
+};
+
+const toPercentage = (value: number, total: number) =>
+  parseFloat(((value / total) * 100).toFixed(2));
+
+const toDecimal = (value: number) => parseFloat(value.toFixed(4));
+
 onMounted(async () => {
-  let startDate = new Date();
-  startDate.setMonth(new Date().getMonth() - parseInt(monthCutoff.toString()));
+  const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - parseInt(monthCutoff.toString()));
+
   const data = await fetchData(competitorsList, event as WCAevent, startDate);
-  runSimulation(data, parseInt(simCount.toString()), event as WCAevent);
+  loading.value = false;
+  await runSimulation(data, parseInt(simCount.toString()), event as WCAevent);
 });
 </script>
 
@@ -264,15 +190,7 @@ onMounted(async () => {
                   :max="bounds.max"
                   class="border rounded-md m-2 p-2"
                 />
-                <div class="my-10 mx-6 text-lg flex flex-row space-x-4">
-                  <div>m = {{ result.mean }}</div>
-                  <div>s = {{ result.stdev }}</div>
-                  <div>&gamma; = {{ result.gamma }}</div>
-                  <div>&mu; = {{ result.mu }}</div>
-                  <div>&sigma; = {{ result.sigma }}</div>
-                  <div>&tau; = {{ result.tau }}</div>
-                  <div>DNF rate = {{ result.dnfRate }}%</div>
-                </div>
+                <ResultInfo v-bind="result" />
                 <hr class="mx-2" />
               </CollapsibleContent>
             </Collapsible>
@@ -280,7 +198,11 @@ onMounted(async () => {
         </ol>
       </div>
     </div>
-    <div v-else-if="loading" class="mt-4">Fetching data...</div>
-    <div v-else class="mt-4">Calculating...</div>
+    <div v-else-if="loading" class="mt-4">
+      <LoadingMessage message="Fetching data" />
+    </div>
+    <div v-else class="mt-4">
+      <LoadingMessage message="Calculating results" />
+    </div>
   </div>
 </template>
