@@ -42,3 +42,4 @@ dist-ssr
 # WASM output
 *.wasm
 *.wasm.map
+wasm

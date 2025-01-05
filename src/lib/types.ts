@@ -18,7 +18,7 @@ export const eventNames: { [key: string]: string } = {
   "333mbf": "3x3x3 Multi-Blind",
 };
 
-export type WCAevent =
+export type SupportedWCAEvent =
   | "222"
   | "333"
   | "444"
@@ -35,6 +35,25 @@ export type WCAevent =
   | "sq1"
   | "444bf"
   | "555bf";
+
+export const supportedWCAEvents = [
+  "222",
+  "333",
+  "444",
+  "555",
+  "666",
+  "777",
+  "333bf",
+  "333fm",
+  "333oh",
+  "minx",
+  "pyram",
+  "clock",
+  "skewb",
+  "sq1",
+  "444bf",
+  "555bf",
+] as const;
 
 export const eventInfo = {
   333: { attempts: 5, format: "a" },
@@ -57,7 +76,7 @@ export const eventInfo = {
 
 interface Registration {
   wcaRegistrationId: number;
-  eventIds: WCAevent[];
+  eventIds: SupportedWCAEvent[];
   status: string;
   isCompeting: boolean;
 }
@@ -70,7 +89,7 @@ interface Person {
 }
 
 export interface wcifEvent {
-  id: WCAevent;
+  id: SupportedWCAEvent;
 }
 
 export interface wcif {

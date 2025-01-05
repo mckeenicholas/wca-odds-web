@@ -2,27 +2,11 @@
 import { watch, ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import { fetchWCAInfo } from "../lib/utils";
-import { wcif, WCAevent, eventNames } from "../lib/types";
+import { wcif, SupportedWCAEvent } from "../lib/types";
 import { Checkbox } from "../components/ui/checkbox";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "../components/ui/select";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import { Label } from "../components/ui/label";
-import {
-  NumberField,
-  NumberFieldContent,
-  NumberFieldDecrement,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "../components/ui/number-field";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "../components/custom/LoadingMessage.vue";
+import ControlPanel from "../components/custom/ControlPanel.vue";
 
 interface EventRegistration {
   [key: string]: {
@@ -58,13 +42,14 @@ watch(data, () => {
 
   selectedEventId.value = response.events[0].id;
   let competitorsByEvent: EventRegistration = {};
-  response.persons.map(
+
+  response.persons.forEach(
     (person: {
       personalBests: any;
       registration: {
         status: string;
         isCompeting: any;
-        eventIds: WCAevent[];
+        eventIds: SupportedWCAEvent[];
       };
       wcaId: any;
       name: string;
@@ -74,13 +59,15 @@ watch(data, () => {
         person.registration?.isCompeting &&
         person.wcaId
       ) {
-        person.registration.eventIds.forEach((event: WCAevent) => {
+        person.registration.eventIds.forEach((event: SupportedWCAEvent) => {
           if (!competitorsByEvent[event]) {
             competitorsByEvent[event] = [];
           }
+
           const worldRank = person.personalBests.find(
             (personalBest: { eventId: any }) => personalBest.eventId === event,
           )?.worldRanking;
+
           if (worldRank) {
             competitorsByEvent[event].push({
               id: person.wcaId,
@@ -96,9 +83,11 @@ watch(data, () => {
 
   Object.values(competitorsByEvent).forEach((competitors) => {
     competitors.sort((a, b) => a.rank - b.rank);
+
     competitors.forEach(
       (competitor, index) => (competitor.selected = index < defaultSelectedNum),
     );
+
     competitors.splice(defaultShownNum);
   });
 
@@ -114,7 +103,7 @@ const runSimulation = () => {
       .map((item) => item.id);
     const queryParams = new URLSearchParams({
       name: data.value.name,
-      event: selectedEventId.value,
+      eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
       competitors: eventSelectedCompetitors.join(","),
@@ -126,7 +115,7 @@ const runSimulation = () => {
 
 const eventIds = computed(() => {
   return data.value
-    ? data.value.events.map((event: { id: WCAevent }) => event.id)
+    ? data.value.events.map((event: { id: SupportedWCAEvent }) => event.id)
     : [];
 });
 </script>
@@ -143,74 +132,34 @@ const eventIds = computed(() => {
       <h1 class="text-center text-2xl font-bold m-4">
         {{ data.name }}
       </h1>
-      <Select v-model="selectedEventId">
-        <SelectTrigger class="ms-0">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem v-for="event of eventIds" :value="event">
-            {{ eventNames[event] }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-      <div class="border rounded-md my-2 p-2 flex items-center space-x-4">
-        <Label for="simCount">Number of simulations:</Label>
-        <Input
-          placeholder="100000"
-          class="min-w-16 max-w-36"
-          id="simCount"
-          v-model="simCount"
+      <div class="min-w-[70vw]">
+        <ControlPanel
+          v-bind:event-ids="eventIds"
+          v-model:month-count="monthCount"
+          v-model:selected-event-id="selectedEventId"
+          v-model:sim-count="simCount"
+          v-on:run-simulation="runSimulation"
         />
-        <Label for="resultCutoff">Using results from past</Label>
-        <NumberField
-          v-model="monthCount"
-          :default-value="18"
-          :min="1"
-          id="resultCutoff"
-          class="w-24"
-        >
-          <NumberFieldContent>
-            <NumberFieldDecrement />
-            <NumberFieldInput />
-            <NumberFieldIncrement />
-          </NumberFieldContent>
-        </NumberField>
-        <Label for="resultCutoff">{{
-          monthCount === 1 ? "month" : "months"
-        }}</Label>
-        <!-- <Label for="useDNF">Include DNF rate in calculations:</Label>
-        <Checkbox id="useDNF" /> -->
-        <div class="flex flex-grow justify-end">
-          <Button @click="runSimulation">Run Simulation</Button>
-        </div>
-      </div>
-      <div
-        class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll"
-      >
-        <ol>
-          <li
-            v-for="person in selectedCompetitors[selectedEventId]"
-            @click="() => (person.selected = !person.selected)"
-            :key="person.id"
-            class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
-          >
-            <span :class="{ 'text-muted-foreground': !person.selected }">
-              <a
-                @click.stop
-                :href="`https://worldcubeassociation.org/persons/${person.id}`"
-                class="hover:underline"
-              >
-                {{ person.name }}
-              </a></span
-            >
-            <Checkbox
-              v-model:checked="person.selected"
-              @click.stop
-              class="me-2"
-            />
-          </li>
-        </ol>
       </div>
     </div>
+    <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll">
+      <li
+        v-for="person in selectedCompetitors[selectedEventId]"
+        @click="() => (person.selected = !person.selected)"
+        :key="person.id"
+        class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
+      >
+        <span :class="{ 'text-muted-foreground': !person.selected }">
+          <a
+            @click.stop
+            :href="`https://worldcubeassociation.org/persons/${person.id}`"
+            class="hover:underline"
+          >
+            {{ person.name }}
+          </a></span
+        >
+        <Checkbox v-model:checked="person.selected" @click.stop class="me-2" />
+      </li>
+    </ol>
   </div>
 </template>

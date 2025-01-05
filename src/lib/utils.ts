@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Competition, Competitor, eventInfo, WCAevent } from "./types";
+import { Competition, Competitor, eventInfo, SupportedWCAEvent } from "./types";
 
 export const cn = (...inputs: ClassValue[]) => {
   return twMerge(clsx(inputs));
@@ -15,7 +15,7 @@ export const fetchWCAInfo = async <T>(url: string | URL): Promise<T> => {
 export const filterCompetitions = (
   competitions: Competition[],
   competitors: Competitor[],
-  event: WCAevent,
+  event: SupportedWCAEvent,
   startDate: Date,
 ): { id: string; name: string; results: number[] }[] => {
   const numSolves = eventInfo[event].attempts;
@@ -50,7 +50,7 @@ const createCompetitionDateMap = (
 const extractValidResults = (
   person: Competitor,
   compDate: Record<string, string>,
-  event: WCAevent,
+  event: SupportedWCAEvent,
   startDate: Date,
   numSolves: number,
 ): number[] => {
@@ -67,7 +67,7 @@ const extractValidResults = (
 
 export const fetchData = async (
   persons: string[],
-  event: WCAevent,
+  event: SupportedWCAEvent,
   startDate: Date,
 ): Promise<{ id: string; name: string; results: number[] }[]> => {
   const years = getYearsFromDate(startDate);

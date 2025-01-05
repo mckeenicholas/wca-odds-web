@@ -3,7 +3,7 @@ import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { simulate } from "../../wasm/odds_web.js";
 import { fetchData } from "../lib/utils.js";
-import { eventInfo, WCAevent } from "../lib/types.js";
+import { eventInfo, SupportedWCAEvent } from "../lib/types.js";
 import IndividualHistogram from "../components/charts/IndividualHistogram.vue";
 import { generateColors } from "../lib/histogram.js";
 import FullHistogram from "../components/charts/FullHistogram.vue";
@@ -18,13 +18,17 @@ import {
   CollapsibleTrigger,
 } from "../components/ui/collapsible";
 import LoadingMessage from "../components/custom/LoadingMessage.vue";
+import { eventNames } from "../lib/types";
+import { Button } from "../components/ui/button";
 
 const router = useRouter();
 
-const { competitors, event, name, simCount, monthCutoff } =
+const { competitors, eventId, name, simCount, monthCutoff } =
   router.currentRoute.value.query;
 
-if (!competitors || !event || !name || !simCount || !monthCutoff) {
+const error = ref<string>("");
+
+if (!competitors || !eventId || !name || !simCount || !monthCutoff) {
   throw new Error("One or more required parameters are null or undefined.");
 }
 
@@ -34,12 +38,12 @@ const simulation_results = ref<any>(null);
 const loading = ref<boolean>(true);
 const colors = ref<string[]>([""]);
 const bounds = ref<{ max: number; min: number }>({ max: 0, min: 100 });
-const selected = ref<boolean[]>(new Array(competitorsList.length).fill(true));
+const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
 
 const runSimulation = async (
   results: { id: string; name: string; results: number[] }[],
   simCount: number,
-  event: WCAevent,
+  event: SupportedWCAEvent,
 ) => {
   await init();
 
@@ -97,13 +101,35 @@ const toPercentage = (value: number, total: number) =>
 
 const toDecimal = (value: number) => parseFloat(value.toFixed(4));
 
+const goBack = () => {
+  window.history.back();
+};
+
 onMounted(async () => {
+  if (!((eventId as string) in eventNames)) {
+    error.value = "Invalid event ID";
+    return;
+  }
+
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - parseInt(monthCutoff.toString()));
 
-  const data = await fetchData(competitorsList, event as WCAevent, startDate);
+  const data = await fetchData(
+    competitorsList,
+    eventId as SupportedWCAEvent,
+    startDate,
+  );
   loading.value = false;
-  await runSimulation(data, parseInt(simCount.toString()), event as WCAevent);
+
+  if (data.length == 0) {
+    error.value = `Nobody has results in ${eventNames[eventId as keyof typeof eventNames]}`;
+  }
+
+  await runSimulation(
+    data,
+    parseInt(simCount.toString()),
+    eventId as SupportedWCAEvent,
+  );
 });
 </script>
 
@@ -112,11 +138,17 @@ onMounted(async () => {
     <h1 class="text-center text-2xl font-bold mt-4 mb-2">
       Results for {{ name }}
     </h1>
-    <div v-if="simulation_results" class="min-w-[70vw]">
+    <div v-if="error" class="flex flex-col items-center justify-center">
+      <p>Error: {{ error }}</p>
+      <div class="mt-2">
+        <Button :onclick="goBack"> Back </Button>
+      </div>
+    </div>
+    <div v-else-if="simulation_results" class="min-w-[70vw]">
       <div class="flex">
-        <div class="border rounded-md my-2 py-2 px-4 me-2 flex-grow">
+        <p class="border rounded-md my-2 py-2 px-4 me-2 flex-grow">
           winner info here
-        </div>
+        </p>
         <div class="border rounded-md my-2 py-2 px-4">
           <PieChart :data="simulation_results" :colors="colors" />
         </div>
@@ -127,7 +159,7 @@ onMounted(async () => {
           :min="bounds.min"
           :max="bounds.max"
           :colors="colors"
-          :key="selected.filter((item) => item).length"
+          :key="selected.filter(Boolean).length"
         />
       </Expandable>
       <Expandable title="Predicted Ranks">
@@ -135,7 +167,7 @@ onMounted(async () => {
           :data="simulation_results"
           :colors="colors"
           :count="parseInt(simCount as string)"
-          :key="selected.filter((item) => item).length"
+          :key="selected.filter(Boolean).length"
         />
       </Expandable>
       <div class="border rounded-md mt-2">
