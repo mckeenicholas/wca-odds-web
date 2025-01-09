@@ -2,24 +2,24 @@
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { simulate } from "../../wasm/odds_web.js";
-import { fetchData } from "../lib/utils.js";
-import { eventInfo, SupportedWCAEvent } from "../lib/types.js";
-import IndividualHistogram from "../components/charts/IndividualHistogram.vue";
-import { generateColors } from "../lib/histogram.js";
-import FullHistogram from "../components/charts/FullHistogram.vue";
-import RankHistogram from "../components/charts/RankHistogram.vue";
-import PieChart from "../components/charts/PieChart.vue";
+import { fetchData } from "@/lib/utils.js";
+import { eventInfo, SupportedWCAEvent } from "@/lib/types.js";
+import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
+import { generateColors } from "@/lib/histogram.js";
+import FullHistogram from "@/components/charts/FullHistogram.vue";
+import RankHistogram from "@/components/charts/RankHistogram.vue";
+import PieChart from "@/components/charts/PieChart.vue";
 import { Icon } from "@iconify/vue";
-import Expandable from "../components/custom/Expandable.vue";
-import ResultInfo from "../components/custom/ResultInfo.vue";
+import Expandable from "@/components/custom/Expandable.vue";
+import ResultInfo from "@/components/custom/ResultInfo.vue";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "../components/ui/collapsible";
-import LoadingMessage from "../components/custom/LoadingMessage.vue";
-import { eventNames } from "../lib/types";
-import { Button } from "../components/ui/button";
+} from "@/components/ui/collapsible";
+import LoadingMessage from "@/components/custom/LoadingMessage.vue";
+import { eventNames } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 const router = useRouter();
 

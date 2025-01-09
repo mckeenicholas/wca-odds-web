@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BarChart } from "../ui/chart-bar";
+import { BarChart } from "@/components/ui/chart-bar";
 
 const { data, colors, count } = defineProps<{
   data: any;

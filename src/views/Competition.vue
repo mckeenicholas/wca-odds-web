@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { watch, ref, computed } from "vue";
 import { useRoute } from "vue-router";
-import { fetchWCAInfo } from "../lib/utils";
-import { wcif, SupportedWCAEvent } from "../lib/types";
-import { Checkbox } from "../components/ui/checkbox";
+import { fetchWCAInfo } from "@/lib/utils";
+import { wcif, SupportedWCAEvent } from "@/lib/types";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
-import LoadingMessage from "../components/custom/LoadingMessage.vue";
-import ControlPanel from "../components/custom/ControlPanel.vue";
+import LoadingMessage from "@/components/custom/LoadingMessage.vue";
+import ControlPanel from "@/components/custom/ControlPanel.vue";
 
 interface EventRegistration {
   [key: string]: {

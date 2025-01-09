@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { fetchWCAInfo } from "../lib/utils";
+import { fetchWCAInfo } from "@/lib/utils";
 import { useQuery } from "@tanstack/vue-query";
-import { Input } from "../components/ui/input";
-import { Skeleton } from "../components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X } from "lucide-vue-next";
-import ControlPanel from "../components/custom/ControlPanel.vue";
-import { supportedWCAEvents } from "../lib/types";
+import ControlPanel from "@/components/custom/ControlPanel.vue";
+import { supportedWCAEvents } from "@/lib/types";
 
 interface Person {
   name: string;

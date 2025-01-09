@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { Input } from "../components/ui/input";
-import { Button } from "../components/ui/button";
-import { Skeleton } from "../components/ui/skeleton";
-import { fetchWCAInfo } from "../lib/utils";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { fetchWCAInfo } from "@/lib/utils";
 import { useQuery } from "@tanstack/vue-query";
 
 interface Competition {

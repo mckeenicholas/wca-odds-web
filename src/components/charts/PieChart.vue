@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DonutChart } from "../ui/chart-donut";
+import { DonutChart } from "@/components/ui/chart-donut";
 
 const { data, colors } = defineProps<{
   data: { name: string; wins: number }[];

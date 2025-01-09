@@ -2,9 +2,9 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Competition, Competitor, eventInfo, SupportedWCAEvent } from "./types";
 
-export const cn = (...inputs: ClassValue[]) => {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-};
+}
 
 export const fetchWCAInfo = async <T>(url: string | URL): Promise<T> => {
   const response = await fetch(url);

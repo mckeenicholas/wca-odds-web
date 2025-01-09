@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { AreaChart } from "../ui/chart-area";
-import getHistValues from "../../lib/histogram";
+import { AreaChart } from "@/components/ui/chart-area";
+import getHistValues from "@/lib/histogram";
 
 const { min, max, data, colors } = defineProps<{
   min: number;

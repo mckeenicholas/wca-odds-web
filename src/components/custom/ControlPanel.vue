@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { eventNames, SupportedWCAEvent } from "../../lib/types";
+import { eventNames, SupportedWCAEvent } from "@/lib/types";
 import { defineProps } from "vue";
 import {
   Select,
@@ -7,17 +7,17 @@ import {
   SelectValue,
   SelectContent,
   SelectItem,
-} from "../../components/ui/select";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Label } from "../../components/ui/label";
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   NumberField,
   NumberFieldContent,
   NumberFieldDecrement,
   NumberFieldIncrement,
   NumberFieldInput,
-} from "../../components/ui/number-field";
+} from "@/components/ui/number-field";
 
 const props = defineProps<{
   selectedEventId: string;
