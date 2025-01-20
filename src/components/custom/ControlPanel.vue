@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { eventNames, SupportedWCAEvent } from "@/lib/types";
-import { defineProps } from "vue";
 import {
   Select,
   SelectTrigger,

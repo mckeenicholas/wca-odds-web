@@ -8,6 +8,7 @@ repository = "https://github.com/mckeenicholas/wca-odds-web"
 edition = "2018"
 
 [lib]
+path = "src/rust/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies.web-sys]
@@ -20,3 +21,9 @@ rand = "0.8.5"
 serde = { version = "1.0", features = ["derive"] }
 serde-wasm-bindgen = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
+reqwest-wasm = "0.11.16"
+reqwest = { version = "0.11", features = ["json"] }
+wasm-bindgen-futures = "0.4.49"
+serde_json = "1.0.135"
+chrono = "0.4.39"
+futures = "0.3.31"

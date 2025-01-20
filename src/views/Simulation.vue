@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { simulate } from "../../wasm/odds_web.js";
+
 import { fetchData } from "@/lib/utils.js";
 import { eventInfo, SupportedWCAEvent } from "@/lib/types.js";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
@@ -45,9 +46,11 @@ const runSimulation = async (
   simCount: number,
   event: SupportedWCAEvent,
 ) => {
-  await init();
 
   const resultTimes = results.map((result) => result.results);
+
+  await init()
+
   const rawResults = simulate(
     { results: resultTimes },
     simCount,
