@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import init, { simulate } from "../../wasm/odds_web.js";
+import init, { run_odds_simulation } from "../../wasm/odds_web.js";
 
 import { fetchData } from "@/lib/utils.js";
 import { eventInfo, SupportedWCAEvent } from "@/lib/types.js";
@@ -41,25 +41,25 @@ const colors = ref<string[]>([""]);
 const bounds = ref<{ max: number; min: number }>({ max: 0, min: 100 });
 const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
 
-const runSimulation = async (
-  results: { id: string; name: string; results: number[] }[],
-  simCount: number,
-  event: SupportedWCAEvent,
-) => {
+// const runSimulation = async (
+//   results: { id: string; name: string; results: number[] }[],
+//   simCount: number,
+//   event: SupportedWCAEvent,
+// ) => {
 
-  const resultTimes = results.map((result) => result.results);
+//   const resultTimes = results.map((result) => result.results);
 
-  await init()
+//   await init()
 
-  const rawResults = simulate(
-    { results: resultTimes },
-    simCount,
-    eventInfo[event].format,
-  );
+//   const rawResults = simulate(
+//     { results: resultTimes },
+//     simCount,
+//     eventInfo[event].format,
+//   );
 
-  updateSimulationResults(rawResults, results, simCount);
-  colors.value = generateColors(rawResults.length);
-};
+//   updateSimulationResults(rawResults, results, simCount);
+//   colors.value = generateColors(rawResults.length);
+// };
 
 const updateSimulationResults = (
   rawResults: any[],
@@ -117,22 +117,24 @@ onMounted(async () => {
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - parseInt(monthCutoff.toString()));
 
-  const data = await fetchData(
-    competitorsList,
-    eventId as SupportedWCAEvent,
-    startDate,
-  );
+  // const data = await fetchData(
+  //   competitorsList,
+  //   eventId as SupportedWCAEvent,
+  //   startDate,
+  // );
   loading.value = false;
 
-  if (data.length == 0) {
-    error.value = `Nobody has results in ${eventNames[eventId as keyof typeof eventNames]}`;
-  }
+  // if (data.length == 0) {
+  //   error.value = `Nobody has results in ${eventNames[eventId as keyof typeof eventNames]}`;
+  // }
 
-  await runSimulation(
-    data,
-    parseInt(simCount.toString()),
-    eventId as SupportedWCAEvent,
-  );
+  // await runSimulation(
+  //   data,
+  //   parseInt(simCount.toString()),
+  //   eventId as SupportedWCAEvent,
+  // );
+  await init();
+  run_odds_simulation(competitorsList, eventId as SupportedWCAEvent, parseInt(monthCutoff as string));
 });
 </script>
 

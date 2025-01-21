@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
+use simulation::run_simulations;
 use std::collections::HashMap;
 use std::error::Error;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsValue;
 use web_sys::js_sys::Promise;
 
 mod data;
@@ -35,15 +37,14 @@ pub struct ReturnData {
     pub persons: Vec<PersonData>,
 }
 
-#[wasm_bindgen(js_namespace = console)]
-extern "C" {
-    #[allow(dead_code)]
-    fn log(s: &str);
-}
-
+#[macro_export]
 #[allow(unused_macros)]
 macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => {
+        use web_sys::console;
+        use wasm_bindgen::JsValue;
+        console::log_1(&JsValue::from_str(&format!($($t)*).as_str()));
+    }
 }
 
 #[wasm_bindgen]
@@ -57,6 +58,8 @@ pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff
 
         // Testing code for WASM binding
         let result = vec![1, 2, 3];
+
+        run_simulations(4, parsed_data);
 
         serde_wasm_bindgen::to_value(&result)
             .map_err(|e| serde_wasm_bindgen::to_value(&format!("{}", e)).unwrap())
