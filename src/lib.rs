@@ -29,6 +29,15 @@ pub struct ReturnData {
     pub persons: Vec<PersonData>,
 }
 
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! console_log {
+    ($($t:tt)*) => {
+        web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!($($t)*).as_str()));
+    }
+}
+
+
 fn find_lowest_indices(vec: &[i32]) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..vec.len()).collect();
     indices.sort_unstable_by_key(|&i| vec[i]);
