@@ -35,16 +35,14 @@ pub struct ReturnData {
     pub persons: Vec<PersonData>,
 }
 
-#[wasm_bindgen(js_namespace = console)]
-extern "C" {
-    #[allow(dead_code)]
-    fn log(s: &str);
-}
-
+#[macro_export]
 #[allow(unused_macros)]
 macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+    ($($t:tt)*) => {
+        web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!($($t)*).as_str()));
+    }
 }
+
 
 #[wasm_bindgen]
 pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff: i32) -> Promise {
@@ -54,6 +52,8 @@ pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff
             .map_err(|e| {
                 serde_wasm_bindgen::to_value(&format!("{}", e)).expect("Error parsing message")
             })?;
+
+        console_log!("{:?}", format_results(parsed_data));
 
         // Testing code for WASM binding
         let result = vec![1, 2, 3];
@@ -65,8 +65,20 @@ pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff
     wasm_bindgen_futures::future_to_promise(future)
 }
 
+fn format_results(data: Vec<Vec<DatedCompetitionResult>>) -> String {
+    let all_results = data.into_iter().map(|person| person.into_iter().flat_map(|dated_result| dated_result.results).collect::<Vec<_>>()).collect::<Vec<_>>();
+
+    let mut base = String::new();
+
+    for item in all_results {
+        base = base + &format!("Length: {}, times: {:?}", item.len(), item);
+    }
+
+    base
+}
+
 fn join_data(
-    mut competitions: HashMap<String, i64>,
+    competitions: HashMap<String, i64>,
     results: Vec<Vec<CompetitionResult>>,
 ) -> Vec<Vec<DatedCompetitionResult>> {
     results
@@ -75,12 +87,15 @@ fn join_data(
             competitor
                 .into_iter()
                 .filter_map(|competition| {
-                    competitions
-                        .remove(&competition.id)
-                        .map(|comp_date| DatedCompetitionResult {
-                            date: comp_date,
-                            results: competition.results,
-                        })
+                    match competitions.get(&competition.id) {
+                        Some(comp_date) => {
+                            Some(DatedCompetitionResult {
+                                date: *comp_date,
+                                results: competition.results,
+                            })
+                        },
+                        None => None
+                    }
                 })
                 .collect()
         })

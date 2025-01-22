@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import init, { simulate } from "../../wasm/odds_web.js";
+import init, { run_odds_simulation } from "../../wasm/odds_web.js";
 
 import { fetchData } from "@/lib/utils.js";
 import { eventInfo, SupportedWCAEvent } from "@/lib/types.js";
@@ -51,11 +51,12 @@ const runSimulation = async (
 
   await init()
 
-  const rawResults = simulate(
-    { results: resultTimes },
-    simCount,
-    eventInfo[event].format,
-  );
+  const rawResults: any[] = [] 
+  // simulate(
+  //   { results: resultTimes },
+  //   simCount,
+  //   eventInfo[event].format,
+  // );
 
   updateSimulationResults(rawResults, results, simCount);
   colors.value = generateColors(rawResults.length);
