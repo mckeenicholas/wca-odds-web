@@ -3,7 +3,6 @@ use simulation::run_simulations;
 use std::collections::HashMap;
 use std::error::Error;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsValue;
 use web_sys::js_sys::Promise;
 
 mod data;
@@ -41,14 +40,17 @@ pub struct ReturnData {
 #[allow(unused_macros)]
 macro_rules! console_log {
     ($($t:tt)*) => {
-        use web_sys::console;
-        use wasm_bindgen::JsValue;
-        console::log_1(&JsValue::from_str(&format!($($t)*).as_str()));
+        web_sys::console::log_1(&wasm_bindgen::JsValue::from_str(&format!($($t)*).as_str()));
     }
 }
 
 #[wasm_bindgen]
-pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff: i32) -> Promise {
+pub fn run_odds_simulation(
+    competitors: Vec<String>,
+    event: String,
+    month_cutoff: i32,
+    num_simulations: u32,
+) -> Promise {
     let future = async move {
         let parsed_data = fetch_and_join(competitors, event, month_cutoff)
             .await
@@ -56,12 +58,9 @@ pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff
                 serde_wasm_bindgen::to_value(&format!("{}", e)).expect("Error parsing message")
             })?;
 
-        // Testing code for WASM binding
-        let result = vec![1, 2, 3];
+        let results = run_simulations(num_simulations, parsed_data);
 
-        run_simulations(4, parsed_data);
-
-        serde_wasm_bindgen::to_value(&result)
+        serde_wasm_bindgen::to_value(&results)
             .map_err(|e| serde_wasm_bindgen::to_value(&format!("{}", e)).unwrap())
     };
 
@@ -69,7 +68,7 @@ pub fn run_odds_simulation(competitors: Vec<String>, event: String, month_cutoff
 }
 
 fn join_data(
-    mut competitions: HashMap<String, i64>,
+    competitions: HashMap<String, i64>,
     results: Vec<Vec<CompetitionResult>>,
 ) -> Vec<Vec<DatedCompetitionResult>> {
     results
@@ -77,13 +76,12 @@ fn join_data(
         .map(|competitor| {
             competitor
                 .into_iter()
-                .filter_map(|competition| {
-                    competitions
-                        .remove(&competition.id)
-                        .map(|comp_date| DatedCompetitionResult {
-                            date: comp_date,
-                            results: competition.results,
-                        })
+                .filter_map(|competition| match competitions.get(&competition.id) {
+                    Some(comp_date) => Some(DatedCompetitionResult {
+                        date: *comp_date,
+                        results: competition.results,
+                    }),
+                    None => None,
                 })
                 .collect()
         })

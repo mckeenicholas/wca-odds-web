@@ -18,10 +18,11 @@ pub async fn get_competition_data(
     let now: DateTime<Utc> = Utc::now();
     let current_year = now.year();
 
-    let months_duration = Duration::days((month_cutoff * 30) as i64);
+    let months_duration = Duration::days((month_cutoff * 31) as i64);
     let start_date = now - months_duration;
 
     let cutoff_timestamp = start_date.timestamp();
+    let today_timestamp = now.timestamp();
 
     let first_year = start_date.year();
 
@@ -81,7 +82,7 @@ pub async fn get_competition_data(
 
         let date = datetime.timestamp();
 
-        if date < cutoff_timestamp {
+        if date < cutoff_timestamp || date > today_timestamp {
             return None;
         }
 
