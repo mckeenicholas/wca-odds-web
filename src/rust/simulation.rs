@@ -1,29 +1,46 @@
 use core::arch::wasm32::{
     f32x4, f32x4_abs, f32x4_add, f32x4_convert_i32x4, f32x4_div, f32x4_extract_lane, f32x4_max,
-    f32x4_mul, f32x4_splat, i32x4_extract_lane, v128,
+    f32x4_mul, f32x4_splat, i32x4_extract_lane, v128, i32x4_splat, i32x4_trunc_sat_f32x4,
 };
+use core::num;
+use std::collections::{HashMap, HashSet};
+use std::i32;
 use rand::rngs::ThreadRng;
 use rand::Rng;
 use rand::{distributions::Uniform, thread_rng};
 use serde::Serialize;
 use std::f32::consts::PI;
+use std::iter::zip;
 
 use crate::{console_log, DatedCompetitionResult};
 
 #[derive(Debug)]
-struct CompetitorStats {
-    location: f32,
-    shape: f32,
-    skew: f32,
-    dnf_rate: f32,
+pub struct CompetitorStats {
+    pub location: f32,
+    pub shape: f32,
+    pub skew: f32,
+    pub dnf_rate: f32,
 }
 
-#[derive(Serialize)]
-pub struct SimulationResults {
-    win_count: Vec<u32>,
-    pod_count: Vec<u32>,
-    total_rank: Vec<u32>,
-    rank_dist: Vec<Vec<u32>>,
+#[derive(Serialize, Clone)]
+pub struct SimulationResult {
+    win_count: u32,
+    pod_count: u32,
+    total_rank: u32,
+    rank_dist: Vec<u32>,
+    hist_values: HashMap<i32, i32>,
+}
+
+impl SimulationResult {
+    fn new(num_competitors: usize, num_buckets: usize) -> Self {
+        Self {
+            win_count: 0,
+            pod_count: 0,
+            total_rank: 0,
+            rank_dist: vec![0; num_competitors],
+            hist_values: HashMap::new(),
+        }
+    }
 }
 
 macro_rules! i32x4_extract_lanes {
@@ -36,7 +53,7 @@ macro_rules! i32x4_extract_lanes {
 
 macro_rules! gen_n_skewnorm_simd {
     ($n:literal, $stats:expr, $rng:expr) => {{
-        let mut values = [f32x4_splat(0.0); $n];
+        let mut values = [i32x4_splat(0); $n];
         for i in 0..$n {
             values[i] = gen_skewnorm_simd($stats, $rng);
         }
@@ -63,9 +80,13 @@ fn f32x4_to_slice(vec: v128) -> [f32; 4] {
     ]
 }
 
-fn f32x4_cast_centiseconds(vec: v128) -> v128 {
-    let centiseconds = f32x4_mul(vec, f32x4_splat(100.0));
-    f32x4_convert_i32x4(centiseconds)
+fn i32x4_to_slice(vec: v128) -> [i32; 4] {
+    [
+        i32x4_extract_lane::<0>(vec),
+        i32x4_extract_lane::<1>(vec),
+        i32x4_extract_lane::<2>(vec),
+        i32x4_extract_lane::<3>(vec),
+    ]
 }
 
 fn mean(data: &[i32]) -> f32 {
@@ -98,11 +119,12 @@ fn gen_skewnorm_simd(stats: &CompetitorStats, rand_source: &mut ThreadRng) -> v1
     let range = Uniform::<f32>::new(0.0, 1.0);
 
     let [v1, v2, v3, v4] = gen_n_random!(4, rand_source, range);
+    let [w1, w2, w3, w4] = gen_n_random!(4, rand_source, range);
 
     let sigma = stats.skew / (1.0 + stats.skew.powi(2)).sqrt();
 
     let u0 = f32x4(v1, v2, v3, v4);
-    let v = f32x4(v2, v3, v4, v1);
+    let v = f32x4(w2, w3, w4, w1);
 
     let u1 = f32x4_mul(
         f32x4_add(
@@ -115,7 +137,7 @@ fn gen_skewnorm_simd(stats: &CompetitorStats, rand_source: &mut ThreadRng) -> v1
     let u2 = f32x4_abs(u1);
     let u3 = f32x4_add(u2, f32x4_splat(stats.location));
 
-    f32x4_cast_centiseconds(u3)
+    i32x4_trunc_sat_f32x4(u3)
 }
 
 fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [f32; 4] {
@@ -209,8 +231,11 @@ fn transpose_solves(solves: Vec<[i32; 4]>) -> [Vec<i32>; 4] {
 pub fn run_simulations(
     num_simulations: u32,
     competitor_data: Vec<Vec<DatedCompetitionResult>>,
-) -> SimulationResults {
+) -> Vec<SimulationResult> {
     let num_competitors = competitor_data.len();
+
+    let mut hist_max = 0;
+    let mut hist_min = i32::MAX;
 
     let competitor_stats = competitor_data
         .into_iter()
@@ -228,6 +253,9 @@ pub fn run_simulations(
             let sample_mean = mean(result_no_dnf.as_slice());
             let sample_dev = stdev(result_no_dnf.as_slice(), sample_mean);
 
+            hist_max = hist_max.max(((sample_mean + sample_dev * 4.0) / 10.0) as i32);
+            hist_min = hist_min.min(((sample_mean - sample_dev * 4.0) / 10.0) as i32);
+
             let trimmed_results = trim_errant_results(result_no_dnf, sample_mean, sample_dev);
 
             let (skew, shape, location) = fit_skewnorm(&trimmed_results);
@@ -241,11 +269,9 @@ pub fn run_simulations(
         })
         .collect::<Vec<CompetitorStats>>();
 
-    let mut win_count: Vec<u32> = vec![0; num_competitors];
-    let mut pod_count: Vec<u32> = vec![0; num_competitors];
-    let mut total_rank: Vec<u32> = vec![0; num_competitors];
-    let mut rank_dist: Vec<Vec<u32>> = vec![vec![0; num_competitors]; num_competitors];
+    hist_min = hist_min.max(0);
 
+    let mut results = vec![SimulationResult::new(num_competitors, (hist_max - hist_min) as _); num_competitors];
     let mut rng = thread_rng();
 
     for _ in 0..(num_simulations / 4) {
@@ -262,24 +288,27 @@ pub fn run_simulations(
         let solves_by_sim = transpose_solves(sim_results);
 
         for i in 0..4 {
-            let indicies = find_lowest_indices(solves_by_sim[i].as_slice());
+            let avg_by_competitor = &solves_by_sim[i];
 
-            win_count[indicies[0]] += 1;
+            let indicies = find_lowest_indices(avg_by_competitor.as_slice());
+
+            results[indicies[0]].win_count += 1;
             for &index in indicies.iter().take(3) {
-                pod_count[index] += 1;
+                results[index].pod_count += 1;
             }
 
             for i in 0..num_competitors {
-                total_rank[i] += (indicies[i] as u32) + 1;
-                rank_dist[indicies[i]][i] += 1;
+                let avg = avg_by_competitor[i];
+                let bucket = (avg / 10).clamp(hist_min, hist_max - 1);
+
+                *results[i].hist_values.entry(bucket).or_insert(0) += 1;
+
+                results[i].total_rank += (indicies[i] as u32) + 1;
+                results[indicies[i]].rank_dist[i] += 1;
             }
         }
     }
 
-    SimulationResults {
-        win_count,
-        pod_count,
-        total_rank,
-        rank_dist,
-    }
+    results
 }
+

@@ -108,3 +108,11 @@ export interface Competitor {
   id: string;
   results: { [key: string]: any };
 }
+
+export interface SimulationResult {
+  win_count: number;       
+  pod_count: number;       
+  total_rank: number;      
+  rank_dist: number[];     
+  hist_values: Map<number, number>;
+}

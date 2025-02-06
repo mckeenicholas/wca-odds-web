@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use simulation::run_simulations;
 use std::collections::HashMap;
 use std::error::Error;
 use wasm_bindgen::prelude::*;
@@ -9,6 +8,7 @@ mod data;
 use data::{get_competition_data, get_solve_data, CompetitionResult};
 
 mod simulation;
+use simulation::run_simulations;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DatedCompetitionResult {
@@ -58,7 +58,9 @@ pub fn run_odds_simulation(
                 serde_wasm_bindgen::to_value(&format!("{}", e)).expect("Error parsing message")
             })?;
 
-        let results = run_simulations(num_simulations, parsed_data);
+        let mut results = run_simulations(num_simulations, parsed_data);
+
+        
 
         serde_wasm_bindgen::to_value(&results)
             .map_err(|e| serde_wasm_bindgen::to_value(&format!("{}", e)).unwrap())

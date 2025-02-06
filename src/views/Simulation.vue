@@ -3,10 +3,7 @@ import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { run_odds_simulation } from "../../wasm/odds_web.js";
 
-import { fetchData } from "@/lib/utils.js";
-import { eventInfo, SupportedWCAEvent } from "@/lib/types.js";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
-import { generateColors } from "@/lib/histogram.js";
 import FullHistogram from "@/components/charts/FullHistogram.vue";
 import RankHistogram from "@/components/charts/RankHistogram.vue";
 import PieChart from "@/components/charts/PieChart.vue";
@@ -19,8 +16,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
-import { eventNames } from "@/lib/types";
+import { eventNames, SimulationResult, SupportedWCAEvent } from "@/lib/types";
 import { Button } from "@/components/ui/button";
+import { generateColors } from "@/lib/histogram";
 
 const router = useRouter();
 
@@ -34,75 +32,12 @@ if (!competitors || !eventId || !name || !simCount || !monthCutoff) {
 }
 
 const competitorsList = competitors?.toString().split(",");
+const numSimulations = parseInt(simCount as string);
+const colors = generateColors(competitorsList.length)
 
-const simulation_results = ref<any>(null);
+const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
-const colors = ref<string[]>([""]);
-const bounds = ref<{ max: number; min: number }>({ max: 0, min: 100 });
 const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
-
-// const runSimulation = async (
-//   results: { id: string; name: string; results: number[] }[],
-//   simCount: number,
-//   event: SupportedWCAEvent,
-// ) => {
-
-//   const resultTimes = results.map((result) => result.results);
-
-//   await init()
-
-//   const rawResults = simulate(
-//     { results: resultTimes },
-//     simCount,
-//     eventInfo[event].format,
-//   );
-
-//   updateSimulationResults(rawResults, results, simCount);
-//   colors.value = generateColors(rawResults.length);
-// };
-
-const updateSimulationResults = (
-  rawResults: any[],
-  results: { id: string; name: string }[],
-  simCount: number,
-) => {
-  simulation_results.value = rawResults
-    .map((item, idx) => transformResult(item, results[idx], simCount))
-    .sort((a, b) => b.wins - a.wins);
-};
-
-const transformResult = (
-  item: any,
-  result: { id: string; name: string },
-  simCount: number,
-) => {
-  const maxBound = (item.mu + 6 * item.sigma) / 100;
-  const minBound = Math.max((item.mu - 4 * item.sigma) / 100, 0);
-
-  if (!isNaN(maxBound)) bounds.value.max = Math.max(maxBound, bounds.value.max);
-  if (!isNaN(minBound)) bounds.value.min = Math.min(minBound, bounds.value.min);
-
-  return {
-    name: result.name,
-    id: result.id,
-    wins: toPercentage(item.wins, simCount),
-    podiums: toPercentage(item.podiums, simCount),
-    mean: toDecimal(item.mean / 100),
-    stdev: toDecimal(item.stdev / 100),
-    gamma: toDecimal(Math.max(item.gamma / 100, 0)),
-    mu: toDecimal(item.mu / 100),
-    sigma: toDecimal(item.sigma / 100),
-    tau: toDecimal(Math.max(item.tau / 100, 0)),
-    dnfRate: toDecimal(item.dnf_rate * 100),
-    avgRank: toDecimal(item.avg_rank),
-    ranks: item.ranks,
-  };
-};
-
-const toPercentage = (value: number, total: number) =>
-  parseFloat(((value / total) * 100).toFixed(2));
-
-const toDecimal = (value: number) => parseFloat(value.toFixed(4));
 
 const goBack = () => {
   window.history.back();
@@ -117,24 +52,14 @@ onMounted(async () => {
   const startDate = new Date();
   startDate.setMonth(startDate.getMonth() - parseInt(monthCutoff.toString()));
 
-  // const data = await fetchData(
-  //   competitorsList,
-  //   eventId as SupportedWCAEvent,
-  //   startDate,
-  // );
-  loading.value = false;
+  const event = eventId as SupportedWCAEvent;
 
-  // if (data.length == 0) {
-  //   error.value = `Nobody has results in ${eventNames[eventId as keyof typeof eventNames]}`;
-  // }
-
-  // await runSimulation(
-  //   data,
-  //   parseInt(simCount.toString()),
-  //   eventId as SupportedWCAEvent,
-  // );
   await init();
-  run_odds_simulation(competitorsList, eventId as SupportedWCAEvent, parseInt(monthCutoff as string));
+  simulation_results.value = await run_odds_simulation(competitorsList, event, parseInt(monthCutoff as string), numSimulations);
+
+  console.log(simulation_results);
+
+  loading.value = false;
 });
 </script>
 
@@ -155,15 +80,15 @@ onMounted(async () => {
           winner info here
         </p>
         <div class="border rounded-md my-2 py-2 px-4">
-          <PieChart :data="simulation_results" :colors="colors" />
+          <!-- <PieChart :data="simulation_results" :colors="colors" /> -->
         </div>
       </div>
       <Expandable title="Results Histogram" class="mb-2">
         <FullHistogram
           :data="simulation_results"
-          :min="bounds.min"
-          :max="bounds.max"
           :colors="colors"
+          :simulations="numSimulations"
+          :names="competitorsList"
           :key="selected.filter(Boolean).length"
         />
       </Expandable>
@@ -186,7 +111,7 @@ onMounted(async () => {
         <ol>
           <li
             v-for="(result, idx) in simulation_results"
-            :key="result.id"
+            :key="idx"
             class="p-1 rounded-md"
           >
             <Collapsible>
@@ -204,30 +129,28 @@ onMounted(async () => {
                         />
                       </div>
                       <a
-                        :href="`https://worldcubeassociation.org/persons/${result.id}`"
+                        :href="`https://worldcubeassociation.org/persons/${competitorsList[idx]}`"
                         @click.stop
                         class="hover:underline"
                       >
-                        {{ result.name }}
+                        {{ competitorsList[idx] }}
                       </a>
                     </div>
                   </div>
-                  <div class="flex-1 text-center">{{ result.wins }}%</div>
-                  <div class="flex-1 text-center">{{ result.podiums }}%</div>
-                  <div class="flex-1 text-center">{{ result.avgRank }}</div>
+                  <div class="flex-1 text-center">{{ result.win_count * 100 / numSimulations }}%</div>
+                  <div class="flex-1 text-center">{{ result.pod_count * 100 / numSimulations }}%</div>
+                  <div class="flex-1 text-center">{{ result.total_rank / numSimulations }}</div>
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent class="space-y-2">
                 <IndividualHistogram
-                  :mu="result.mu"
-                  :sigma="result.sigma"
-                  :tau="result.tau"
                   :color="colors[idx]"
-                  :min="bounds.min"
-                  :max="bounds.max"
+                  :hist="result.hist_values"
+                  :simulations="numSimulations"
                   class="border rounded-md m-2 p-2"
                 />
-                <ResultInfo v-bind="result" />
+                <!-- Will probably add this back later -->
+                <!-- <ResultInfo v-bind="result" /> -->
                 <hr class="mx-2" />
               </CollapsibleContent>
             </Collapsible>
@@ -235,11 +158,8 @@ onMounted(async () => {
         </ol>
       </div>
     </div>
-    <div v-else-if="loading" class="mt-4">
-      <LoadingMessage message="Fetching data" />
-    </div>
     <div v-else class="mt-4">
-      <LoadingMessage message="Calculating results" />
+      <LoadingMessage message="Calculating" />
     </div>
   </div>
 </template>
