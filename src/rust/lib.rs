@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
 use wasm_bindgen::prelude::*;
 use web_sys::js_sys::Promise;
 
@@ -14,26 +13,6 @@ use simulation::run_simulations;
 pub struct DatedCompetitionResult {
     pub date: i64,
     pub results: Vec<i32>,
-}
-
-#[derive(Serialize)]
-pub struct PersonData {
-    pub wins: i32,
-    pub podiums: i32,
-    pub mean: f64,
-    pub gamma: f64,
-    pub stdev: f64,
-    pub mu: f64,
-    pub sigma: f64,
-    pub tau: f64,
-    pub dnf_rate: f64,
-    pub avg_rank: f64,
-    pub ranks: Vec<i32>,
-}
-
-#[derive(Serialize)]
-pub struct ReturnData {
-    pub persons: Vec<PersonData>,
 }
 
 #[macro_export]
@@ -55,15 +34,14 @@ pub fn run_odds_simulation(
         let parsed_data = fetch_and_join(competitors, event, month_cutoff)
             .await
             .map_err(|e| {
-                serde_wasm_bindgen::to_value(&format!("{}", e)).expect("Error parsing message")
+                console_log!("Error fetching and joining data: {:?}", e);
+                serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()
             })?;
 
-        let mut results = run_simulations(num_simulations, parsed_data);
-
-        
+        let results = run_simulations(num_simulations, parsed_data);
 
         serde_wasm_bindgen::to_value(&results)
-            .map_err(|e| serde_wasm_bindgen::to_value(&format!("{}", e)).unwrap())
+            .map_err(|_| serde_wasm_bindgen::to_value("Error serializing results").unwrap())
     };
 
     wasm_bindgen_futures::future_to_promise(future)
@@ -78,14 +56,14 @@ fn join_data(
         .map(|competitor| {
             competitor
                 .into_iter()
-                .filter_map(|competition| match competitions.get(&competition.id) {
-                    Some(comp_date) => Some(DatedCompetitionResult {
+                .filter_map(|competition| {
+                    let comp_date = competitions.get(&competition.id)?;
+                    Some(DatedCompetitionResult {
                         date: *comp_date,
                         results: competition.results,
-                    }),
-                    None => None,
+                    })
                 })
-                .collect()
+                .collect::<Vec<_>>()
         })
         .collect()
 }
@@ -94,9 +72,8 @@ pub async fn fetch_and_join(
     competitors: Vec<String>,
     event: String,
     month_cutoff: i32,
-) -> Result<Vec<Vec<DatedCompetitionResult>>, Box<dyn Error>> {
+) -> Result<Vec<Vec<DatedCompetitionResult>>, &'static str> {
     let competitions = get_competition_data(month_cutoff).await?;
     let results = get_solve_data(competitors, event).await?;
-
     Ok(join_data(competitions, results))
 }

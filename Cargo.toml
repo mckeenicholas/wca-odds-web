@@ -5,7 +5,7 @@ authors = ["Nicholas McKee"]
 description = "Core odds calculator for WCA competition predictor"
 license = "MIT"
 repository = "https://github.com/mckeenicholas/wca-odds-web"
-edition = "2018"
+edition = "2021"
 
 [lib]
 path = "src/rust/lib.rs"
@@ -17,7 +17,8 @@ features = [ "console" ]
 
 [dependencies]
 wasm-bindgen = "0.2"
-rand = "0.8.5"
+rand = "0.8"
+rand_distr = { version = "0.4", features = ["std"] }
 serde = { version = "1.0", features = ["derive"] }
 serde-wasm-bindgen = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
