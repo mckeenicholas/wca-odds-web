@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import PieChart from "@/components/charts/PieChart.vue";
+import { SimulationResult } from "@/lib/types";
 
 const { simulationResults, colors } = defineProps<{
-  simulationResults: any;
+  simulationResults: SimulationResult[];
   colors: string[];
 }>();
 </script>

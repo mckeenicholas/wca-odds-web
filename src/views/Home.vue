@@ -57,9 +57,9 @@ const handleSearch = () => {
       </div>
       <div v-if="isFetching && input" class="mt-2">
         <div class="border rounded-md px-3 pt-1 max-h-[75vh] overflow-y-scroll">
-          <div v-for="index in 12">
-            <Skeleton class="h-6 my-2" :key="index" />
-            <Skeleton class="h-5 w-24 my-2" :key="index" />
+          <div v-for="index in 12" :key="index">
+            <Skeleton class="h-6 my-2" />
+            <Skeleton class="h-5 w-24 my-2" />
           </div>
         </div>
       </div>

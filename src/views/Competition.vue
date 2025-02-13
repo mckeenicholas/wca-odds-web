@@ -43,43 +43,32 @@ watch(data, () => {
   selectedEventId.value = response.events[0].id;
   let competitorsByEvent: EventRegistration = {};
 
-  response.persons.forEach(
-    (person: {
-      personalBests: any;
-      registration: {
-        status: string;
-        isCompeting: any;
-        eventIds: SupportedWCAEvent[];
-      };
-      wcaId: any;
-      name: string;
-    }) => {
-      if (
-        person.registration?.status === "accepted" &&
-        person.registration?.isCompeting &&
-        person.wcaId
-      ) {
-        person.registration.eventIds.forEach((event: SupportedWCAEvent) => {
-          if (!competitorsByEvent[event]) {
-            competitorsByEvent[event] = [];
-          }
+  response.persons.forEach((person) => {
+    if (
+      person.registration?.status === "accepted" &&
+      person.registration?.isCompeting &&
+      person.wcaId
+    ) {
+      person.registration.eventIds.forEach((event: SupportedWCAEvent) => {
+        if (!competitorsByEvent[event]) {
+          competitorsByEvent[event] = [];
+        }
 
-          const worldRank = person.personalBests.find(
-            (personalBest: { eventId: any }) => personalBest.eventId === event,
-          )?.worldRanking;
+        const worldRank = person.personalBests.find(
+          (personalBest) => personalBest.eventId === event,
+        )?.worldRanking;
 
-          if (worldRank) {
-            competitorsByEvent[event].push({
-              id: person.wcaId,
-              name: person.name,
-              rank: worldRank,
-              selected: false,
-            });
-          }
-        });
-      }
-    },
-  );
+        if (worldRank) {
+          competitorsByEvent[event].push({
+            id: person.wcaId,
+            name: person.name,
+            rank: worldRank,
+            selected: false,
+          });
+        }
+      });
+    }
+  });
 
   Object.values(competitorsByEvent).forEach((competitors) => {
     competitors.sort((a, b) => a.rank - b.rank);

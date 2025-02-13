@@ -155,10 +155,10 @@ const runSimulation = () => {
         <ol>
           <li
             v-for="competitor of competitors"
+            :key="competitor.wca_id"
             class="flex justify-between items-center"
           >
             <a
-              :key="competitor.wca_id"
               :href="`https://worldcubeassociation.org/persons/${competitor.wca_id}`"
               class="hover:underline p-2"
             >

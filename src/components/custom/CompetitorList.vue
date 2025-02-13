@@ -6,10 +6,11 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
+import { SimulationResult } from "@/lib/types";
 
 const { simulationResults, colors, competitorsList, numSimulations } =
   defineProps<{
-    simulationResults: any[];
+    simulationResults: SimulationResult[];
     colors: string[];
     competitorsList: string[];
     numSimulations: number;

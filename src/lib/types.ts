@@ -65,8 +65,14 @@ interface Registration {
 interface Person {
   name: string;
   wcaId: string;
-  personalBests: any;
+  personalBests: PersonalBest[];
   registration: Registration;
+}
+
+interface PersonalBest {
+  eventId: string;
+  best: number;
+  worldRanking: number;
 }
 
 export interface wcifEvent {
