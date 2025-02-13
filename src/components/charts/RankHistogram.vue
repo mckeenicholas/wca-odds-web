@@ -18,7 +18,7 @@ const chartData = Array.from({ length: data.length }, (_, idx) => ({
   ),
 }));
 
-const names = data.map((person) => person.name);
+const names = data.map((person) => person.name) as "name"[];
 </script>
 
 <template>

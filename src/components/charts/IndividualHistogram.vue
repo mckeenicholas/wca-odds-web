@@ -15,8 +15,6 @@ const data = [...hist]
 
   .filter((item) => item.probability > 0.01)
   .sort((a, b) => a.time - b.time);
-
-console.log(data);
 </script>
 
 <template>

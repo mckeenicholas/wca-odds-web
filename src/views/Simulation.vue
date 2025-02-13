@@ -3,7 +3,7 @@ import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { run_odds_simulation } from "../../wasm/odds_web.js";
 import { eventNames, SimulationResult, SupportedWCAEvent } from "@/lib/types";
-import { generateColors } from "@/lib/histogram";
+import { generateColors } from "@/lib/utils";
 import Expandable from "@/components/custom/Expandable.vue";
 import FullHistogram from "@/components/charts/FullHistogram.vue";
 import RankHistogram from "@/components/charts/RankHistogram.vue";

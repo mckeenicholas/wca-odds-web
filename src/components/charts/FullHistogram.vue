@@ -35,7 +35,7 @@ const chartData = [...resultTimes.entries()]
   }))
   .sort((a, b) => a.time - b.time);
 
-const names = data.map((person) => person.name);
+const names = data.map((person) => person.name) as "time"[];
 </script>
 
 <template>
