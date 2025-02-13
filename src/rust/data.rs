@@ -1,6 +1,7 @@
 use chrono::{DateTime, Datelike, Duration, NaiveDateTime, TimeZone, Utc};
 use futures::future::join_all;
 use reqwest::Client;
+use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -12,6 +13,11 @@ pub struct CompetitionResult {
 }
 
 #[derive(Deserialize, Debug)]
+struct RequestCompetitions {
+    items: Vec<RequestCompetition>,
+}
+
+#[derive(Deserialize, Debug)]
 struct RequestCompetition {
     id: String,
     date: RequestCompetitionDate, // {"from": "YYYY-MM-DD"}
@@ -20,6 +26,17 @@ struct RequestCompetition {
 #[derive(Deserialize, Debug)]
 struct RequestCompetitionDate {
     from: String,
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestPerson {
+    name: String,
+    results: HashMap<String, HashMap<String, Vec<RequestCompetitionResult>>>,
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestCompetitionResult {
+    solves: Vec<i32>,
 }
 
 pub async fn get_competition_data(month_cutoff: i32) -> Result<HashMap<String, i64>, &'static str> {
@@ -45,17 +62,14 @@ pub async fn get_competition_data(month_cutoff: i32) -> Result<HashMap<String, i
                 year
             );
 
-            let response = fetch(url, client).await?;
-            let competitions_json = response.get("items")
-                .and_then(Value::as_array)
-                .ok_or("Expected 'items' as an array")?;
+            let response = fetch::<RequestCompetitions>(url, &client).await?;
+            let competition_list = response.items;
 
-            let competitions: Result<HashMap<String, i64>, &'static str> = competitions_json
+            let competitions: Result<HashMap<String, i64>, &'static str> = competition_list
                 .iter()
-                .filter_map(|comp_json| {
-                    let comp: RequestCompetition = serde_json::from_value(comp_json.clone()).ok()?;
-                    let date_str = comp.date.from;
+                .filter_map(|comp| {
 
+                    let date_str = &comp.date.from;
                     let naive_date = NaiveDateTime::parse_from_str(
                         &format!("{} 00:00:00", date_str),
                         "%Y-%m-%d %H:%M:%S",
@@ -68,7 +82,7 @@ pub async fn get_competition_data(month_cutoff: i32) -> Result<HashMap<String, i
                         return None;
                     }
 
-                    Some(Ok((comp.id, date)))
+                    Some(Ok((comp.id.clone(), date)))
                 })
                 .collect();
 
@@ -99,28 +113,18 @@ pub async fn get_solve_data(
         let client = o_client.clone();
         async move {
             let url = format!("https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/persons/{}.json", competitor);
-            let response = fetch(url, client).await?;
+            let response = fetch::<RequestPerson>(url, &client).await?;
 
-            let results_json = response.get("results")
-                .and_then(|v| v.as_object())
-                .ok_or("Missing or invalid 'results' field")?;
-
-            let results: Vec<CompetitionResult> = results_json
-                .iter()
+            let results: Vec<CompetitionResult> = response.results
+                .into_iter()
                 .filter_map(|(key, value)| {
                     value.get(event_ref).and_then(|event_data| {
                         let solves: Vec<i32> = event_data
-                            .as_array()?
-                            .iter()
+                            .into_iter()
                             .flat_map(|round| {
-                                round
-                                    .get("solves")
-                                    .and_then(|s| s.as_array())
-                                    .unwrap_or(&vec![])
-                                    .iter()
-                                    .filter_map(|solve| solve.as_i64().map(|x| x as i32))
-                                    .collect::<Vec<_>>()
+                                &round.solves
                             })
+                            .cloned()
                             .collect();
 
                         Some(CompetitionResult {
@@ -146,12 +150,14 @@ pub async fn get_solve_data(
     Ok(competitor_results)
 }
 
-async fn fetch(url: String, client: Client) -> Result<serde_json::Value, &'static str> {
+async fn fetch<T: DeserializeOwned>(url: String, client: &Client) -> Result<T, &'static str> {
     let response = client
         .get(&url)
         .send()
         .await
         .map_err(|_| "Failed to fetch data")?;
-    let json: serde_json::Value = response.json().await.map_err(|_| "Failed to parse JSON")?;
+
+    let json: T = response.json().await.map_err(|_| "Failed to parse JSON")?;
+
     Ok(json)
 }
