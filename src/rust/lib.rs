@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::*;
 use web_sys::js_sys::Promise;
 
 mod data;
-use data::{get_competition_data, get_solve_data, CompetitionResult, PersonResult};
+use data::{get_competition_data, get_solve_data, PersonResult};
 
 mod simulation;
 use simulation::{run_simulations, SimulationResult};

@@ -2,13 +2,10 @@ use core::arch::wasm32::{
     f32x4, f32x4_add, f32x4_div, f32x4_gt, f32x4_max, f32x4_min, f32x4_mul, f32x4_neg, f32x4_splat,
     f32x4_sub, i32x4_extract_lane, i32x4_splat, i32x4_trunc_sat_f32x4, v128, v128_bitselect,
 };
-use rand::rngs::ThreadRng;
-use rand::thread_rng;
+use rand::{rngs::ThreadRng, thread_rng};
 use rand_distr::{Distribution, Normal};
 use serde::Serialize;
-use std::collections::HashMap;
-use std::f32::consts::PI;
-use std::i32;
+use std::{collections::HashMap, f32::consts::PI, i32};
 
 use crate::DatedCompetitionResult;
 
@@ -242,6 +239,10 @@ pub fn run_simulations(
                 .filter(|&x| x > 0)
                 .collect::<Vec<_>>();
 
+            if result_no_dnf.len() == 0 {
+                return None;
+            }
+
             let (sample_mean, _sample_variance, sample_dev) =
                 calc_mean_variance_stdev(&result_no_dnf.as_slice());
 
@@ -252,14 +253,14 @@ pub fn run_simulations(
 
             let (skew, shape, location) = fit_skewnorm(&trimmed_results);
 
-            CompetitorStats {
+            Some(CompetitorStats {
                 location,
                 shape,
                 skew,
                 dnf_rate,
-            }
+            })
         })
-        .collect::<Vec<CompetitorStats>>();
+        .collect::<Vec<Option<CompetitorStats>>>();
 
     hist_min = hist_min.max(0);
 
@@ -270,7 +271,14 @@ pub fn run_simulations(
         let sim_results = competitor_stats
             .iter()
             .enumerate()
-            .map(|(i, stats)| {
+            .map(|(i, opt_stats)| {
+                let stats = if let Some(stat) = opt_stats {
+                    stat
+                } else {
+                    // TODO: Refactor this into ao Option<[i32]> instead... Rust has an incredibly powerful type system, and we should use it.
+                    return [i32::MAX; 4];
+                };
+
                 let results: [v128; 5] = gen_n_skewnorm_simd!(5, stats, &mut rng);
                 let [a1, a2, a3, a4, a5] = results;
                 let out = calc_wca_average_5(a1, a2, a3, a4, a5);
@@ -278,6 +286,10 @@ pub fn run_simulations(
                 for result in results {
                     let solves = i32x4_to_slice(result);
                     for solve in solves {
+                        if solve == i32::MAX {
+                            continue;
+                        }
+
                         let bucket = (solve / 10).clamp(hist_min, hist_max - 1);
                         *simulation_results[i].hist_values.entry(bucket).or_insert(0) += 1;
                     }
