@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { eventNames, SupportedWCAEvent } from "@/lib/types";
-import { defineProps, ref, watch } from "vue"; // import ref to create a reactive variable
+import { ref, watch } from "vue";
 import {
   Select,
   SelectTrigger,

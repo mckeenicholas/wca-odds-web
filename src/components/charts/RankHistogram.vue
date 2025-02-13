@@ -1,28 +1,24 @@
 <script setup lang="ts">
 import { BarChart } from "@/components/ui/chart-bar";
+import { SimulationResult } from "@/lib/types";
 
 const { data, colors, count } = defineProps<{
-  data: any;
+  data: SimulationResult[];
   colors: string[];
   count: number;
 }>();
 
-type ChartRow = {
-  name: number;
-  [key: string]: any;
-};
+const chartData = Array.from({ length: data.length }, (_, idx) => ({
+  name: idx + 1,
+  ...Object.fromEntries(
+    data.map((person) => [
+      person.name,
+      parseFloat(((person.results.rank_dist[idx] / count) * 100).toFixed(2)),
+    ]),
+  ),
+}));
 
-let chartData: ChartRow[] = [];
-
-data[0].ranks.forEach((_: number, itemIndex: number) => {
-  let row: ChartRow = { name: itemIndex + 1 };
-  data.forEach((_: any, idx: number) => {
-    row[data[idx].name] = (100 * data[idx].ranks[itemIndex]) / count;
-  });
-  chartData.push(row);
-});
-
-const categories = data.map((item: { name: any }) => item.name);
+const names = data.map((person) => person.name) as "name"[];
 </script>
 
 <template>
@@ -30,7 +26,7 @@ const categories = data.map((item: { name: any }) => item.name);
     <BarChart
       :data="chartData"
       index="name"
-      :categories="categories"
+      :categories="names"
       :colors="colors"
       :type="'stacked'"
       :showLegend="false"

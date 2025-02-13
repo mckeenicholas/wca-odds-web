@@ -4,10 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build:wasm": "wasm-pack build --target web --release --out-dir wasm",
+    "build:wasm": "wasm-pack build --target web --debug --out-dir wasm",
+    "build:wasm:release": "wasm-pack build --target web --release --out-dir wasm",
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "npm run build:wasm:release && vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "format": "bunx prettier . --write"
   },
   "dependencies": {
     "@stdlib/math-base-special-erfc": "^0.2.3",
