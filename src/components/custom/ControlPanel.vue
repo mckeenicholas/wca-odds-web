@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { eventNames, SupportedWCAEvent } from "@/lib/types";
+import { ref, watch } from "vue";
 import {
   Select,
   SelectTrigger,
@@ -31,15 +32,26 @@ const emit = defineEmits<{
   (event: "update:monthCount", value: number): void;
   (event: "runSimulation"): void;
 }>();
+
+const simCountValue = ref(props.simCount);
+const selectedEventValue = ref(props.selectedEventId);
+const monthCountValue = ref(props.monthCount);
+
+watch(simCountValue, (newValue) => {
+  emit("update:simCount", newValue);
+});
+
+watch(selectedEventValue, (newValue) => {
+  emit("update:selectedEventId", newValue);
+});
+
+watch(monthCountValue, (newValue) => {
+  emit("update:monthCount", newValue);
+});
 </script>
 
 <template>
-  <Select
-    v-model="props.selectedEventId"
-    @update:modelValue="
-      (value) => emit('update:selectedEventId', value as SupportedWCAEvent)
-    "
-  >
+  <Select v-model="selectedEventValue">
     <SelectTrigger class="ms-0">
       <SelectValue />
     </SelectTrigger>
@@ -55,17 +67,15 @@ const emit = defineEmits<{
       placeholder="100000"
       class="min-w-16 max-w-36"
       id="simCount"
-      v-model="props.simCount"
-      @input="(value: number) => emit('update:simCount', value)"
+      v-model.number="simCountValue"
     />
     <Label for="resultCutoff">Using results from past</Label>
     <NumberField
-      v-model="props.monthCount"
       :default-value="18"
       :min="1"
       id="resultCutoff"
       class="w-24"
-      @update:modelValue="(value) => emit('update:monthCount', value)"
+      v-model="monthCountValue"
     >
       <NumberFieldContent>
         <NumberFieldDecrement />
