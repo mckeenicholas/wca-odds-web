@@ -1,3 +1,4 @@
+use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
@@ -9,6 +10,41 @@ use data::{get_competition_data, get_solve_data, PersonResult};
 mod simulation;
 use simulation::{run_simulations, SimulationResult};
 
+mod calc;
+mod simd;
+
+lazy_static! {
+    static ref EVENT_MAPPINGS: HashMap<&'static str, EventType> = {
+        let mut m = HashMap::new();
+        // Ao5 events
+        ["222", "333", "444", "555", "333oh", "skewb", "pyram", "minx", "clock", "sq1"]
+            .iter()
+            .for_each(|&id| { m.insert(id, EventType::Ao5); });
+        // Mo3 events
+        ["666", "777", "333fm"]
+            .iter()
+            .for_each(|&id| { m.insert(id, EventType::Mo3); });
+        // Bo3 events
+        ["333bf", "444bf", "555bf"]
+            .iter()
+            .for_each(|&id| { m.insert(id, EventType::Bo3); });
+        m
+    };
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum EventType {
+    Ao5,
+    Mo3,
+    Bo3,
+}
+
+impl EventType {
+    fn from_event_id(event_id: &str) -> Option<Self> {
+        EVENT_MAPPINGS.get(event_id).cloned()
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DatedCompetitionResult {
     pub date: i64,
@@ -16,7 +52,6 @@ pub struct DatedCompetitionResult {
 }
 
 #[derive(Serialize)]
-
 pub struct SimulationReturn {
     name: String,
     results: SimulationResult,
@@ -33,12 +68,14 @@ macro_rules! console_log {
 #[wasm_bindgen]
 pub fn run_odds_simulation(
     competitors: Vec<String>,
-    event: String,
+    event_str: String,
     month_cutoff: i32,
     num_simulations: u32,
 ) -> Promise {
+    let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
+
     let future = async move {
-        let parsed_data = fetch_and_join(competitors, event, month_cutoff)
+        let parsed_data = fetch_and_join(competitors, event_str, month_cutoff)
             .await
             .map_err(|e| {
                 console_log!("Error fetching and joining data: {:?}", e);
@@ -46,7 +83,7 @@ pub fn run_odds_simulation(
             })?;
 
         let (names, solve_data): (Vec<String>, _) = parsed_data.into_iter().unzip();
-        let simulated_data = run_simulations(num_simulations, solve_data);
+        let simulated_data = run_simulations(num_simulations, solve_data, event_type);
 
         let results: Vec<_> = names
             .into_iter()
