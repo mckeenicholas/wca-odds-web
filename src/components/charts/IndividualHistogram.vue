@@ -7,10 +7,16 @@ const { hist, color, simulations } = defineProps<{
   simulations: number;
 }>();
 
-const data = [...hist].map(([k, v]) => ({ time: k / 10, probability: v / simulations })).sort((a, b) => a.time - b.time);
+const data = [...hist]
+  .map(([k, v]) => ({
+    time: k / 10,
+    probability: parseFloat(((v / simulations) * 100).toFixed(2)),
+  }))
 
+  .filter((item) => item.probability > 0.01)
+  .sort((a, b) => a.time - b.time);
 
-console.log(data);  
+console.log(data);
 </script>
 
 <template>

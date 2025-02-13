@@ -110,9 +110,14 @@ export interface Competitor {
 }
 
 export interface SimulationResult {
-  win_count: number;       
-  pod_count: number;       
-  total_rank: number;      
-  rank_dist: number[];     
+  name: string;
+  results: ResultStats;
+}
+
+export interface ResultStats {
+  win_count: number;
+  pod_count: number;
+  total_rank: number;
+  rank_dist: number[];
   hist_values: Map<number, number>;
 }

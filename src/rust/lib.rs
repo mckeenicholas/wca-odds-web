@@ -4,15 +4,22 @@ use wasm_bindgen::prelude::*;
 use web_sys::js_sys::Promise;
 
 mod data;
-use data::{get_competition_data, get_solve_data, CompetitionResult};
+use data::{get_competition_data, get_solve_data, CompetitionResult, PersonResult};
 
 mod simulation;
-use simulation::run_simulations;
+use simulation::{run_simulations, SimulationResult};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct DatedCompetitionResult {
     pub date: i64,
     pub results: Vec<i32>,
+}
+
+#[derive(Serialize)]
+
+pub struct SimulationReturn {
+    name: String,
+    results: SimulationResult,
 }
 
 #[macro_export]
@@ -38,7 +45,14 @@ pub fn run_odds_simulation(
                 serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()
             })?;
 
-        let results = run_simulations(num_simulations, parsed_data);
+        let (names, solve_data): (Vec<String>, _) = parsed_data.into_iter().unzip();
+        let simulated_data = run_simulations(num_simulations, solve_data);
+
+        let results: Vec<_> = names
+            .into_iter()
+            .zip(simulated_data)
+            .map(|(name, results)| SimulationReturn { name, results })
+            .collect();
 
         serde_wasm_bindgen::to_value(&results)
             .map_err(|_| serde_wasm_bindgen::to_value("Error serializing results").unwrap())
@@ -49,12 +63,13 @@ pub fn run_odds_simulation(
 
 fn join_data(
     competitions: HashMap<String, i64>,
-    results: Vec<Vec<CompetitionResult>>,
-) -> Vec<Vec<DatedCompetitionResult>> {
+    results: Vec<PersonResult>,
+) -> Vec<(String, Vec<DatedCompetitionResult>)> {
     results
         .into_iter()
         .map(|competitor| {
-            competitor
+            let results = competitor
+                .results
                 .into_iter()
                 .filter_map(|competition| {
                     let comp_date = competitions.get(&competition.id)?;
@@ -63,7 +78,9 @@ fn join_data(
                         results: competition.results,
                     })
                 })
-                .collect::<Vec<_>>()
+                .collect::<Vec<_>>();
+
+            (competitor.name, results)
         })
         .collect()
 }
@@ -72,7 +89,7 @@ pub async fn fetch_and_join(
     competitors: Vec<String>,
     event: String,
     month_cutoff: i32,
-) -> Result<Vec<Vec<DatedCompetitionResult>>, &'static str> {
+) -> Result<Vec<(String, Vec<DatedCompetitionResult>)>, &'static str> {
     let competitions = get_competition_data(month_cutoff).await?;
     let results = get_solve_data(competitors, event).await?;
     Ok(join_data(competitions, results))

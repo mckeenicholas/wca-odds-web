@@ -8,7 +8,8 @@
     "build:wasm:release": "wasm-pack build --target web --release --out-dir wasm",
     "dev": "vite",
     "build": "npm run build:wasm:release && vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format": "bunx prettier . --write"
   },
   "dependencies": {
     "@stdlib/math-base-special-erfc": "^0.2.3",

@@ -12,6 +12,11 @@ pub struct CompetitionResult {
     pub results: Vec<i32>,
 }
 
+pub struct PersonResult {
+    pub name: String,
+    pub results: Vec<CompetitionResult>,
+}
+
 #[derive(Deserialize, Debug)]
 struct RequestCompetitions {
     items: Vec<RequestCompetition>,
@@ -104,8 +109,7 @@ pub async fn get_competition_data(month_cutoff: i32) -> Result<HashMap<String, i
 pub async fn get_solve_data(
     competitors: Vec<String>,
     event: String,
-) -> Result<Vec<Vec<CompetitionResult>>, &'static str> {
-    let mut competitor_results: Vec<Vec<CompetitionResult>> = Vec::new();
+) -> Result<Vec<PersonResult>, &'static str> {
     let o_client = reqwest::Client::new();
 
     let futures = competitors.iter().map(|competitor| {
@@ -135,14 +139,19 @@ pub async fn get_solve_data(
                 })
                 .collect();
 
-            Ok::<Vec<CompetitionResult>, &'static str>(results)
+            Ok::<(String, Vec<CompetitionResult>), &'static str>((response.name, results))
         }
     });
 
-    let query_results: Vec<Result<Vec<CompetitionResult>, _>> = join_all(futures).await;
+    let query_results = join_all(futures).await;
+
+    let mut competitor_results = Vec::new();
     for result in query_results {
         match result {
-            Ok(competitor) => competitor_results.push(competitor),
+            Ok(results) => competitor_results.push(PersonResult {
+                name: results.0,
+                results: results.1,
+            }),
             Err(_) => return Err("Error fetching competitor data"),
         }
     }

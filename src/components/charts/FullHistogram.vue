@@ -2,34 +2,40 @@
 import { AreaChart } from "@/components/ui/chart-area";
 import { SimulationResult } from "@/lib/types";
 
-const { data, names, colors, simulations } = defineProps<{
+const { data, colors, simulations } = defineProps<{
   data: SimulationResult[];
-  names: string[];
   colors: string[];
   simulations: number;
 }>();
 
 const resultTimes = new Map<number, Map<string, number>>();
 
-data.forEach((person, idx) => {
-  [...person.histValues].forEach(([k, v]) => {
+data.forEach((person) => {
+  [...person.results.hist_values].forEach(([k, v]) => {
     const key = k / 10;
-    const name = names[idx];
+    const name = person.name;
 
     if (!resultTimes.has(key)) {
       resultTimes.set(key, new Map<string, number>());
     }
 
     const timesMap = resultTimes.get(key)!;
-    timesMap.set(name, (timesMap.get(name) || 0) + (v / simulations));
+    timesMap.set(
+      name,
+      (timesMap.get(name) || 0) +
+        parseFloat(((v / simulations) * 100).toFixed(2)),
+    );
   });
 });
 
-const chartData = [...resultTimes.entries()].map(([time, nameMap]) => ({
-  time,
-  ...Object.fromEntries(nameMap.entries())
-}));
+const chartData = [...resultTimes.entries()]
+  .map(([time, nameMap]) => ({
+    time,
+    ...Object.fromEntries(nameMap.entries()),
+  }))
+  .sort((a, b) => a.time - b.time);
 
+const names = data.map((person) => person.name);
 </script>
 
 <template>
