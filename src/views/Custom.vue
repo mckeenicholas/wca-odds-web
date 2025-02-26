@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X } from "lucide-vue-next";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import { supportedWCAEvents } from "@/lib/types";
+import debounce from "debounce";
 
 interface Person {
   name: string;
@@ -18,7 +19,9 @@ interface SearchResult {
 }
 
 const input = ref<string>("");
-const competitors = ref<Person[]>([]);
+const competitors = ref<Person[]>(
+  JSON.parse(localStorage.getItem("competitors") || "[]"),
+);
 
 const selectedEventId = ref<string>("333");
 const simCount = ref<number>(10000);
@@ -41,28 +44,32 @@ const { isFetching, isError, data, error, refetch } = useQuery({
   enabled: false,
 });
 
-const debounce = (fn: () => void, delay: number) => {
-  let timeoutId: number;
-  return () => {
-    clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(fn, delay);
-  };
-};
-
 const debouncedRefetch = debounce(() => refetch(), 250);
 
 watch(input, () => {
   debouncedRefetch();
 });
 
+// Update localStorage when competitors change
+watch(
+  competitors,
+  (newCompetitors) => {
+    localStorage.setItem("competitors", JSON.stringify(newCompetitors));
+  },
+  { deep: true },
+);
+
 const handleSearch = () => {
   refetch();
 };
 
 const addCompetitor = (competitor: Person) => {
-  competitors.value.push(competitor);
-  input.value = "";
-  handleSearch();
+  // Prevent duplicates
+  if (!competitors.value.some((c) => c.wca_id === competitor.wca_id)) {
+    competitors.value.push(competitor);
+    input.value = "";
+    handleSearch();
+  }
 };
 
 const removeCompetitor = (competitorId: string) => {
@@ -88,7 +95,7 @@ const runSimulation = () => {
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
-      <h1 class="text-center text-xl m-2">Add a competitor</h1>
+      <h1 class="text-center text-xl m-4">Add a competitor</h1>
       <div class="flex flex-row min-w-[70vw] relative">
         <Input
           v-model="input"

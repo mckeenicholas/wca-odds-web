@@ -94,6 +94,7 @@ export interface ResultStats {
   win_count: number;
   pod_count: number;
   total_rank: number;
+  mean_no_dnf: number;
   rank_dist: number[];
   hist_values: Map<number, number>;
 }

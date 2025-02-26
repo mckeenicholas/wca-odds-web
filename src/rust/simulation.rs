@@ -25,6 +25,8 @@ pub struct SimulationResult {
     win_count: u32,
     pod_count: u32,
     total_rank: u32,
+    average_result: u32,
+    mean_no_dnf: u32,
     rank_dist: Vec<u32>,
     hist_values: HashMap<i32, i32>,
 }
@@ -35,6 +37,8 @@ impl SimulationResult {
             win_count: 0,
             pod_count: 0,
             total_rank: 0,
+            average_result: 0,
+            mean_no_dnf: 0,
             rank_dist: vec![0; num_competitors],
             hist_values: HashMap::new(),
         }
@@ -76,10 +80,22 @@ pub fn run_simulations(
 ) -> Vec<SimulationResult> {
     let num_competitors = competitor_data.len();
 
-    let (hist_min, hist_max, competitor_stats) = prepare_competitor_stats(competitor_data);
+    let (hist_min, hist_max, competitor_stats_with_means) =
+        prepare_competitor_stats(competitor_data);
 
     let mut simulation_results = vec![SimulationResult::new(num_competitors); num_competitors];
-    let mut rng = thread_rng();
+
+    // Set the mean_no_dnf for each competitor
+    for (i, (_, mean)) in competitor_stats_with_means.iter().enumerate() {
+        simulation_results[i].mean_no_dnf = *mean;
+    }
+
+    let competitor_stats: Vec<Option<CompetitorStats>> = competitor_stats_with_means
+        .into_iter()
+        .map(|(stats, _)| stats)
+        .collect();
+
+    let mut rng: ThreadRng = thread_rng();
 
     for _ in 0..(num_simulations / 4) {
         let sim_results = generate_simulation_results(
@@ -101,7 +117,8 @@ pub fn run_simulations(
 
 fn prepare_competitor_stats(
     competitor_data: Vec<Vec<DatedCompetitionResult>>,
-) -> (i32, i32, Vec<Option<CompetitorStats>>) {
+) -> (i32, i32, Vec<(Option<CompetitorStats>, u32)>) {
+    // Modified return type
     let mut hist_max = 0;
     let mut hist_min = i32::MAX;
 
@@ -118,7 +135,7 @@ fn prepare_competitor_stats(
                 .collect::<Vec<_>>();
 
             if result_no_dnf.len() == 0 {
-                return None;
+                return (None, 0);
             }
 
             let (sample_mean, _sample_variance, sample_dev) =
@@ -131,14 +148,17 @@ fn prepare_competitor_stats(
 
             let (skew, shape, location) = fit_skewnorm(&trimmed_results);
 
-            Some(CompetitorStats {
-                location,
-                shape,
-                skew,
-                dnf_rate,
-            })
+            (
+                Some(CompetitorStats {
+                    location,
+                    shape,
+                    skew,
+                    dnf_rate,
+                }),
+                sample_mean as u32,
+            )
         })
-        .collect::<Vec<Option<CompetitorStats>>>();
+        .collect::<Vec<(Option<CompetitorStats>, u32)>>();
 
     hist_min = hist_min.max(0);
 

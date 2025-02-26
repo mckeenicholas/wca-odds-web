@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { RouterLink } from "vue-router";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchWCAInfo } from "@/lib/utils";
 import { useQuery } from "@tanstack/vue-query";
+import debounce from "debounce";
 
 interface Competition {
   start_date: string;
@@ -13,6 +15,24 @@ interface Competition {
 }
 
 const input = ref<string>("");
+
+// Sync input with URL search parameter
+const syncInputWithURL = () => {
+  const searchParam =
+    new URLSearchParams(window.location.search).get("q") || "";
+  input.value = searchParam;
+};
+
+// Update URL when input changes
+const updateURL = (value: string) => {
+  const url = new URL(window.location.href);
+  if (value) {
+    url.searchParams.set("q", value);
+  } else {
+    url.searchParams.delete("q");
+  }
+  window.history.replaceState({}, "", url);
+};
 
 const { isFetching, isError, data, error, refetch } = useQuery({
   queryKey: ["competitionSearch", input.value],
@@ -23,29 +43,32 @@ const { isFetching, isError, data, error, refetch } = useQuery({
   enabled: false,
 });
 
-const debounce = (fn: () => void, delay: number) => {
-  let timeoutId: number;
-  return () => {
-    clearTimeout(timeoutId);
-    timeoutId = window.setTimeout(fn, delay);
-  };
-};
-
 const debouncedRefetch = debounce(() => refetch(), 250);
+const debouncedUpdateURL = debounce((value: string) => updateURL(value), 250);
 
-watch(input, () => {
+watch(input, (value) => {
   debouncedRefetch();
+  debouncedUpdateURL(value);
 });
 
 const handleSearch = () => {
   refetch();
 };
+
+onMounted(() => {
+  syncInputWithURL();
+  window.addEventListener("popstate", syncInputWithURL);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("popstate", syncInputWithURL);
+});
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
-      <h1 class="text-center text-xl m-2">Find a competition</h1>
+      <h1 class="text-center text-xl m-4">Find a competition</h1>
       <div class="flex flex-row space-x-4 min-w-[70vw]">
         <Input
           v-model="input"
@@ -74,7 +97,7 @@ const handleSearch = () => {
             :key="result.id"
             class="p-2 hover:bg-secondary rounded-md"
           >
-            <a :href="`/competition/${result.id}`">
+            <RouterLink :to="`/competition/${result.id}`">
               <p>{{ result.name }}</p>
               <p class="text-sm text-secondary-foreground">
                 {{
@@ -85,16 +108,16 @@ const handleSearch = () => {
                   })
                 }}
               </p>
-            </a>
+            </RouterLink>
           </li>
         </ol>
       </div>
       <div v-else class="text-center m-4">No competitions found</div>
     </div>
     <div class="mt-4 items-center justify-center">
-      <a href="/custom">
+      <RouterLink to="/custom">
         <Button> Or select competitors manually </Button>
-      </a>
+      </RouterLink>
     </div>
   </div>
 </template>

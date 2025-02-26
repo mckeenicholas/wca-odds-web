@@ -1,0 +1,7 @@
+services:
+  odds_calc:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"

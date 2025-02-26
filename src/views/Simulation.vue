@@ -67,6 +67,8 @@ onMounted(async () => {
       <ResultsSummary
         :simulation-results="simulation_results"
         :colors="colors"
+        :num-simulations="numSimulations"
+        :event="eventId as SupportedWCAEvent"
       />
 
       <Expandable title="Results Histogram" class="mb-2">

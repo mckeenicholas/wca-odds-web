@@ -130,25 +130,29 @@ const eventIds = computed(() => {
           v-on:run-simulation="runSimulation"
         />
       </div>
-    </div>
-    <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll">
-      <li
-        v-for="person in selectedCompetitors[selectedEventId]"
-        @click="() => (person.selected = !person.selected)"
-        :key="person.id"
-        class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
-      >
-        <span :class="{ 'text-muted-foreground': !person.selected }">
-          <a
-            @click.stop
-            :href="`https://worldcubeassociation.org/persons/${person.id}`"
-            class="hover:underline"
-          >
-            {{ person.name }}
-          </a></span
+      <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll">
+        <li
+          v-for="person in selectedCompetitors[selectedEventId]"
+          @click="() => (person.selected = !person.selected)"
+          :key="person.id"
+          class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
         >
-        <Checkbox v-model:checked="person.selected" @click.stop class="me-2" />
-      </li>
-    </ol>
+          <span :class="{ 'text-muted-foreground': !person.selected }">
+            <a
+              @click.stop
+              :href="`https://worldcubeassociation.org/persons/${person.id}`"
+              class="hover:underline"
+            >
+              {{ person.name }}
+            </a></span
+          >
+          <Checkbox
+            v-model:checked="person.selected"
+            @click.stop
+            class="me-2"
+          />
+        </li>
+      </ol>
+    </div>
   </div>
 </template>
