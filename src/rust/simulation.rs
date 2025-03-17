@@ -77,6 +77,7 @@ pub fn run_simulations(
     num_simulations: u32,
     competitor_data: Vec<Vec<DatedCompetitionResult>>,
     event_type: EventType,
+    include_dnf: bool,
 ) -> Vec<SimulationResult> {
     let num_competitors = competitor_data.len();
 
@@ -101,6 +102,7 @@ pub fn run_simulations(
         let sim_results = generate_simulation_results(
             &competitor_stats,
             event_type,
+            include_dnf,
             &mut rng,
             &mut simulation_results,
             hist_min,
@@ -168,6 +170,7 @@ fn prepare_competitor_stats(
 fn generate_simulation_results(
     competitor_stats: &[Option<CompetitorStats>],
     event_type: EventType,
+    include_dnf: bool,
     rng: &mut ThreadRng,
     simulation_results: &mut [SimulationResult],
     hist_min: i32,
@@ -186,6 +189,7 @@ fn generate_simulation_results(
             simulate_event(
                 event_type,
                 stats,
+                include_dnf,
                 rng,
                 &mut simulation_results[i],
                 hist_min,
@@ -198,6 +202,7 @@ fn generate_simulation_results(
 fn simulate_event(
     event_type: EventType,
     stats: &CompetitorStats,
+    include_dnf: bool,
     rng: &mut ThreadRng,
     simulation_results: &mut SimulationResult,
     hist_min: i32,
@@ -205,7 +210,7 @@ fn simulate_event(
 ) -> [i32; 4] {
     match event_type {
         EventType::Ao5 => {
-            let results: [v128; 5] = gen_n_skewnorm_simd!(5, stats, rng);
+            let results: [v128; 5] = gen_n_skewnorm_simd!(5, stats, rng, include_dnf);
             let [a1, a2, a3, a4, a5] = results;
             add_hist(
                 &results,
@@ -216,7 +221,7 @@ fn simulate_event(
             calc_wca_average_5(a1, a2, a3, a4, a5)
         }
         EventType::Mo3 => {
-            let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng);
+            let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng, include_dnf);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,
@@ -227,7 +232,7 @@ fn simulate_event(
             calc_wca_mean_3(a1, a2, a3)
         }
         EventType::Bo3 => {
-            let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng);
+            let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng, include_dnf);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,

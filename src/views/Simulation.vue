@@ -15,8 +15,10 @@ import CompetitorList from "@/components/custom/CompetitorList.vue";
 
 const router = useRouter();
 
-const { competitors, eventId, name, simCount, monthCutoff } =
+const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
   router.currentRoute.value.query;
+
+const includeDNF = (includeDNFFlag ?? false) as boolean;
 
 const error = ref<string>("");
 
@@ -49,6 +51,7 @@ onMounted(async () => {
     event,
     parseInt(monthCutoff.toString()),
     numSimulations,
+    includeDNF,
   );
 
   loading.value = false;

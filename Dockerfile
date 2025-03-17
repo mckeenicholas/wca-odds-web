@@ -27,10 +27,9 @@ RUN npm install
 COPY --from=wasm-builder /app/wasm ./wasm
 COPY . .
 
-# RUN bun run build
 RUN npm run build
 
-# Final nginx stage
+# Final nginx deploy stage
 FROM nginx:1.27.4-alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html

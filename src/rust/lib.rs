@@ -71,6 +71,7 @@ pub fn run_odds_simulation(
     event_str: String,
     month_cutoff: i32,
     num_simulations: u32,
+    include_dnf: bool,
 ) -> Promise {
     let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
 
@@ -83,7 +84,7 @@ pub fn run_odds_simulation(
             })?;
 
         let (names, solve_data): (Vec<String>, _) = parsed_data.into_iter().unzip();
-        let simulated_data = run_simulations(num_simulations, solve_data, event_type);
+        let simulated_data = run_simulations(num_simulations, solve_data, event_type, include_dnf);
 
         let results: Vec<_> = names
             .into_iter()

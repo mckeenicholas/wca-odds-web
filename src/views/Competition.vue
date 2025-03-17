@@ -22,6 +22,7 @@ const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<string>("");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
+const includeDNF = ref<boolean>(false);
 
 const defaultShownNum = 64;
 const defaultSelectedNum = 16;
@@ -127,7 +128,8 @@ const eventIds = computed(() => {
           v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
-          v-on:run-simulation="runSimulation"
+          v-model:include-dnf="includeDNF"
+          @run-simulation="runSimulation"
         />
       </div>
       <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll">

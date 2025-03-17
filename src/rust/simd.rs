@@ -1,6 +1,6 @@
 use core::arch::wasm32::{
     f32x4, f32x4_add, f32x4_div, f32x4_gt, f32x4_max, f32x4_min, f32x4_mul, f32x4_neg, f32x4_splat,
-    f32x4_sub, i32x4_extract_lane, i32x4_trunc_sat_f32x4, v128, v128_bitselect,
+    f32x4_sub, i32x4_extract_lane, i32x4_splat, i32x4_trunc_sat_f32x4, v128, v128_bitselect,
 };
 use rand::rngs::ThreadRng;
 use rand_distr::{Distribution, Normal};
@@ -9,10 +9,10 @@ use crate::simulation::CompetitorStats;
 
 #[macro_export]
 macro_rules! gen_n_skewnorm_simd {
-    ($n:literal, $stats:expr, $rng:expr) => {{
+    ($n:literal, $stats:expr, $rng:expr, $include_dnf:expr) => {{
         let mut values = [::core::arch::wasm32::i32x4_splat(0); $n];
         for i in 0..$n {
-            values[i] = $crate::simd::gen_skewnorm_simd($stats, $rng);
+            values[i] = $crate::simd::gen_skewnorm_simd($stats, $rng, $include_dnf);
         }
         values
     }};
@@ -40,19 +40,20 @@ pub fn i32x4_to_slice(vec: v128) -> [i32; 4] {
 
 pub fn f32x4_conditional_negate(input: v128, cond: v128) -> v128 {
     let mask = f32x4_gt(cond, f32x4_splat(0.0));
-
     let neg_u1 = f32x4_neg(input);
 
-    let result = v128_bitselect(input, neg_u1, mask);
-
-    result
+    v128_bitselect(input, neg_u1, mask)
 }
 
-pub fn gen_skewnorm_simd(stats: &CompetitorStats, rand_source: &mut ThreadRng) -> v128 {
-    let range = Normal::new(0.0, 1.0).expect("Failed to initialize normal distribution");
+pub fn gen_skewnorm_simd(
+    stats: &CompetitorStats,
+    rand_source: &mut ThreadRng,
+    include_dnf: bool,
+) -> v128 {
+    let normal_dist = Normal::new(0.0, 1.0).expect("Failed to initialize normal distribution");
 
-    let [v1, v2, v3, v4] = gen_n_random!(4, rand_source, range);
-    let [w1, w2, w3, w4] = gen_n_random!(4, rand_source, range);
+    let [v1, v2, v3, v4] = gen_n_random!(4, rand_source, normal_dist);
+    let [w1, w2, w3, w4] = gen_n_random!(4, rand_source, normal_dist);
 
     let sigma = stats.skew / (1.0 + stats.skew.powi(2)).sqrt();
 
@@ -70,7 +71,18 @@ pub fn gen_skewnorm_simd(stats: &CompetitorStats, rand_source: &mut ThreadRng) -
     let u2 = f32x4_conditional_negate(u1, u0);
     let u3 = f32x4_add(u2, f32x4_splat(stats.location));
 
-    i32x4_trunc_sat_f32x4(u3)
+    let results_i32 = i32x4_trunc_sat_f32x4(u3);
+
+    if !include_dnf {
+        return results_i32;
+    }
+
+    let uniform_dist = rand::distributions::Uniform::new(0.0, 1.0);
+    let [r1, r2, r3, r4] = gen_n_random!(4, rand_source, uniform_dist);
+
+    let mask = f32x4_gt(f32x4(r1, r2, r3, r4), f32x4_splat(stats.dnf_rate));
+
+    v128_bitselect(results_i32, i32x4_splat(i32::MAX), mask)
 }
 
 pub fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
