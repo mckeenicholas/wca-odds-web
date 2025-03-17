@@ -10,7 +10,7 @@ use crate::calc::{
 };
 use crate::gen_n_skewnorm_simd;
 use crate::simd::{calc_wca_average_5, calc_wca_best_3, calc_wca_mean_3, i32x4_to_slice};
-use crate::{DatedCompetitionResult, EventType};
+use crate::{Competitor, DatedCompetitionResult, EventType};
 
 #[derive(Debug)]
 pub struct CompetitorStats {
@@ -28,7 +28,8 @@ pub struct SimulationResult {
     average_result: u32,
     mean_no_dnf: u32,
     rank_dist: Vec<u32>,
-    hist_values: HashMap<i32, i32>,
+    hist_values_single: HashMap<i32, i32>,
+    hist_values_average: HashMap<i32, i32>,
 }
 
 impl SimulationResult {
@@ -40,16 +41,17 @@ impl SimulationResult {
             average_result: 0,
             mean_no_dnf: 0,
             rank_dist: vec![0; num_competitors],
-            hist_values: HashMap::new(),
+            hist_values_single: HashMap::new(),
+            hist_values_average: HashMap::new(),
         }
     }
 }
 
-fn collect_results(results: Vec<DatedCompetitionResult>) -> Vec<i32> {
+fn collect_results(results: &Vec<DatedCompetitionResult>) -> Vec<i32> {
     // Assuming at least 2 averages per competitor as competitors predicted to win will generally be on the faster end.
     let mut collected = Vec::with_capacity(results.len() * 10);
     for comp_data in results {
-        collected.extend(comp_data.results);
+        collected.extend(comp_data.results.clone());
     }
     collected
 }
@@ -75,14 +77,13 @@ fn add_hist(
 
 pub fn run_simulations(
     num_simulations: u32,
-    competitor_data: Vec<Vec<DatedCompetitionResult>>,
+    competitors: &Vec<Competitor>,
     event_type: EventType,
     include_dnf: bool,
 ) -> Vec<SimulationResult> {
-    let num_competitors = competitor_data.len();
+    let num_competitors = competitors.len();
 
-    let (hist_min, hist_max, competitor_stats_with_means) =
-        prepare_competitor_stats(competitor_data);
+    let (hist_min, hist_max, competitor_stats_with_means) = prepare_competitor_stats(competitors);
 
     let mut simulation_results = vec![SimulationResult::new(num_competitors); num_competitors];
 
@@ -117,16 +118,20 @@ pub fn run_simulations(
     simulation_results
 }
 
+// TODO: Check number of entered results, and adjust number of randomly generated
+// times to complete average
 fn prepare_competitor_stats(
-    competitor_data: Vec<Vec<DatedCompetitionResult>>,
+    competitor_data: &Vec<Competitor>,
 ) -> (i32, i32, Vec<(Option<CompetitorStats>, u32)>) {
     // Modified return type
     let mut hist_max = 0;
     let mut hist_min = i32::MAX;
 
     let competitor_stats = competitor_data
-        .into_iter()
-        .map(|results| {
+        .iter()
+        .map(|competitor| {
+            let results = &competitor.results;
+
             let all_results = collect_results(results);
 
             let num_dnf = all_results.iter().filter(|&&x| x < 0).count();
@@ -210,37 +215,70 @@ fn simulate_event(
 ) -> [i32; 4] {
     match event_type {
         EventType::Ao5 => {
+            // TODO: This will need to be adjusted to account for how many competitors there are
+            // Will probably need to move to a vec since the size is unknown, otherwise dont use the total size of the
+            // array
             let results: [v128; 5] = gen_n_skewnorm_simd!(5, stats, rng, include_dnf);
             let [a1, a2, a3, a4, a5] = results;
             add_hist(
                 &results,
-                &mut simulation_results.hist_values,
+                &mut simulation_results.hist_values_single,
                 hist_min,
                 hist_max,
             );
-            calc_wca_average_5(a1, a2, a3, a4, a5)
+            let averages = calc_wca_average_5(a1, a2, a3, a4, a5);
+
+            for average in averages {
+                let bucket = (average / 10).clamp(hist_min, hist_max - 1);
+                *simulation_results
+                    .hist_values_average
+                    .entry(bucket)
+                    .or_insert(0) += 1;
+            }
+
+            averages
         }
         EventType::Mo3 => {
             let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng, include_dnf);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,
-                &mut simulation_results.hist_values,
+                &mut simulation_results.hist_values_single,
                 hist_min,
                 hist_max,
             );
-            calc_wca_mean_3(a1, a2, a3)
+            let averages = calc_wca_mean_3(a1, a2, a3);
+
+            for average in averages {
+                let bucket = (average / 10).clamp(hist_min, hist_max - 1);
+                *simulation_results
+                    .hist_values_average
+                    .entry(bucket)
+                    .or_insert(0) += 1;
+            }
+
+            averages
         }
         EventType::Bo3 => {
             let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng, include_dnf);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,
-                &mut simulation_results.hist_values,
+                &mut simulation_results.hist_values_single,
                 hist_min,
                 hist_max,
             );
-            calc_wca_best_3(a1, a2, a3)
+            let averages = calc_wca_best_3(a1, a2, a3);
+
+            for average in averages {
+                let bucket = (average / 10).clamp(hist_min, hist_max - 1);
+                *simulation_results
+                    .hist_values_average
+                    .entry(bucket)
+                    .or_insert(0) += 1;
+            }
+
+            averages
         }
     }
 }

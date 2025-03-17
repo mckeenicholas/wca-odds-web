@@ -96,5 +96,6 @@ export interface ResultStats {
   total_rank: number;
   mean_no_dnf: number;
   rank_dist: number[];
-  hist_values: Map<number, number>;
+  hist_values_single: Map<number, number>;
+  hist_values_average: Map<number, number>;
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import init, { run_odds_simulation } from "../../wasm/odds_web.js";
+import init, { load_data, run_odds_simulation } from "../../wasm/odds_web.js";
 import { eventNames, SimulationResult, SupportedWCAEvent } from "@/lib/types";
 import { generateColors } from "@/lib/utils";
 import Expandable from "@/components/custom/Expandable.vue";
@@ -46,16 +46,27 @@ onMounted(async () => {
   const event = eventId as SupportedWCAEvent;
 
   await init();
-  simulation_results.value = await run_odds_simulation(
+  const result = await load_data(
     competitorsList,
     event,
     parseInt(monthCutoff.toString()),
-    numSimulations,
-    includeDNF,
   );
+
+  if (!result) {
+    console.error("Error fetching data");
+    error.value = "Error fetching data";
+    return;
+  }
+
+  simulation_results.value = run_odds_simulation(numSimulations, includeDNF);
 
   loading.value = false;
 });
+
+const recalculate = () => {
+  console.log("lol");
+  simulation_results.value = run_odds_simulation(numSimulations, includeDNF);
+};
 </script>
 
 <template>
@@ -97,6 +108,8 @@ onMounted(async () => {
         :competitors-list="competitorsList"
         :num-simulations="numSimulations"
       />
+
+      <button @click="recalculate">Recalculate</button>
     </div>
 
     <div v-else class="mt-4">

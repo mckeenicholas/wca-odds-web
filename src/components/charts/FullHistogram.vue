@@ -11,7 +11,7 @@ const { data, colors, simulations } = defineProps<{
 const resultTimes = new Map<number, Map<string, number>>();
 
 data.forEach((person) => {
-  [...person.results.hist_values].forEach(([k, v]) => {
+  [...person.results.hist_values_single].forEach(([k, v]) => {
     const key = k / 10;
     const name = person.name;
 

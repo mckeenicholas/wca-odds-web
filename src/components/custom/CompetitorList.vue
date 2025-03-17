@@ -69,7 +69,7 @@ const { simulationResults, colors, competitorsList, numSimulations } =
           <CollapsibleContent class="space-y-2">
             <IndividualHistogram
               :color="colors[idx]"
-              :hist="result.results.hist_values"
+              :hist="result.results.hist_values_single"
               :simulations="numSimulations"
               class="border rounded-md m-2 p-2"
             />
