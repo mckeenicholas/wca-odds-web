@@ -6,15 +6,23 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
-import { SimulationResult } from "@/lib/types";
+import {
+  eventAttempts,
+  SimulationResult,
+  SupportedWCAEvent,
+} from "@/lib/types";
+import ResultEntryField from "@/components/custom/ResultEntryField.vue";
 
-const { simulationResults, colors, competitorsList, numSimulations } =
+const { simulationResults, colors, competitorsList, numSimulations, event } =
   defineProps<{
     simulationResults: SimulationResult[];
     colors: string[];
     competitorsList: string[];
     numSimulations: number;
+    event: SupportedWCAEvent;
   }>();
+
+const model = defineModel<number[][]>({ required: true });
 </script>
 
 <template>
@@ -28,8 +36,8 @@ const { simulationResults, colors, competitorsList, numSimulations } =
     <hr class="mx-2" />
     <ol>
       <li
-        v-for="(result, idx) in simulationResults"
-        :key="idx"
+        v-for="(result, personIdx) in simulationResults"
+        :key="personIdx"
         class="p-1 rounded-md"
       >
         <Collapsible>
@@ -43,11 +51,11 @@ const { simulationResults, colors, competitorsList, numSimulations } =
                     <Icon
                       icon="radix-icons:dot-filled"
                       class="scale-150"
-                      :style="{ color: colors[idx] }"
+                      :style="{ color: colors[personIdx] }"
                     />
                   </div>
                   <a
-                    :href="`https://worldcubeassociation.org/persons/${competitorsList[idx]}`"
+                    :href="`https://worldcubeassociation.org/persons/${competitorsList[personIdx]}`"
                     @click.stop
                     class="hover:underline"
                   >
@@ -68,11 +76,19 @@ const { simulationResults, colors, competitorsList, numSimulations } =
           </CollapsibleTrigger>
           <CollapsibleContent class="space-y-2">
             <IndividualHistogram
-              :color="colors[idx]"
+              :color="colors[personIdx]"
               :hist="result.results.hist_values_single"
               :simulations="numSimulations"
               class="border rounded-md m-2 p-2"
             />
+            <div>
+              <div
+                v-for="attemptIdx in eventAttempts[event]"
+                v-bind:key="attemptIdx"
+              >
+                <ResultEntryField v-model="model[personIdx][attemptIdx]" />
+              </div>
+            </div>
             <hr class="mx-2" />
           </CollapsibleContent>
         </Collapsible>

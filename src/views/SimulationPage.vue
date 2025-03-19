@@ -2,9 +2,14 @@
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
 import init, { load_data, run_odds_simulation } from "../../wasm/odds_web.js";
-import { eventNames, SimulationResult, SupportedWCAEvent } from "@/lib/types";
+import {
+  eventAttempts,
+  eventNames,
+  SimulationResult,
+  SupportedWCAEvent,
+} from "@/lib/types";
 import { generateColors } from "@/lib/utils";
-import Expandable from "@/components/custom/Expandable.vue";
+import ExpandableBox from "@/components/custom/ExpandableBox.vue";
 import FullHistogram from "@/components/charts/FullHistogram.vue";
 import RankHistogram from "@/components/charts/RankHistogram.vue";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
@@ -33,6 +38,12 @@ const colors = generateColors(competitorsList.length);
 const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
+
+const inputtedTimes = ref<number[][]>(
+  new Array(competitorsList?.length).fill(
+    new Array(eventAttempts[eventId as SupportedWCAEvent]).fill(0),
+  ),
+);
 
 onMounted(async () => {
   if (!((eventId as string) in eventNames)) {
@@ -85,28 +96,30 @@ const recalculate = () => {
         :event="eventId as SupportedWCAEvent"
       />
 
-      <Expandable title="Results Histogram" class="mb-2">
+      <ExpandableBox title="Results Histogram" class="mb-2">
         <FullHistogram
           :data="simulation_results"
           :colors="colors"
           :simulations="numSimulations"
           :key="selected.filter(Boolean).length"
         />
-      </Expandable>
-      <Expandable title="Predicted Ranks">
+      </ExpandableBox>
+      <ExpandableBox title="Predicted Ranks">
         <RankHistogram
           :data="simulation_results"
           :colors="colors"
           :count="numSimulations"
           :key="selected.filter(Boolean).length"
         />
-      </Expandable>
+      </ExpandableBox>
 
       <CompetitorList
         :simulation-results="simulation_results"
         :colors="colors"
         :competitors-list="competitorsList"
         :num-simulations="numSimulations"
+        :event="eventId as SupportedWCAEvent"
+        v-model="inputtedTimes"
       />
 
       <button @click="recalculate">Recalculate</button>

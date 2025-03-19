@@ -1,4 +1,4 @@
-export const eventNames: { [key: string]: string } = {
+export const eventNames: Record<SupportedWCAEvent, string> = {
   "333": "3x3x3 Cube",
   "222": "2x2x2 Cube",
   "444": "4x4x4 Cube",
@@ -15,26 +15,28 @@ export const eventNames: { [key: string]: string } = {
   sq1: "Square-1",
   "444bf": "4x4x4 Blindfolded",
   "555bf": "5x5x5 Blindfolded",
-  "333mbf": "3x3x3 Multi-Blind",
 };
 
-export type SupportedWCAEvent =
-  | "222"
-  | "333"
-  | "444"
-  | "555"
-  | "666"
-  | "777"
-  | "333bf"
-  | "333fm"
-  | "333oh"
-  | "minx"
-  | "pyram"
-  | "clock"
-  | "skewb"
-  | "sq1"
-  | "444bf"
-  | "555bf";
+export const eventAttempts: Record<SupportedWCAEvent, number> = {
+  "333": 5,
+  "222": 5,
+  "444": 5,
+  "555": 5,
+  "666": 3,
+  "777": 3,
+  "333bf": 3,
+  "333fm": 3,
+  "333oh": 5,
+  minx: 5,
+  pyram: 5,
+  clock: 5,
+  skewb: 5,
+  sq1: 5,
+  "444bf": 3,
+  "555bf": 3,
+};
+
+export type SupportedWCAEvent = (typeof supportedWCAEvents)[number];
 
 export const supportedWCAEvents = [
   "222",

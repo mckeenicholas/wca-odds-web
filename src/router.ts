@@ -1,15 +1,15 @@
 import { createWebHistory, createRouter } from "vue-router";
 
-import Home from "./views/Home.vue";
-import Competition from "./views/Competition.vue";
-import Simulation from "./views/Simulation.vue";
-import Custom from "./views/Custom.vue";
+import HomePage from "./views/HomePage.vue";
+import CompetitionPage from "./views/CompetitionPage.vue";
+import SimulationPage from "./views/SimulationPage.vue";
+import CustomPage from "./views/CustomPage.vue";
 
 const routes = [
-  { path: "/", component: Home },
-  { path: "/competition/:id", component: Competition },
-  { path: "/simulation/", component: Simulation },
-  { path: "/custom/", component: Custom },
+  { path: "/", component: HomePage },
+  { path: "/competition/:id", component: CompetitionPage },
+  { path: "/simulation/", component: SimulationPage },
+  { path: "/custom/", component: CustomPage },
 ];
 
 const router = createRouter({
