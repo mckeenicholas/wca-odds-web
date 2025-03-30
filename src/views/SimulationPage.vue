@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onMounted, ref, watch } from "vue";
-import init, { load_data, run_odds_simulation } from "../../wasm/odds_web.js";
+import { onMounted, ref, watch, onUnmounted, computed } from "vue";
 import {
   eventAttempts,
   eventNames,
@@ -9,6 +8,10 @@ import {
   SupportedWCAEvent,
 } from "@/lib/types";
 import { generateColors } from "@/lib/utils";
+import {
+  runSimulationInWorker,
+  terminateSimulationWorker,
+} from "@/lib/simulationWorkerService";
 import ExpandableBox from "@/components/custom/ExpandableBox.vue";
 import FullHistogram from "@/components/charts/FullHistogram.vue";
 import RankHistogram from "@/components/charts/RankHistogram.vue";
@@ -18,35 +21,35 @@ import ErrorDisplay from "@/components/custom/CompetitionError.vue";
 import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import CompetitorList from "@/components/custom/CompetitorList.vue";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@iconify/vue";
 
 const router = useRouter();
-
 const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
   router.currentRoute.value.query;
-
-const includeDNF = (includeDNFFlag ?? false) as boolean;
-
-const error = ref<string>("");
 
 if (!competitors || !eventId || !name || !simCount || !monthCutoff) {
   throw new Error("One or more required parameters are null or undefined.");
 }
 
-const competitorsList = competitors?.toString().split(",");
+const includeDNF = (includeDNFFlag ?? false) as boolean;
+const competitorsList = competitors.toString().split(",");
 const numSimulations = parseInt(simCount as string);
+const monthCutoffNum = parseInt(monthCutoff.toString());
+const event = eventId as SupportedWCAEvent;
 const colors = generateColors(competitorsList.length);
 
+const error = ref<string>("");
 const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
+const recalculateLoading = ref<boolean>(false);
+const inputtedTimesModified = ref<boolean>(false);
 const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
 
-const inputtedTimesModified = ref<boolean>(false);
+const attemptsCount = computed(() => eventAttempts[event]);
+
 const inputtedTimes = ref<number[][]>(
   Array.from({ length: competitorsList.length }, () =>
-    Array.from(
-      { length: eventAttempts[eventId as SupportedWCAEvent] + 1 },
-      () => 0,
-    ),
+    Array.from({ length: attemptsCount.value + 1 }, () => 0),
   ),
 );
 
@@ -54,43 +57,56 @@ watch(
   inputtedTimes,
   () => {
     inputtedTimesModified.value = true;
-    console.log("inputtedTimes modified");
   },
   { deep: true },
 );
 
+const runSimulation = async () => {
+  try {
+    return await runSimulationInWorker(
+      competitorsList,
+      event,
+      monthCutoffNum,
+      numSimulations,
+      includeDNF,
+      inputtedTimes.value,
+    );
+  } catch (err) {
+    console.error("Error in simulation:", err);
+    error.value = err instanceof Error ? err.message : "Unknown error occurred";
+    return null;
+  }
+};
+
 onMounted(async () => {
-  if (!((eventId as string) in eventNames)) {
-    error.value = "Invalid event ID";
-    return;
+  try {
+    if (!(event in eventNames)) {
+      error.value = "Invalid event ID";
+      return;
+    }
+
+    simulation_results.value = await runSimulation();
+  } finally {
+    loading.value = false;
   }
-
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - parseInt(monthCutoff.toString()));
-
-  const event = eventId as SupportedWCAEvent;
-
-  await init();
-  const result = await load_data(
-    competitorsList,
-    event,
-    parseInt(monthCutoff.toString()),
-  );
-
-  if (!result) {
-    console.error("Error fetching data");
-    error.value = "Error fetching data";
-    return;
-  }
-
-  simulation_results.value = run_odds_simulation(numSimulations, includeDNF);
-
-  loading.value = false;
 });
 
-const recalculate = () => {
-  console.log("lol");
-  simulation_results.value = run_odds_simulation(numSimulations, includeDNF);
+onUnmounted(() => {
+  terminateSimulationWorker();
+});
+
+const recalculate = async () => {
+  recalculateLoading.value = true;
+
+  try {
+    const results = await runSimulation();
+    if (results) {
+      simulation_results.value = results;
+      inputtedTimesModified.value = false;
+    }
+  } finally {
+    recalculateLoading.value = false;
+  }
 };
 </script>
 
@@ -107,19 +123,18 @@ const recalculate = () => {
         :simulation-results="simulation_results"
         :colors="colors"
         :num-simulations="numSimulations"
-        :event="eventId as SupportedWCAEvent"
+        :event="event"
       />
 
       <ExpandableBox title="Results Histogram" class="mb-2">
         <FullHistogram
           :data="simulation_results"
           :colors="colors"
-          :simulations="
-            numSimulations * eventAttempts[eventId as SupportedWCAEvent]
-          "
+          :simulations="numSimulations * attemptsCount"
           :key="selected.filter(Boolean).length"
         />
       </ExpandableBox>
+
       <ExpandableBox title="Predicted Ranks">
         <RankHistogram
           :data="simulation_results"
@@ -134,9 +149,10 @@ const recalculate = () => {
         :colors="colors"
         :competitors-list="competitorsList"
         :num-simulations="numSimulations"
-        :event="eventId as SupportedWCAEvent"
+        :event="event"
         v-model="inputtedTimes"
       />
+
       <div
         class="fixed bottom-4 right-4 z-50 transition-opacity duration-300 ease-in-out"
         :class="{
@@ -144,7 +160,20 @@ const recalculate = () => {
           'opacity-100': inputtedTimesModified,
         }"
       >
-        <Button @click="recalculate" class="shadow-lg"> Recalculate </Button>
+        <Button
+          @click="recalculate"
+          class="shadow-lg"
+          :disabled="recalculateLoading"
+        >
+          {{ recalculateLoading ? "Calculating..." : "Recalculate" }}
+          <Icon
+            v-if="recalculateLoading"
+            icon="svg-spinners:180-ring"
+            class="ml-2"
+            width="24"
+            height="24"
+          />
+        </Button>
       </div>
     </div>
 

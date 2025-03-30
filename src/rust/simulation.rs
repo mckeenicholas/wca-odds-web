@@ -224,7 +224,7 @@ fn simulate_event(
             // Will probably need to move to a vec since the size is unknown, otherwise dont use the total size of the
             // array
             let results: [v128; 5] =
-                gen_n_skewnorm_simd!(5, stats, rng, include_dnf, competitor.results);
+                gen_n_skewnorm_simd!(5, stats, rng, include_dnf, competitor.entered_results);
             let [a1, a2, a3, a4, a5] = results;
             add_hist(
                 &results,
@@ -246,7 +246,7 @@ fn simulate_event(
         }
         EventType::Mo3 => {
             let results: [v128; 3] =
-                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.results);
+                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.entered_results);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,
@@ -268,7 +268,7 @@ fn simulate_event(
         }
         EventType::Bo3 => {
             let results: [v128; 3] =
-                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.results);
+                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.entered_results);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,

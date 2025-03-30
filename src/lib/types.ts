@@ -101,3 +101,23 @@ export interface ResultStats {
   hist_values_single: Map<number, number>;
   hist_values_average: Map<number, number>;
 }
+
+export interface SimulationWorkerMessage {
+  type: "RUN_SIMULATION";
+  payload: {
+    competitorList: string[];
+    event: SupportedWCAEvent;
+    monthCutoff: number;
+    numSimulations: number;
+    includeDNF: boolean;
+    inputtedTimes: number[][];
+  };
+}
+
+export interface SimulationCompleteMessage {
+  type: "SIMULATION_COMPLETE";
+  results: SimulationResult[];
+}
+
+export type WorkerMessage = SimulationWorkerMessage;
+export type MainThreadMessage = SimulationCompleteMessage;
