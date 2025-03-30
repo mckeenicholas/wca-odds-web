@@ -97,6 +97,14 @@ impl EventType {
     fn from_event_id(event_id: &str) -> Option<Self> {
         EVENT_MAPPINGS.get(event_id).copied()
     }
+
+    fn num_attempts(&self) -> usize {
+        match self {
+            Self::Ao5 => 5,
+            Self::Mo3 => 3,
+            Self::Bo3 => 3,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -164,6 +172,12 @@ pub fn run_simulation(
             .iter_mut()
             .zip(entered_times)
             .for_each(|(ref mut competitor, times)| {
+                assert!(
+                    times.len() != state.get_event().num_attempts(),
+                    "Invalid number of times for competitor: {}.",
+                    competitor.name
+                );
+
                 competitor.entered_results = times;
             });
 

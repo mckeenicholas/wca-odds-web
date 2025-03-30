@@ -15,7 +15,7 @@ pub fn calc_mean_variance_stdev(data: &[i32]) -> (f32, f32, f32) {
 }
 
 pub fn trim_errant_results(mut results: Vec<i32>, mean: f32, stdev: f32) -> Vec<i32> {
-    let threshold = (mean + stdev * 3.0) as i32;
+    let threshold = (mean + stdev * 2.0) as i32;
     results.retain(|&x| x <= threshold);
     results
 }
@@ -37,7 +37,7 @@ pub fn fit_skewnorm(times: &[i32]) -> (f32, f32, f32) {
         * ((PI / 2.0) * bounded_skew.abs().powf(2.0 / 3.0)
             / (bounded_skew.abs().powf(2.0 / 3.0) + ((4.0 - PI) / 2.0).powf(2.0 / 3.0)))
         .sqrt()
-        .clamp(-0.9999, 0.9999);
+        .clamp(-0.995, 0.995);
 
     let alpha = delta / (1.0 - delta.powi(2)).sqrt();
     let omega = (variance / (1.0 - 2.0 * delta.powi(2) / PI)).sqrt();

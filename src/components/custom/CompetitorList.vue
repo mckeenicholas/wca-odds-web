@@ -78,15 +78,19 @@ const model = defineModel<number[][]>({ required: true });
             <IndividualHistogram
               :color="colors[personIdx]"
               :hist="result.results.hist_values_single"
-              :simulations="numSimulations"
+              :simulations="numSimulations * eventAttempts[event]"
               class="border rounded-md m-2 p-2"
             />
-            <div>
+            <div class="flex gap-4 items-center px-2">
               <div
                 v-for="attemptIdx in eventAttempts[event]"
                 v-bind:key="attemptIdx"
+                class="flex items-center gap-2"
               >
-                <ResultEntryField v-model="model[personIdx][attemptIdx]" />
+                <span class="whitespace-nowrap">Attempt {{ attemptIdx }}:</span>
+                <div class="max-w-24">
+                  <ResultEntryField v-model="model[personIdx][attemptIdx]" />
+                </div>
               </div>
             </div>
             <hr class="mx-2" />

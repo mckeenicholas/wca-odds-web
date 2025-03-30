@@ -9,10 +9,15 @@ use crate::simulation::CompetitorStats;
 
 #[macro_export]
 macro_rules! gen_n_skewnorm_simd {
-    ($n:literal, $stats:expr, $rng:expr, $include_dnf:expr) => {{
+    ($n:literal, $stats:expr, $rng:expr, $include_dnf:expr, $entered_times:expr) => {{
         let mut values = [::core::arch::wasm32::i32x4_splat(0); $n];
+
         for i in 0..$n {
-            values[i] = $crate::simd::gen_skewnorm_simd($stats, $rng, $include_dnf);
+            values[i] = if $entered_times[i] == 0 {
+                $crate::simd::gen_skewnorm_simd($stats, $rng, $include_dnf)
+            } else {
+                ::core::arch::wasm32::i32x4_splat($entered_times[i])
+            };
         }
         values
     }};

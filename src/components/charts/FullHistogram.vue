@@ -22,8 +22,7 @@ data.forEach((person) => {
     const timesMap = resultTimes.get(key)!;
     timesMap.set(
       name,
-      (timesMap.get(name) || 0) +
-        parseFloat(((v / simulations) * 100).toFixed(2)),
+      (timesMap.get(name) || 0) + parseFloat((v / simulations).toFixed(4)),
     );
   });
 });

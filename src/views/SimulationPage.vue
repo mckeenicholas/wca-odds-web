@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import init, { load_data, run_odds_simulation } from "../../wasm/odds_web.js";
 import {
   eventAttempts,
@@ -17,6 +17,7 @@ import CompetitionHeader from "@/components/custom/CompetitionHeader.vue";
 import ErrorDisplay from "@/components/custom/CompetitionError.vue";
 import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import CompetitorList from "@/components/custom/CompetitorList.vue";
+import { Button } from "@/components/ui/button";
 
 const router = useRouter();
 
@@ -39,10 +40,23 @@ const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
 
+const inputtedTimesModified = ref<boolean>(false);
 const inputtedTimes = ref<number[][]>(
-  new Array(competitorsList?.length).fill(
-    new Array(eventAttempts[eventId as SupportedWCAEvent]).fill(0),
+  Array.from({ length: competitorsList.length }, () =>
+    Array.from(
+      { length: eventAttempts[eventId as SupportedWCAEvent] + 1 },
+      () => 0,
+    ),
   ),
+);
+
+watch(
+  inputtedTimes,
+  () => {
+    inputtedTimesModified.value = true;
+    console.log("inputtedTimes modified");
+  },
+  { deep: true },
 );
 
 onMounted(async () => {
@@ -100,7 +114,9 @@ const recalculate = () => {
         <FullHistogram
           :data="simulation_results"
           :colors="colors"
-          :simulations="numSimulations"
+          :simulations="
+            numSimulations * eventAttempts[eventId as SupportedWCAEvent]
+          "
           :key="selected.filter(Boolean).length"
         />
       </ExpandableBox>
@@ -121,8 +137,15 @@ const recalculate = () => {
         :event="eventId as SupportedWCAEvent"
         v-model="inputtedTimes"
       />
-
-      <button @click="recalculate">Recalculate</button>
+      <div
+        class="fixed bottom-4 right-4 z-50 transition-opacity duration-300 ease-in-out"
+        :class="{
+          'opacity-0': !inputtedTimesModified,
+          'opacity-100': inputtedTimesModified,
+        }"
+      >
+        <Button @click="recalculate" class="shadow-lg"> Recalculate </Button>
+      </div>
     </div>
 
     <div v-else class="mt-4">

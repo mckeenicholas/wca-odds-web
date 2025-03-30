@@ -48,7 +48,8 @@ impl SimulationResult {
 }
 
 fn collect_results(results: &Vec<DatedCompetitionResult>) -> Vec<i32> {
-    // Assuming at least 2 averages per competitor as competitors predicted to win will generally be on the faster end.
+    // Assuming at least 2 averages per competitor as competitors predicted to win will generally be on the faster end,
+    // and this means we only at most 1 expansion for any instance.
     let mut collected = Vec::with_capacity(results.len() * 10);
     for comp_data in results {
         collected.extend(comp_data.results.clone());
@@ -101,6 +102,7 @@ pub fn run_simulations(
 
     for _ in 0..(num_simulations / 4) {
         let sim_results = generate_simulation_results(
+            &competitors,
             &competitor_stats,
             event_type,
             include_dnf,
@@ -173,6 +175,7 @@ fn prepare_competitor_stats(
 }
 
 fn generate_simulation_results(
+    competitors: &[Competitor],
     competitor_stats: &[Option<CompetitorStats>],
     event_type: EventType,
     include_dnf: bool,
@@ -192,6 +195,7 @@ fn generate_simulation_results(
             };
 
             simulate_event(
+                &competitors[i],
                 event_type,
                 stats,
                 include_dnf,
@@ -205,6 +209,7 @@ fn generate_simulation_results(
 }
 
 fn simulate_event(
+    competitor: &Competitor,
     event_type: EventType,
     stats: &CompetitorStats,
     include_dnf: bool,
@@ -218,7 +223,8 @@ fn simulate_event(
             // TODO: This will need to be adjusted to account for how many competitors there are
             // Will probably need to move to a vec since the size is unknown, otherwise dont use the total size of the
             // array
-            let results: [v128; 5] = gen_n_skewnorm_simd!(5, stats, rng, include_dnf);
+            let results: [v128; 5] =
+                gen_n_skewnorm_simd!(5, stats, rng, include_dnf, competitor.results);
             let [a1, a2, a3, a4, a5] = results;
             add_hist(
                 &results,
@@ -239,7 +245,8 @@ fn simulate_event(
             averages
         }
         EventType::Mo3 => {
-            let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng, include_dnf);
+            let results: [v128; 3] =
+                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.results);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,
@@ -260,7 +267,8 @@ fn simulate_event(
             averages
         }
         EventType::Bo3 => {
-            let results: [v128; 3] = gen_n_skewnorm_simd!(3, stats, rng, include_dnf);
+            let results: [v128; 3] =
+                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.results);
             let [a1, a2, a3] = results;
             add_hist(
                 &results,
