@@ -45,3 +45,7 @@ export const generateColors = (num: number) => {
   }
   return hexCodes;
 };
+
+export const totalSolves = (results: Map<number, number>) => {
+  return Array.from(results.values()).reduce((sum, count) => sum + count, 0);
+};

@@ -5,14 +5,14 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::js_sys::Promise;
 
-mod data;
-use data::{get_competition_data, get_solve_data, PersonResult};
-
-mod simulation;
-use simulation::{run_simulations, SimulationResult};
-
 mod calc;
+mod data;
+mod event_simulation;
 mod simd;
+mod simulation;
+
+use data::{get_competition_data, get_solve_data, PersonResult};
+use simulation::{run_simulations, SimulationResult};
 
 thread_local! {
     static APP_STATE: AppState = AppState::new();

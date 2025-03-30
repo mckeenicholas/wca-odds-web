@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { Input } from "@/components/ui/input";
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
 const model = defineModel<number>({ required: true });
 
 const inputValue = ref<string>("");
 
+onMounted(() => {
+  inputValue.value = toClockFormat(model.value);
+});
+
 // We use a watch here instead including this in handleKeydown as we need
-// to ensure the model value is updated befor executing.
+// to ensure the model value is updated before executing.
 watch(inputValue, (value) => {
   if (value != "DNF") {
     inputValue.value = reformatInput(value);
@@ -17,6 +21,8 @@ watch(inputValue, (value) => {
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (["d", "D"].includes(event.key)) {
+    event.preventDefault();
+
     inputValue.value = "DNF";
     model.value = -1;
   }
@@ -25,6 +31,20 @@ const handleKeydown = (event: KeyboardEvent) => {
 const toInt = (input: string): number | null => {
   const int = parseInt(input);
   return isNaN(int) ? null : int;
+};
+
+const toClockFormat = (centiseconds: number): string => {
+  if (centiseconds === -1) return "DNF";
+  if (centiseconds === -2) return "DNS";
+  if (!Number.isFinite(centiseconds)) {
+    throw new Error(
+      `Invalid centiseconds, expected positive number, got ${centiseconds}.`,
+    );
+  }
+  return new Date(centiseconds * 10)
+    .toISOString()
+    .substr(11, 11)
+    .replace(/^[0:]*(?!\.)/g, "");
 };
 
 const reformatInput = (input: string): string => {

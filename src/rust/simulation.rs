@@ -1,6 +1,4 @@
-use core::arch::wasm32::v128;
-use rand::rngs::ThreadRng;
-use rand::thread_rng;
+use rand::{rngs::ThreadRng, thread_rng};
 use serde::Serialize;
 use std::{collections::HashMap, i32};
 
@@ -8,9 +6,24 @@ use crate::calc::{
     calc_mean_variance_stdev, find_lowest_indices, fit_skewnorm, transpose_solves,
     trim_errant_results,
 };
-use crate::gen_n_skewnorm_simd;
-use crate::simd::{calc_wca_average_5, calc_wca_best_3, calc_wca_mean_3, i32x4_to_slice};
+use crate::event_simulation::{Ao5Simulation, Bo3Simulation, EventSimulation, Mo3Simulation};
 use crate::{Competitor, DatedCompetitionResult, EventType};
+
+pub struct SimulationConfig {
+    pub include_dnf: bool,
+    pub hist_min: i32,
+    pub hist_max: i32,
+}
+
+pub struct SimulationContext<'a> {
+    pub config: &'a SimulationConfig,
+    pub rng: &'a mut ThreadRng,
+}
+
+struct HistogramBounds {
+    min: i32,
+    max: i32,
+}
 
 #[derive(Debug)]
 pub struct CompetitorStats {
@@ -22,14 +35,14 @@ pub struct CompetitorStats {
 
 #[derive(Serialize, Clone)]
 pub struct SimulationResult {
-    win_count: u32,
-    pod_count: u32,
-    total_rank: u32,
-    average_result: u32,
-    mean_no_dnf: u32,
-    rank_dist: Vec<u32>,
-    hist_values_single: HashMap<i32, i32>,
-    hist_values_average: HashMap<i32, i32>,
+    pub win_count: u32,
+    pub pod_count: u32,
+    pub total_rank: u32,
+    pub average_result: u32,
+    pub mean_no_dnf: u32,
+    pub rank_dist: Vec<u32>,
+    pub hist_values_single: HashMap<i32, i32>,
+    pub hist_values_average: HashMap<i32, i32>,
 }
 
 impl SimulationResult {
@@ -47,89 +60,68 @@ impl SimulationResult {
     }
 }
 
-fn collect_results(results: &Vec<DatedCompetitionResult>) -> Vec<i32> {
-    // Assuming at least 2 averages per competitor as competitors predicted to win will generally be on the faster end,
-    // and this means we only at most 1 expansion for any instance.
-    let mut collected = Vec::with_capacity(results.len() * 10);
-    for comp_data in results {
-        collected.extend(comp_data.results.clone());
-    }
-    collected
-}
-
-fn add_hist(
-    results: &[v128],
-    simulation_results: &mut HashMap<i32, i32>,
-    hist_min: i32,
-    hist_max: i32,
-) {
-    for result in results {
-        let solves = i32x4_to_slice(*result);
-        for solve in solves {
-            if solve == i32::MAX {
-                continue;
-            }
-
-            let bucket = (solve / 10).clamp(hist_min, hist_max - 1);
-            *simulation_results.entry(bucket).or_insert(0) += 1;
-        }
-    }
-}
-
 pub fn run_simulations(
     num_simulations: u32,
-    competitors: &Vec<Competitor>,
+    competitors: &[Competitor],
     event_type: EventType,
     include_dnf: bool,
 ) -> Vec<SimulationResult> {
-    let num_competitors = competitors.len();
+    // Prepare configs
+    let stats_result = prepare_competitor_stats(competitors);
+    let config = SimulationConfig {
+        include_dnf,
+        hist_min: stats_result.bounds.min,
+        hist_max: stats_result.bounds.max,
+    };
 
-    let (hist_min, hist_max, competitor_stats_with_means) = prepare_competitor_stats(competitors);
+    // Setup results
+    let mut simulation_results =
+        init_simulation_results(competitors.len(), &stats_result.competitor_stats);
 
-    let mut simulation_results = vec![SimulationResult::new(num_competitors); num_competitors];
+    // Select event simulation implementation
+    let event_simulator = get_event_simulator(event_type);
 
-    // Set the mean_no_dnf for each competitor
-    for (i, (_, mean)) in competitor_stats_with_means.iter().enumerate() {
-        simulation_results[i].mean_no_dnf = *mean;
-    }
-
-    let competitor_stats: Vec<Option<CompetitorStats>> = competitor_stats_with_means
-        .into_iter()
-        .map(|(stats, _)| stats)
-        .collect();
-
-    let mut rng: ThreadRng = thread_rng();
+    // Run simulations
+    let mut rng = thread_rng();
 
     for _ in 0..(num_simulations / 4) {
-        let sim_results = generate_simulation_results(
-            &competitors,
-            &competitor_stats,
-            event_type,
-            include_dnf,
-            &mut rng,
+        let mut context = SimulationContext {
+            config: &config,
+            rng: &mut rng,
+        };
+
+        let sim_results = run_simulation_batch(
+            competitors,
+            &stats_result.competitor_stats,
+            event_simulator.as_ref(),
+            &mut context,
             &mut simulation_results,
-            hist_min,
-            hist_max,
         );
 
-        let solves_by_sim = transpose_solves(sim_results);
-
-        update_simulation_results(&mut simulation_results, &solves_by_sim, num_competitors);
+        update_rankings(&mut simulation_results, sim_results, competitors.len());
     }
 
     simulation_results
 }
 
-// TODO: Check number of entered results, and adjust number of randomly generated
-// times to complete average
-fn prepare_competitor_stats(
-    competitor_data: &Vec<Competitor>,
-) -> (i32, i32, Vec<(Option<CompetitorStats>, u32)>) {
-    // Modified return type
+fn get_event_simulator(event_type: EventType) -> Box<dyn EventSimulation> {
+    match event_type {
+        EventType::Ao5 => Box::new(Ao5Simulation),
+        EventType::Mo3 => Box::new(Mo3Simulation),
+        EventType::Bo3 => Box::new(Bo3Simulation),
+    }
+}
+
+struct CompetitorStatsResult {
+    bounds: HistogramBounds,
+    competitor_stats: Vec<(Option<CompetitorStats>, u32)>,
+}
+
+fn prepare_competitor_stats(competitors: &[Competitor]) -> CompetitorStatsResult {
     let mut hist_max = 0;
     let mut hist_min = i32::MAX;
 
-    let competitor_stats = competitor_data
+    let competitor_stats = competitors
         .iter()
         .map(|competitor| {
             let results = &competitor.results;
@@ -167,148 +159,89 @@ fn prepare_competitor_stats(
                 sample_mean as u32,
             )
         })
-        .collect::<Vec<(Option<CompetitorStats>, u32)>>();
+        .collect();
 
     hist_min = hist_min.max(0);
 
-    (hist_min, hist_max, competitor_stats)
+    CompetitorStatsResult {
+        bounds: HistogramBounds {
+            min: hist_min,
+            max: hist_max,
+        },
+        competitor_stats,
+    }
 }
 
-fn generate_simulation_results(
+fn init_simulation_results(
+    num_competitors: usize,
+    competitor_stats: &[(Option<CompetitorStats>, u32)],
+) -> Vec<SimulationResult> {
+    let mut results = vec![SimulationResult::new(num_competitors); num_competitors];
+
+    // Copy mean values
+    for (i, (_, mean)) in competitor_stats.iter().enumerate() {
+        results[i].mean_no_dnf = *mean;
+    }
+
+    results
+}
+
+fn run_simulation_batch(
     competitors: &[Competitor],
-    competitor_stats: &[Option<CompetitorStats>],
-    event_type: EventType,
-    include_dnf: bool,
-    rng: &mut ThreadRng,
+    competitor_stats: &[(Option<CompetitorStats>, u32)],
+    event_simulator: &dyn EventSimulation,
+    context: &mut SimulationContext,
     simulation_results: &mut [SimulationResult],
-    hist_min: i32,
-    hist_max: i32,
 ) -> Vec<[i32; 4]> {
     competitor_stats
         .iter()
         .enumerate()
         .map(|(i, opt_stats)| {
-            let stats = if let Some(stat) = opt_stats {
-                stat
+            if let Some(stats) = &opt_stats.0 {
+                event_simulator.run_simulation(
+                    &competitors[i].entered_results,
+                    stats,
+                    context,
+                    &mut simulation_results[i],
+                )
             } else {
-                return [i32::MAX; 4];
-            };
-
-            simulate_event(
-                &competitors[i],
-                event_type,
-                stats,
-                include_dnf,
-                rng,
-                &mut simulation_results[i],
-                hist_min,
-                hist_max,
-            )
+                [i32::MAX; 4]
+            }
         })
-        .collect::<Vec<[i32; 4]>>()
+        .collect()
 }
 
-fn simulate_event(
-    competitor: &Competitor,
-    event_type: EventType,
-    stats: &CompetitorStats,
-    include_dnf: bool,
-    rng: &mut ThreadRng,
-    simulation_results: &mut SimulationResult,
-    hist_min: i32,
-    hist_max: i32,
-) -> [i32; 4] {
-    match event_type {
-        EventType::Ao5 => {
-            // TODO: This will need to be adjusted to account for how many competitors there are
-            // Will probably need to move to a vec since the size is unknown, otherwise dont use the total size of the
-            // array
-            let results: [v128; 5] =
-                gen_n_skewnorm_simd!(5, stats, rng, include_dnf, competitor.entered_results);
-            let [a1, a2, a3, a4, a5] = results;
-            add_hist(
-                &results,
-                &mut simulation_results.hist_values_single,
-                hist_min,
-                hist_max,
-            );
-            let averages = calc_wca_average_5(a1, a2, a3, a4, a5);
-
-            for average in averages {
-                let bucket = (average / 10).clamp(hist_min, hist_max - 1);
-                *simulation_results
-                    .hist_values_average
-                    .entry(bucket)
-                    .or_insert(0) += 1;
-            }
-
-            averages
-        }
-        EventType::Mo3 => {
-            let results: [v128; 3] =
-                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.entered_results);
-            let [a1, a2, a3] = results;
-            add_hist(
-                &results,
-                &mut simulation_results.hist_values_single,
-                hist_min,
-                hist_max,
-            );
-            let averages = calc_wca_mean_3(a1, a2, a3);
-
-            for average in averages {
-                let bucket = (average / 10).clamp(hist_min, hist_max - 1);
-                *simulation_results
-                    .hist_values_average
-                    .entry(bucket)
-                    .or_insert(0) += 1;
-            }
-
-            averages
-        }
-        EventType::Bo3 => {
-            let results: [v128; 3] =
-                gen_n_skewnorm_simd!(3, stats, rng, include_dnf, competitor.entered_results);
-            let [a1, a2, a3] = results;
-            add_hist(
-                &results,
-                &mut simulation_results.hist_values_single,
-                hist_min,
-                hist_max,
-            );
-            let averages = calc_wca_best_3(a1, a2, a3);
-
-            for average in averages {
-                let bucket = (average / 10).clamp(hist_min, hist_max - 1);
-                *simulation_results
-                    .hist_values_average
-                    .entry(bucket)
-                    .or_insert(0) += 1;
-            }
-
-            averages
-        }
-    }
-}
-
-fn update_simulation_results(
+fn update_rankings(
     simulation_results: &mut [SimulationResult],
-    solves_by_sim: &[Vec<i32>],
+    solve_results: Vec<[i32; 4]>,
     num_competitors: usize,
 ) {
+    let solves_by_sim = transpose_solves(solve_results);
+
     for i in 0..4 {
         let avg_by_competitor = &solves_by_sim[i];
+        let indices = find_lowest_indices(avg_by_competitor.as_slice());
 
-        let indicies = find_lowest_indices(avg_by_competitor.as_slice());
+        // Update win count
+        simulation_results[indices[0]].win_count += 1;
 
-        simulation_results[indicies[0]].win_count += 1;
-        for &index in indicies.iter().take(3) {
+        // Update podium counts
+        for &index in indices.iter().take(3) {
             simulation_results[index].pod_count += 1;
         }
 
+        // Update rankings
         for i in 0..num_competitors {
-            simulation_results[i].total_rank += (indicies[i] as u32) + 1;
-            simulation_results[indicies[i]].rank_dist[i] += 1;
+            simulation_results[i].total_rank += (indices[i] as u32) + 1;
+            simulation_results[indices[i]].rank_dist[i] += 1;
         }
     }
+}
+
+fn collect_results(results: &Vec<DatedCompetitionResult>) -> Vec<i32> {
+    let mut collected = Vec::with_capacity(results.len() * 10);
+    for comp_data in results {
+        collected.extend(comp_data.results.clone());
+    }
+    collected
 }

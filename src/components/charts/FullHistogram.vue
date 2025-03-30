@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { AreaChart } from "@/components/ui/chart-area";
 import { SimulationResult } from "@/lib/types";
+import { totalSolves } from "@/lib/utils";
 
-const { data, colors, simulations } = defineProps<{
+const { data, colors } = defineProps<{
   data: SimulationResult[];
   colors: string[];
-  simulations: number;
 }>();
 
 const resultTimes = new Map<number, Map<string, number>>();
@@ -20,9 +20,14 @@ data.forEach((person) => {
     }
 
     const timesMap = resultTimes.get(key)!;
+
+    const solveCount = totalSolves(person.results.hist_values_single);
+
     timesMap.set(
       name,
-      (timesMap.get(name) || 0) + parseFloat((v / simulations).toFixed(4)),
+      solveCount == 0
+        ? 0
+        : (timesMap.get(name) || 0) + parseFloat((v / solveCount).toFixed(4)),
     );
   });
 });

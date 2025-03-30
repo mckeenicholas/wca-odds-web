@@ -23,6 +23,8 @@ import CompetitorList from "@/components/custom/CompetitorList.vue";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/vue";
 
+// TODO: Make charts update automatically
+
 const router = useRouter();
 const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
   router.currentRoute.value.query;
@@ -130,7 +132,6 @@ const recalculate = async () => {
         <FullHistogram
           :data="simulation_results"
           :colors="colors"
-          :simulations="numSimulations * attemptsCount"
           :key="selected.filter(Boolean).length"
         />
       </ExpandableBox>
