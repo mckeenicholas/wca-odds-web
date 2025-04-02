@@ -16,14 +16,12 @@ interface Competition {
 
 const input = ref<string>("");
 
-// Sync input with URL search parameter
 const syncInputWithURL = () => {
   const searchParam =
     new URLSearchParams(window.location.search).get("q") || "";
   input.value = searchParam;
 };
 
-// Update URL when input changes
 const updateURL = (value: string) => {
   const url = new URL(window.location.href);
   if (value) {

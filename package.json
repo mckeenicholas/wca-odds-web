@@ -23,6 +23,7 @@
     "debounce": "^2.2.0",
     "eslint": "^9.23.0",
     "eslint-plugin-vue": "^9.33.0",
+    "lodash-es": "^4.17.21",
     "lucide-vue-next": "^0.408.0",
     "radix-vue": "^1.9.17",
     "reka-ui": "^2.1.1",

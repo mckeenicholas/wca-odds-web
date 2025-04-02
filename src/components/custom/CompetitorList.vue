@@ -97,7 +97,9 @@ const model = defineModel<number[][]>({ required: true });
               >
                 <span class="whitespace-nowrap">Attempt {{ attemptIdx }}:</span>
                 <div class="max-w-24">
-                  <ResultEntryField v-model="model[personIdx][attemptIdx]" />
+                  <ResultEntryField
+                    v-model="model[personIdx][attemptIdx - 1]"
+                  />
                 </div>
               </div>
             </div>

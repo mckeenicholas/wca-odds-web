@@ -10,27 +10,23 @@ interface DataPoint {
   average: number;
 }
 
-const props = defineProps<{
+const { histAverage, histSingle, color } = defineProps<{
   histAverage: Map<number, number>;
   histSingle: Map<number, number>;
   color: string;
 }>();
 
-const solveCount = computed(() => totalSolves(props.histSingle));
-const avgCount = computed(() => totalSolves(props.histAverage));
+const solveCount = computed(() => totalSolves(histSingle));
+const avgCount = computed(() => totalSolves(histAverage));
 
 const data = computed(() =>
-  [...new Set([...props.histSingle.keys(), ...props.histAverage.keys()])]
+  [...new Set([...histSingle.keys(), ...histAverage.keys()])]
     .reduce((acc: DataPoint[], time) => {
       const single = parseFloat(
-        ((props.histSingle.get(time) || 0) / (solveCount.value / 100)).toFixed(
-          4,
-        ),
+        ((histSingle.get(time) || 0) / (solveCount.value / 100)).toFixed(4),
       );
       const average = parseFloat(
-        ((props.histAverage.get(time) || 0) / (avgCount.value / 100)).toFixed(
-          4,
-        ),
+        ((histAverage.get(time) || 0) / (avgCount.value / 100)).toFixed(4),
       );
 
       if (single > 0.0001 || average > 0.0001) {
@@ -47,7 +43,7 @@ const data = computed(() =>
   <div class="m-10">
     <AreaChart
       class="mb-2"
-      :data="data"
+      :data
       index="time"
       :categories="['single', 'average']"
       :colors="[color, `${color}88`]"

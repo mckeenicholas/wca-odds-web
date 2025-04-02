@@ -1,21 +1,41 @@
 <script setup lang="ts">
-import { toClockFormat } from "@/lib/utils";
-
 const { title, data } = defineProps<{
   title?: string;
   data: {
     name: string;
     color: string;
-    value: number;
+    value: string | number;
   }[];
 }>();
 
-const time = parseInt(title ?? "0") * 10;
+const toPlaceString = (place: number): string => {
+  if (place >= 11 && place <= 13) {
+    return `${place}th`;
+  }
+
+  switch (place % 10) {
+    case 1:
+      return `${place}st`;
+    case 2:
+      return `${place}nd`;
+    case 3:
+      return `${place}rd`;
+    default:
+      return `${place}th`;
+  }
+};
+
+const getNumericValue = (val: string | number): number => {
+  if (typeof val === "string") {
+    return parseFloat(val);
+  }
+  return val;
+};
 </script>
 
 <template>
   <div class="match-backround p-2 rounded-md border-2">
-    <p class="font-bold">{{ toClockFormat(time) }}</p>
+    <p v-if="title" class="font-bold">{{ toPlaceString(parseInt(title)) }}</p>
     <div v-for="(item, key) in data" :key class="flex justify-between text-sm">
       <div class="flex items-center">
         <span class="w-2.5 h-2.5 mr-2">
@@ -31,7 +51,11 @@ const time = parseInt(title ?? "0") * 10;
         <span>{{ item.name }}</span>
       </div>
       <span class="font-semibold ml-4"
-        >{{ item.value >= 0.01 ? item.value.toFixed(2) : "<0.01" }}%</span
+        >{{
+          getNumericValue(item.value) >= 0.01
+            ? getNumericValue(item.value).toFixed(2)
+            : "<0.01"
+        }}%</span
       >
     </div>
   </div>

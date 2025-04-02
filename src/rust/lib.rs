@@ -131,7 +131,6 @@ macro_rules! console_log {
 pub fn load_data(competitors: Vec<String>, event_str: String, month_cutoff: i32) -> Promise {
     let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
 
-    // Set the event type immediately
     APP_STATE.with(|state| {
         state.set_event(event_type);
     });
@@ -144,7 +143,6 @@ pub fn load_data(competitors: Vec<String>, event_str: String, month_cutoff: i32)
                 serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()
             })?;
 
-        // Update the results in the app state
         APP_STATE.with(|state| {
             state.set_competitors(parsed_data);
         });
@@ -172,12 +170,6 @@ pub fn run_simulation(
             .iter_mut()
             .zip(entered_times)
             .for_each(|(ref mut competitor, times)| {
-                assert!(
-                    times.len() != state.get_event().num_attempts(),
-                    "Invalid number of times for competitor: {}.",
-                    competitor.name
-                );
-
                 competitor.entered_results = times;
             });
 

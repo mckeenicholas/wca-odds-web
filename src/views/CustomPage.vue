@@ -51,7 +51,6 @@ watch(input, () => {
   debouncedRefetch();
 });
 
-// Update localStorage when competitors change
 watch(
   competitors,
   (newCompetitors) => {
@@ -65,7 +64,6 @@ const handleSearch = () => {
 };
 
 const addCompetitor = (competitor: Person) => {
-  // Prevent duplicates
   if (!competitors.value.some((c) => c.wca_id === competitor.wca_id)) {
     competitors.value.push(competitor);
     input.value = "";

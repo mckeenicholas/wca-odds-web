@@ -4,26 +4,45 @@ import { toClockFormat } from "@/lib/utils";
 import { onMounted, ref, watch } from "vue";
 
 const model = defineModel<number>({ required: true });
-
 const inputValue = ref<string>("");
 
 onMounted(() => {
-  inputValue.value = toClockFormat(model.value);
+  updateInputFromModel(model.value);
 });
 
-// We use a watch here instead including this in handleKeydown as we need
-// to ensure the model value is updated before executing.
+watch(
+  () => model.value,
+  (newValue) => {
+    updateInputFromModel(newValue);
+  },
+  { flush: "post" },
+);
+
 watch(inputValue, (value) => {
-  if (value != "DNF") {
+  if (value !== "DNF") {
     inputValue.value = reformatInput(value);
     model.value = toCentiseconds(inputValue.value);
+  } else if (value === "DNF" && model.value !== -1) {
+    model.value = -1;
   }
 });
+
+const updateInputFromModel = (value: number) => {
+  if (value === -1) {
+    if (inputValue.value !== "DNF") {
+      inputValue.value = "DNF";
+    }
+  } else {
+    const formatted = toClockFormat(value);
+    if (formatted !== inputValue.value) {
+      inputValue.value = formatted;
+    }
+  }
+};
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (["d", "D"].includes(event.key)) {
     event.preventDefault();
-
     inputValue.value = "DNF";
     model.value = -1;
   }
@@ -46,7 +65,7 @@ const reformatInput = (input: string): string => {
 
 const toCentiseconds = (input: string): number => {
   if (input === "") return 0;
-  if (input === "DNF") return -1;
+  if (input.toLowerCase() === "dnf") return -1;
   const num = toInt(input.replace(/\D/g, "")) || 0;
   return (
     Math.floor(num / 1000000) * 360000 +

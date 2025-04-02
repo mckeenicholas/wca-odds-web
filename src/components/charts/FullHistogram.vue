@@ -7,7 +7,7 @@ import { ref, computed } from "vue";
 import { Label } from "../ui/label";
 import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
 
-const props = defineProps<{
+const { data, colors } = defineProps<{
   data: SimulationResult[];
   colors: string[];
 }>();
@@ -59,7 +59,7 @@ const reduceDataPoints = (
 const chartData = computed(() => {
   const resultTimes = new Map<number, Map<string, number>>();
 
-  props.data.forEach((person) => {
+  data.forEach((person) => {
     const results = isAverage.value
       ? person.results.hist_values_average
       : person.results.hist_values_single;
@@ -94,9 +94,7 @@ const chartData = computed(() => {
   return reduceDataPoints(values);
 });
 
-const names = computed(() =>
-  props.data.map((person) => person.name),
-) as unknown as "time"[];
+const names = data.map((person) => person.name) as unknown as "time"[];
 </script>
 
 <template>
@@ -106,7 +104,7 @@ const names = computed(() =>
       :data="chartData"
       index="time"
       :categories="names"
-      :colors="colors"
+      :colors
       :showLegend="false"
       :customTooltip="HistogramCustomTooltip"
       :showXAxis="false"

@@ -96,7 +96,7 @@ const runSimulation = () => {
       eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
-      includeDnf: includeDnf.value.toString(), // Updated to match new naming
+      includeDnf: includeDnf.value.toString(),
       competitors: eventSelectedCompetitors.join(","),
     });
     const url = `/simulation?${queryParams.toString()}`;

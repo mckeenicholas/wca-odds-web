@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { BarChart } from "@/components/ui/chart-bar";
 import { SimulationResult } from "@/lib/types";
+import { computed } from "vue";
+import PercentageTooltip from "./PercentageTooltip.vue";
 
 const { data, colors, count } = defineProps<{
   data: SimulationResult[];
@@ -8,15 +10,17 @@ const { data, colors, count } = defineProps<{
   count: number;
 }>();
 
-const chartData = Array.from({ length: data.length }, (_, idx) => ({
-  name: idx + 1,
-  ...Object.fromEntries(
-    data.map((person) => [
-      person.name,
-      parseFloat(((person.results.rank_dist[idx] / count) * 100).toFixed(2)),
-    ]),
-  ),
-}));
+const chartData = computed(() =>
+  Array.from({ length: data.length }, (_, idx) => ({
+    name: idx + 1,
+    ...Object.fromEntries(
+      data.map((person) => [
+        person.name,
+        parseFloat(((person.results.rank_dist[idx] / count) * 100).toFixed(2)),
+      ]),
+    ),
+  })),
+);
 
 const names = data.map((person) => person.name) as "name"[];
 </script>
@@ -27,9 +31,10 @@ const names = data.map((person) => person.name) as "name"[];
       :data="chartData"
       index="name"
       :categories="names"
-      :colors="colors"
+      :colors
       :type="'stacked'"
       :showLegend="false"
+      :customTooltip="PercentageTooltip"
     />
   </div>
 </template>

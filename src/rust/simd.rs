@@ -132,16 +132,12 @@ pub fn simd_gen_skewnorm(
 }
 
 pub fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
-    // let max_1_2 = f32x4_max(v1, v2);
-    // let max_v128 = f32x4_max(max_1_2, v3);
-    let max_v128 = f32x4_max_n!(v1, v2, v3);
+    let max_v128 = f32x4_min_n!(v1, v2, v3);
 
     i32x4_to_slice(max_v128)
 }
 
 pub fn calc_wca_mean_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
-    // let sum_1_2 = f32x4_add(v1, v2);
-    // let sum_v128 = f32x4_add(sum_1_2, v3);
     let sum_v128 = f32x4_add_n!(v1, v2, v3);
     let mean_v128 = f32x4_div(sum_v128, f32x4_splat(3.0));
 
@@ -149,18 +145,9 @@ pub fn calc_wca_mean_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
 }
 
 pub fn calc_wca_average_5(v1: v128, v2: v128, v3: v128, v4: v128, v5: v128) -> [i32; 4] {
-    // let max_1_2 = f32x4_max(v1, v2);
-    // let max_3_4 = f32x4_max(v3, v4);
-    // let max_all = f32x4_max(max_1_2, f32x4_max(max_3_4, v5));
-
     let max_all = f32x4_max_n!(v1, v2, v3, v4, v5);
-
-    // let min_1_2 = f32x4_min(v1, v2);
-    // let min_3_4 = f32x4_min(v3, v4);
-    // let min_all = f32x4_min(min_1_2, f32x4_min(min_3_4, v5));
     let min_all = f32x4_min_n!(v1, v2, v3, v4, v5);
 
-    // let sum = f32x4_add(f32x4_add(f32x4_add(f32x4_add(v1, v2), v3), v4), v5);
     let sum = f32x4_add_n!(v1, v2, v3, v4, v5);
     let adjusted_sum = f32x4_sub(f32x4_sub(sum, max_all), min_all);
 
