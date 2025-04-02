@@ -86,7 +86,9 @@ watch(data, () => {
 
 const runSimulation = () => {
   if (data.value) {
-    const eventSelectedCompetitors = selectedCompetitors.value[selectedEventId.value]
+    const eventSelectedCompetitors = selectedCompetitors.value[
+      selectedEventId.value
+    ]
       .filter((item) => item.selected)
       .map((item) => item.id);
     const queryParams = new URLSearchParams({
@@ -94,7 +96,7 @@ const runSimulation = () => {
       eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
-      includeDnf: includeDnf.value.toString(),  // Updated to match new naming
+      includeDnf: includeDnf.value.toString(), // Updated to match new naming
       competitors: eventSelectedCompetitors.join(","),
     });
     const url = `/simulation?${queryParams.toString()}`;

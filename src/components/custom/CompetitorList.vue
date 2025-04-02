@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Icon } from "@iconify/vue";
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,16 +42,24 @@ const model = defineModel<number[][]>({ required: true });
         <Collapsible>
           <CollapsibleTrigger as-child>
             <div
-              class="flex justify-between p-2 cursor-pointer hover:bg-secondary rounded-md"
+              class="flex justify-between p-2 ps-1 cursor-pointer hover:bg-secondary rounded-md"
             >
               <div class="flex-1 text-left">
                 <div class="flex flex-row">
                   <div class="flex flex-col justify-center">
-                    <Icon
-                      icon="radix-icons:dot-filled"
-                      class="scale-150"
+                    <svg
                       :style="{ color: colors[personIdx] }"
-                    />
+                      width="25"
+                      height="25"
+                      viewBox="0 0 15 15"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M9.875 7.5C9.875 8.81168 8.81168 9.875 7.5 9.875C6.18832 9.875 5.125 8.81168 5.125 7.5C5.125 6.18832 6.18832 5.125 7.5 5.125C8.81168 5.125 9.875 6.18832 9.875 7.5Z"
+                        fill="currentColor"
+                      ></path>
+                    </svg>
                   </div>
                   <a
                     :href="`https://worldcubeassociation.org/persons/${competitorsList[personIdx]}`"

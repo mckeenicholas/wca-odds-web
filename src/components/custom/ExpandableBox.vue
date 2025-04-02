@@ -5,7 +5,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ref } from "vue";
-import { Icon } from "@iconify/vue";
+import { ChevronDown } from "lucide-vue-next";
 
 const { title } = defineProps<{ title: string }>();
 
@@ -21,10 +21,7 @@ const open = ref<boolean>(false);
             {{ title }}
           </div>
           <div class="flex flex-col place-content-center">
-            <Icon
-              icon="radix-icons:chevron-down"
-              :class="`transition-transform duration-500 ${open ? '' : 'rotate-180'}`"
-            />
+            <ChevronDown :class="`scale-75 transition-transform duration-450 ${open ? '' : '-rotate-180'}`" />
           </div>
         </div>
       </CollapsibleTrigger>

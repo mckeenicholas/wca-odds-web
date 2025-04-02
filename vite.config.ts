@@ -3,12 +3,15 @@ import vue from "@vitejs/plugin-vue";
 import tailwind from "tailwindcss";
 import autoprefixer from "autoprefixer";
 import path from "node:path";
+import { AcceptedPlugin } from "postcss";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   css: {
     postcss: {
-      plugins: [tailwind(), autoprefixer()],
+      // This is probably really, really bad, but I honeslty can't find a better
+      // way to do it, until the chart dependencies support tailwind v4
+      plugins: [tailwind() as AcceptedPlugin, autoprefixer()],
     },
   },
   plugins: [vue()],

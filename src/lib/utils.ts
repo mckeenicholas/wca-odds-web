@@ -63,4 +63,3 @@ export const toClockFormat = (centiseconds: number): string => {
     .substr(11, 11)
     .replace(/^[0:]*(?!\.)/g, "");
 };
-

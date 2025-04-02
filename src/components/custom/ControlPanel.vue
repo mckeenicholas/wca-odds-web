@@ -95,8 +95,8 @@ watch(includeDNFValue, (newValue) => {
       props.monthCount === 1 ? "month" : "months"
     }}</Label>
 
-    <Switch id="includeDNF" v-model="includeDNFValue" />
     <Label for="includeDNF">Include DNFs in Calculation</Label>
+    <Switch id="includeDNF" v-model="includeDNFValue" />
 
     <div class="flex flex-grow justify-end">
       <Button @click="() => emit('runSimulation')">Run Simulation</Button>

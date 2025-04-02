@@ -21,7 +21,7 @@ import ErrorDisplay from "@/components/custom/CompetitionError.vue";
 import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import CompetitorList from "@/components/custom/CompetitorList.vue";
 import { Button } from "@/components/ui/button";
-import { Icon } from "@iconify/vue";
+import { LoaderCircle } from "lucide-vue-next";
 
 const router = useRouter();
 const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
@@ -118,7 +118,10 @@ const recalculate = async () => {
       <ErrorDisplay :error="error" />
     </div>
 
-    <div v-else-if="simulation_results" class="min-w-[70vw]">
+    <div
+      v-else-if="simulation_results"
+      class="lg:min-w-[1000px] md:min-w-screen border-lg"
+    >
       <ResultsSummary
         :simulation-results="simulation_results"
         :colors="colors"
@@ -164,14 +167,8 @@ const recalculate = async () => {
           class="shadow-lg"
           :disabled="recalculateLoading"
         >
-          {{ recalculateLoading ? "Calculating..." : "Recalculate" }}
-          <Icon
-            v-if="recalculateLoading"
-            icon="svg-spinners:180-ring"
-            class="ml-2"
-            width="24"
-            height="24"
-          />
+          {{ recalculateLoading ? "Recalculating..." : "Recalculate" }}
+          <LoaderCircle v-show="recalculateLoading" class="animate-spin" />
         </Button>
       </div>
     </div>
