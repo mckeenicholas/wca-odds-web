@@ -22,7 +22,7 @@ const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<string>("");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
-const includeDNF = ref<boolean>(false);
+const includeDnf = ref<boolean>(false);
 
 const defaultShownNum = 64;
 const defaultSelectedNum = 16;
@@ -86,9 +86,7 @@ watch(data, () => {
 
 const runSimulation = () => {
   if (data.value) {
-    const eventSelectedCompetitors = selectedCompetitors.value[
-      selectedEventId.value
-    ]
+    const eventSelectedCompetitors = selectedCompetitors.value[selectedEventId.value]
       .filter((item) => item.selected)
       .map((item) => item.id);
     const queryParams = new URLSearchParams({
@@ -96,6 +94,7 @@ const runSimulation = () => {
       eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
+      includeDnf: includeDnf.value.toString(),  // Updated to match new naming
       competitors: eventSelectedCompetitors.join(","),
     });
     const url = `/simulation?${queryParams.toString()}`;
@@ -128,7 +127,7 @@ const eventIds = computed(() => {
           v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
-          v-model:include-dnf="includeDNF"
+          v-model:include-dnf="includeDnf"
           @run-simulation="runSimulation"
         />
       </div>

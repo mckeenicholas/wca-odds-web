@@ -14,6 +14,48 @@ const props = defineProps<{
 
 const isAverage = ref<boolean>(false);
 
+const reduceDataPoints = (
+  values: Array<Record<string, number>>,
+): Array<Record<string, number>> => {
+  const reduceBy = Math.ceil(Math.log2(values.length)) - 8;
+
+  if (reduceBy <= 0) {
+    return values;
+  }
+
+  const mergeFactor = Math.pow(2, reduceBy);
+
+  const chunkIndices = Array.from(
+    { length: Math.ceil(values.length / mergeFactor) },
+    (_, i) => i * mergeFactor,
+  );
+
+  return chunkIndices.map((startIndex) => {
+    const chunk = values.slice(startIndex, startIndex + mergeFactor);
+
+    const base = { time: chunk[0].time };
+
+    const allKeys = [
+      ...new Set(
+        chunk.flatMap((item) =>
+          Object.keys(item).filter((key) => key !== "time"),
+        ),
+      ),
+    ];
+
+    const averages = allKeys.reduce(
+      (acc, key) => ({
+        ...acc,
+        [key]:
+          chunk.reduce((sum, item) => sum + (item[key] || 0), 0) / mergeFactor,
+      }),
+      {},
+    );
+
+    return { ...base, ...averages };
+  });
+};
+
 const chartData = computed(() => {
   const resultTimes = new Map<number, Map<string, number>>();
 
@@ -49,35 +91,7 @@ const chartData = computed(() => {
     }))
     .sort((a, b) => a.time - b.time);
 
-  const reduceBy = Math.ceil(Math.log2(values.length)) - 8;
-
-  if (reduceBy < 0) {
-    return values;
-  }
-
-  const mergeFactor = Math.pow(2, reduceBy);
-
-  let output = [];
-
-  for (let i = 0; i < values.length; i += mergeFactor) {
-    const items = values.slice(i, i + mergeFactor);
-
-    let merged: Record<string, number> = {
-      time: items[0].time,
-    };
-
-    for (const item of items) {
-      for (const [key, value] of Object.entries(item)) {
-        if (key !== "time") {
-          merged[key] = (merged[key] || 0) + value / mergeFactor;
-        }
-      }
-    }
-
-    output.push(merged);
-  }
-
-  return output;
+  return reduceDataPoints(values);
 });
 
 const names = computed(() =>

@@ -15,7 +15,7 @@ const time = parseInt(props.title ?? "0") * 10;
 
 <template>
   <div class="match-backround p-2 rounded-md border-2">
-    {{ toClockFormat(time) }}
+    <p class="font-bold">{{ toClockFormat(time) }}</p>
     <div
       v-for="(item, key) in data"
       :key="key"

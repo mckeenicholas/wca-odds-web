@@ -26,6 +26,7 @@ const competitors = ref<Person[]>(
 const selectedEventId = ref<string>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
+const includeDnf = ref<boolean>(false);
 
 const fetchPersonsResult = async (): Promise<Person[]> => {
   if (input.value === "") {
@@ -151,6 +152,7 @@ const runSimulation = () => {
           v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
+          v-bind:include-dnf="includeDnf"
           v-on:run-simulation="runSimulation"
         />
       </div>

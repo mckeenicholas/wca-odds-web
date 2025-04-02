@@ -4,6 +4,12 @@ import { totalSolves } from "@/lib/utils";
 import { computed } from "vue";
 import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
 
+interface DataPoint {
+  time: number;
+  single: number;
+  average: number;
+}
+
 const props = defineProps<{
   histAverage: Map<number, number>;
   histSingle: Map<number, number>;
@@ -15,20 +21,24 @@ const avgCount = computed(() => totalSolves(props.histAverage));
 
 const data = computed(() =>
   [...new Set([...props.histSingle.keys(), ...props.histAverage.keys()])]
-    .map((time) => ({
-      time,
-      single: parseFloat(
+    .reduce((acc: DataPoint[], time) => {
+      const single = parseFloat(
         ((props.histSingle.get(time) || 0) / (solveCount.value / 100)).toFixed(
           4,
         ),
-      ),
-      average: parseFloat(
+      );
+      const average = parseFloat(
         ((props.histAverage.get(time) || 0) / (avgCount.value / 100)).toFixed(
           4,
         ),
-      ),
-    }))
-    .filter((item) => item.single > 0.0001 || item.average > 0.0001)
+      );
+
+      if (single > 0.0001 || average > 0.0001) {
+        acc.push({ time, single, average });
+      }
+
+      return acc;
+    }, [])
     .sort((a, b) => a.time - b.time),
 );
 </script>
