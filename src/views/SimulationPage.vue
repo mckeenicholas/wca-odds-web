@@ -23,8 +23,6 @@ import CompetitorList from "@/components/custom/CompetitorList.vue";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@iconify/vue";
 
-// TODO: Make charts update automatically
-
 const router = useRouter();
 const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
   router.currentRoute.value.query;
@@ -113,7 +111,7 @@ const recalculate = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col items-center justify-center mb-2">
+  <div class="content-main flex flex-col items-center justify-center mb-2">
     <CompetitionHeader :name="name as string" />
 
     <div v-if="error">

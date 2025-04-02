@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PieChart from "@/components/charts/PieChart.vue";
 import { SimulationResult, SupportedWCAEvent, eventNames } from "@/lib/types";
+import { toClockFormat } from "@/lib/utils";
 
 const { simulationResults, colors, numSimulations, event } = defineProps<{
   simulationResults: SimulationResult[];
@@ -27,7 +28,7 @@ const podiumChance = (
   100
 ).toFixed(2);
 
-const expectedAvg = (resultsSorted[0].results.mean_no_dnf / 100).toFixed(2);
+const expectedAvg = toClockFormat(resultsSorted[0].results.mean_no_dnf);
 </script>
 
 <template>
@@ -46,7 +47,7 @@ const expectedAvg = (resultsSorted[0].results.mean_no_dnf / 100).toFixed(2);
             <li>{{ winChance }}% chance of winning</li>
             <li>{{ podiumChance }}% chance of podium finish</li>
             <li>Average rank of {{ avgRank }}</li>
-            <li>Expected average of {{ expectedAvg }} seconds</li>
+            <li>Expected average of {{ expectedAvg }}</li>
           </ul>
         </div>
       </div>

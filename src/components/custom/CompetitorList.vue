@@ -77,7 +77,8 @@ const model = defineModel<number[][]>({ required: true });
           <CollapsibleContent class="space-y-2">
             <IndividualHistogram
               :color="colors[personIdx]"
-              :hist="result.results.hist_values_single"
+              :histSingle="result.results.hist_values_single"
+              :histAverage="result.results.hist_values_average"
               :simulations="numSimulations * eventAttempts[event]"
               class="border rounded-md m-2 p-2"
             />

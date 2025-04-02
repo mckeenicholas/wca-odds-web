@@ -50,4 +50,8 @@ const mode = useColorMode();
   background: hsl(var(--muted-foreground));
   border-radius: 4px;
 }
+
+html {
+  scrollbar-gutter: stable;
+}
 </style>

@@ -15,7 +15,10 @@ const vueQueryPluginOptions: VueQueryPluginOptions = {
   },
 };
 
-createApp(App)
+const app = createApp(App)
   .use(router)
-  .use(VueQueryPlugin, vueQueryPluginOptions)
-  .mount("#app");
+  .use(VueQueryPlugin, vueQueryPluginOptions);
+
+app.config.performance = true;
+
+app.mount("#app");

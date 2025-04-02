@@ -5,6 +5,7 @@ use crate::simd::{
 use crate::simulation::{CompetitorStats, SimulationContext, SimulationResult};
 use core::arch::wasm32::v128;
 use std::collections::HashMap;
+use std::iter;
 
 pub trait EventSimulation {
     fn generate_solves(
@@ -25,8 +26,14 @@ pub trait EventSimulation {
     ) -> [i32; 4] {
         let solves: Vec<v128> = self.generate_solves(competitor_data, stats, context);
 
-        for &solve in &solves {
+        for (&solve, &entered) in iter::zip(&solves, competitor_data) {
             let solve_values = i32x4_to_slice(solve);
+
+            // For now, dont include entered times in single histogram
+            if entered != 0 {
+                continue;
+            }
+
             self.add_to_histogram(
                 &solve_values,
                 &mut result.hist_values_single,

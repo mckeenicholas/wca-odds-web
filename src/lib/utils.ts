@@ -49,3 +49,17 @@ export const generateColors = (num: number) => {
 export const totalSolves = (results: Map<number, number>) => {
   return Array.from(results.values()).reduce((sum, count) => sum + count, 0);
 };
+
+export const toClockFormat = (centiseconds: number): string => {
+  if (centiseconds === -1) return "DNF";
+  if (centiseconds === -2) return "DNS";
+  if (!Number.isFinite(centiseconds)) {
+    throw new Error(
+      `Invalid centiseconds, expected positive number, got ${centiseconds}.`,
+    );
+  }
+  return new Date(centiseconds * 10)
+    .toISOString()
+    .substr(11, 11)
+    .replace(/^[0:]*(?!\.)/g, "");
+};

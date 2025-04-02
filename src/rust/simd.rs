@@ -1,6 +1,6 @@
 use core::arch::wasm32::{
-    f32x4, f32x4_add, f32x4_div, f32x4_gt, f32x4_max, f32x4_min, f32x4_mul, f32x4_neg, f32x4_splat,
-    f32x4_sub, i32x4_extract_lane, i32x4_splat, i32x4_trunc_sat_f32x4, v128, v128_bitselect,
+    f32x4, f32x4_add, f32x4_div, f32x4_gt, f32x4_mul, f32x4_neg, f32x4_splat, f32x4_sub,
+    i32x4_extract_lane, i32x4_splat, i32x4_trunc_sat_f32x4, v128, v128_bitselect,
 };
 use rand::{rngs::ThreadRng, Rng};
 use rand_distr::{Distribution, Normal};
@@ -8,6 +8,36 @@ use rand_distr::{Distribution, Normal};
 use crate::simulation::CompetitorStats;
 
 pub const DNF_TEMP_VALUE: i32 = 59000;
+
+macro_rules! f32x4_max_n {
+    ($vec:expr) => {
+        $vec
+    };
+
+    ($vec:expr, $($rest:expr),+) => {
+        ::core::arch::wasm32::f32x4_max($vec, f32x4_max_n!($($rest),+))
+    };
+}
+
+macro_rules! f32x4_min_n {
+    ($vec:expr) => {
+        $vec
+    };
+
+    ($vec:expr, $($rest:expr),+) => {
+        ::core::arch::wasm32::f32x4_min($vec, f32x4_min_n!($($rest),+))
+    };
+}
+
+macro_rules! f32x4_add_n {
+    ($vec:expr) => {
+        $vec
+    };
+
+    ($vec:expr, $($rest:expr),+) => {
+        ::core::arch::wasm32::f32x4_add($vec, f32x4_add_n!($($rest),+))
+    };
+}
 
 pub fn generate_skewnorm_vec(
     count: usize,
@@ -102,30 +132,36 @@ pub fn simd_gen_skewnorm(
 }
 
 pub fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
-    let max_1_2 = f32x4_max(v1, v2);
-    let max_v128 = f32x4_max(max_1_2, v3);
+    // let max_1_2 = f32x4_max(v1, v2);
+    // let max_v128 = f32x4_max(max_1_2, v3);
+    let max_v128 = f32x4_max_n!(v1, v2, v3);
 
     i32x4_to_slice(max_v128)
 }
 
 pub fn calc_wca_mean_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
-    let sum_1_2 = f32x4_add(v1, v2);
-    let sum_v128 = f32x4_add(sum_1_2, v3);
+    // let sum_1_2 = f32x4_add(v1, v2);
+    // let sum_v128 = f32x4_add(sum_1_2, v3);
+    let sum_v128 = f32x4_add_n!(v1, v2, v3);
     let mean_v128 = f32x4_div(sum_v128, f32x4_splat(3.0));
 
     i32x4_to_slice(mean_v128)
 }
 
 pub fn calc_wca_average_5(v1: v128, v2: v128, v3: v128, v4: v128, v5: v128) -> [i32; 4] {
-    let max_1_2 = f32x4_max(v1, v2);
-    let max_3_4 = f32x4_max(v3, v4);
-    let max_all = f32x4_max(max_1_2, f32x4_max(max_3_4, v5));
+    // let max_1_2 = f32x4_max(v1, v2);
+    // let max_3_4 = f32x4_max(v3, v4);
+    // let max_all = f32x4_max(max_1_2, f32x4_max(max_3_4, v5));
 
-    let min_1_2 = f32x4_min(v1, v2);
-    let min_3_4 = f32x4_min(v3, v4);
-    let min_all = f32x4_min(min_1_2, f32x4_min(min_3_4, v5));
+    let max_all = f32x4_max_n!(v1, v2, v3, v4, v5);
 
-    let sum = f32x4_add(f32x4_add(f32x4_add(f32x4_add(v1, v2), v3), v4), v5);
+    // let min_1_2 = f32x4_min(v1, v2);
+    // let min_3_4 = f32x4_min(v3, v4);
+    // let min_all = f32x4_min(min_1_2, f32x4_min(min_3_4, v5));
+    let min_all = f32x4_min_n!(v1, v2, v3, v4, v5);
+
+    // let sum = f32x4_add(f32x4_add(f32x4_add(f32x4_add(v1, v2), v3), v4), v5);
+    let sum = f32x4_add_n!(v1, v2, v3, v4, v5);
     let adjusted_sum = f32x4_sub(f32x4_sub(sum, max_all), min_all);
 
     i32x4_to_slice(f32x4_div(adjusted_sum, f32x4_splat(3.0)))

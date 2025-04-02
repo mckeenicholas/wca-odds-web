@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Input } from "@/components/ui/input";
+import { toClockFormat } from "@/lib/utils";
 import { onMounted, ref, watch } from "vue";
 
 const model = defineModel<number>({ required: true });
@@ -31,20 +32,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 const toInt = (input: string): number | null => {
   const int = parseInt(input);
   return isNaN(int) ? null : int;
-};
-
-const toClockFormat = (centiseconds: number): string => {
-  if (centiseconds === -1) return "DNF";
-  if (centiseconds === -2) return "DNS";
-  if (!Number.isFinite(centiseconds)) {
-    throw new Error(
-      `Invalid centiseconds, expected positive number, got ${centiseconds}.`,
-    );
-  }
-  return new Date(centiseconds * 10)
-    .toISOString()
-    .substr(11, 11)
-    .replace(/^[0:]*(?!\.)/g, "");
 };
 
 const reformatInput = (input: string): string => {
