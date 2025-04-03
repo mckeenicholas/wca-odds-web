@@ -90,6 +90,7 @@ export interface wcif {
 export interface SimulationResult {
   name: string;
   results: ResultStats;
+  sample_size: number;
 }
 
 export interface ResultStats {

@@ -37,9 +37,19 @@ const mode = useColorMode();
     </div>
     <RouterView />
   </main>
-  <footer class="fixed bottom-2 right-2 text-sm text-muted-foreground flex items-center font-semibold">
-    <span class="mr-3">Made by <a class="underline hover:text-gray-400" href="https://nmckee.org">Nicholas McKee</a></span>
-    <a href="https://github.com/mckeenicholas/wca-odds-web" class="hover:text-gray-400 mr-3">
+  <footer
+    class="fixed bottom-2 right-2 text-sm text-muted-foreground flex items-center font-semibold"
+  >
+    <span class="mr-3"
+      >Made by
+      <a class="underline hover:text-gray-400" href="https://nmckee.org"
+        >Nicholas McKee</a
+      ></span
+    >
+    <a
+      href="https://github.com/mckeenicholas/wca-odds-web"
+      class="hover:text-gray-400 mr-3"
+    >
       <Github class="h-4 w-4" />
     </a>
     <span>v0.2.0</span>

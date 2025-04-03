@@ -11,6 +11,15 @@ import {
   SupportedWCAEvent,
 } from "@/lib/types";
 import ResultEntryField from "@/components/custom/ResultEntryField.vue";
+import { CircleAlert } from "lucide-vue-next";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+const lowDataWarningThreshold = 12 as const;
 
 const { simulationResults, colors, competitorsList, numSimulations, event } =
   defineProps<{
@@ -68,6 +77,19 @@ const model = defineModel<number[][]>({ required: true });
                   >
                     {{ result.name }}
                   </a>
+                  <TooltipProvider :delayDuration="250">
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <CircleAlert
+                          v-show="result.sample_size < lowDataWarningThreshold"
+                          class="scale-75 ms-1 text-red-600"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Warning: User has low data
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
               <div class="flex-1 text-center">
