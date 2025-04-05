@@ -34,7 +34,7 @@ const getNumericValue = (val: string | number): number => {
 </script>
 
 <template>
-  <div class="match-backround p-2 rounded-md border-2">
+  <div class="match-background p-2 rounded-md border-2">
     <p v-if="title" class="font-bold">{{ toPlaceString(parseInt(title)) }}</p>
     <div v-for="(item, key) in data" :key class="flex justify-between text-sm">
       <div class="flex items-center">
@@ -62,7 +62,7 @@ const getNumericValue = (val: string | number): number => {
 </template>
 
 <style lang="css">
-.match-backround {
+.match-background {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }

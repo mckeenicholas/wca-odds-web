@@ -30,7 +30,7 @@ pub trait EventSimulation {
         for (&solve, &entered) in iter::zip(&solves, competitor_data) {
             let solve_values = i32x4_to_slice(solve);
 
-            // For now, dont include entered times in single histogram
+            // For now, don't include entered times in single histogram
             if entered != 0 {
                 continue;
             }

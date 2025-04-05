@@ -10,7 +10,7 @@ const timeDisplayValue = renderTime(timeRawValue, isFmc);
 </script>
 
 <template>
-  <div class="match-backround p-2 rounded-md border-2">
+  <div class="match-background p-2 rounded-md border-2">
     <p class="font-bold">{{ timeDisplayValue }}</p>
     <div v-for="(item, key) in data" :key class="flex justify-between text-sm">
       <div class="flex items-center">
@@ -34,7 +34,7 @@ const timeDisplayValue = renderTime(timeRawValue, isFmc);
 </template>
 
 <style lang="css">
-.match-backround {
+.match-background {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
