@@ -1,59 +1,89 @@
 <script setup lang="ts">
 import { Input } from "@/components/ui/input";
+import { SupportedWCAEvent } from "@/lib/types";
 import { toClockFormat } from "@/lib/utils";
 import { onMounted, ref, watch } from "vue";
 
+const { event } = defineProps<{
+  event: SupportedWCAEvent;
+}>();
 const model = defineModel<number>({ required: true });
-
 const inputValue = ref<string>("");
 
-onMounted(() => {
-  inputValue.value = toClockFormat(model.value);
-});
+const isFMC = event === "333fm";
 
-// We use a watch here instead including this in handleKeydown as we need
-// to ensure the model value is updated before executing.
+const formatInput = (input: string): string => {
+  if (isFMC) {
+    return input.replace(/\D/g, "");
+  }
+
+  const number = parseInt(input.replace(/\D/g, ""));
+  if (isNaN(number) || number === 0) return "";
+
+  const str = number.toString().padStart(8, "0").slice(-8);
+  const [hh, mm, ss, cc] = [
+    str.slice(0, 2),
+    str.slice(2, 4),
+    str.slice(4, 6),
+    str.slice(6, 8),
+  ];
+  return `${hh}:${mm}:${ss}.${cc}`.replace(/^[0:]*(?!\.)/g, "");
+};
+
+const toCentiseconds = (input: string): number => {
+  if (input === "") return 0;
+  if (input.toLowerCase() === "dnf") return -1;
+
+  if (isFMC) {
+    const moves = parseInt(input.replace(/\D/g, "")) || 0;
+    return moves * 100;
+  }
+
+  const digits = input.replace(/\D/g, "");
+  if (!digits) return 0;
+
+  const num = parseInt(digits);
+  const hh = Math.floor(num / 1000000) * 360000;
+  const mm = Math.floor((num % 1000000) / 10000) * 6000;
+  const ss = Math.floor((num % 10000) / 100) * 100;
+  const cc = num % 100;
+
+  return hh + mm + ss + cc;
+};
+
+const updateInputFromModel = (value: number) => {
+  if (value === -1) {
+    inputValue.value = "DNF";
+  } else if (value === 0) {
+    inputValue.value = "";
+  } else if (isFMC) {
+    inputValue.value = Math.floor(value / 100).toString();
+  } else {
+    const formatted = toClockFormat(value);
+    inputValue.value = formatted;
+  }
+};
+
+onMounted(() => updateInputFromModel(model.value));
+
+watch(() => model.value, updateInputFromModel, { flush: "post" });
+
 watch(inputValue, (value) => {
-  if (value != "DNF") {
-    inputValue.value = reformatInput(value);
-    model.value = toCentiseconds(inputValue.value);
+  if (value === "DNF") {
+    model.value = -1;
+  } else {
+    const formattedInput = formatInput(value);
+    inputValue.value = formattedInput;
+    model.value = toCentiseconds(formattedInput);
   }
 });
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (["d", "D"].includes(event.key)) {
     event.preventDefault();
-
     inputValue.value = "DNF";
     model.value = -1;
   }
-};
-
-const toInt = (input: string): number | null => {
-  const int = parseInt(input);
-  return isNaN(int) ? null : int;
-};
-
-const reformatInput = (input: string): string => {
-  const number = toInt(input.replace(/\D/g, "")) || 0;
-  if (number === 0) return "";
-  const str = "00000000" + number.toString().slice(0, 8);
-  const match = str.match(/(\d\d)(\d\d)(\d\d)(\d\d)$/);
-  if (!match) return "";
-  const [, hh, mm, ss, cc] = match;
-  return `${hh}:${mm}:${ss}.${cc}`.replace(/^[0:]*(?!\.)/g, "");
-};
-
-const toCentiseconds = (input: string): number => {
-  if (input === "") return 0;
-  if (input === "DNF") return -1;
-  const num = toInt(input.replace(/\D/g, "")) || 0;
-  return (
-    Math.floor(num / 1000000) * 360000 +
-    Math.floor((num % 1000000) / 10000) * 6000 +
-    Math.floor((num % 10000) / 100) * 100 +
-    (num % 100)
-  );
 };
 </script>
 

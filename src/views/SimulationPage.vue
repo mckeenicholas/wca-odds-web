@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { onMounted, ref, watch, onUnmounted, computed } from "vue";
+import { onMounted, ref, onUnmounted, computed } from "vue";
+import { cloneDeep, isEqual } from "lodash-es";
 import {
   eventAttempts,
   eventNames,
@@ -18,8 +19,8 @@ import RankHistogram from "@/components/charts/RankHistogram.vue";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
 import CompetitionHeader from "@/components/custom/CompetitionHeader.vue";
 import ErrorDisplay from "@/components/custom/CompetitionError.vue";
-import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import CompetitorList from "@/components/custom/CompetitorList.vue";
+import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-vue-next";
 
@@ -42,28 +43,35 @@ const error = ref<string>("");
 const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const recalculateLoading = ref<boolean>(false);
-const inputtedTimesModified = ref<boolean>(false);
 const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
 
 const attemptsCount = computed(() => eventAttempts[event]);
 
 const inputtedTimes = ref<number[][]>(
   Array.from({ length: competitorsList.length }, () =>
-    Array.from({ length: attemptsCount.value + 1 }, () => 0),
+    Array.from({ length: attemptsCount.value }, () => 0),
   ),
 );
 
-watch(
-  inputtedTimes,
-  () => {
-    inputtedTimesModified.value = true;
-  },
-  { deep: true },
+const inputtedTimesPrev = ref<number[][]>(
+  Array.from({ length: competitorsList.length }, () =>
+    Array.from({ length: attemptsCount.value }, () => 0),
+  ),
 );
+
+const inputtedTimesModified = computed(() => {
+  return !isEqual(inputtedTimes.value, inputtedTimesPrev.value);
+});
+
+const hasNonZeroTimes = computed(() => {
+  return inputtedTimes.value.some((competitor) =>
+    competitor.some((time) => time !== 0),
+  );
+});
 
 const runSimulation = async () => {
   try {
-    return await runSimulationInWorker(
+    const results = await runSimulationInWorker(
       competitorsList,
       event,
       monthCutoffNum,
@@ -71,6 +79,12 @@ const runSimulation = async () => {
       includeDNF,
       inputtedTimes.value,
     );
+
+    if (results) {
+      inputtedTimesPrev.value = cloneDeep(inputtedTimes.value);
+    }
+
+    return results;
   } catch (err) {
     console.error("Error in simulation:", err);
     error.value = err instanceof Error ? err.message : "Unknown error occurred";
@@ -102,37 +116,45 @@ const recalculate = async () => {
     const results = await runSimulation();
     if (results) {
       simulation_results.value = results;
-      inputtedTimesModified.value = false;
     }
   } finally {
     recalculateLoading.value = false;
   }
 };
+
+const reset = () => {
+  const newTimes = Array.from({ length: competitorsList.length }, () =>
+    Array.from({ length: attemptsCount.value }, () => 0),
+  );
+
+  inputtedTimes.value.splice(0, inputtedTimes.value.length, ...newTimes);
+};
 </script>
 
 <template>
-  <div class="content-main flex flex-col items-center justify-center mb-2">
+  <div class="content-main flex flex-col items-center justify-center mx-2">
     <CompetitionHeader :name="name as string" />
 
     <div v-if="error">
-      <ErrorDisplay :error="error" />
+      <ErrorDisplay :error />
     </div>
 
     <div
       v-else-if="simulation_results"
-      class="lg:min-w-[1000px] md:min-w-screen border-lg"
+      class="lg:min-w-[1000px] md:min-w-full sm:min-w-full border-lg"
     >
       <ResultsSummary
         :simulation-results="simulation_results"
-        :colors="colors"
+        :colors
         :num-simulations="numSimulations"
-        :event="event"
+        :event
       />
 
       <ExpandableBox title="Results Histogram" class="mb-2">
         <FullHistogram
           :data="simulation_results"
-          :colors="colors"
+          :event
+          :colors
           :key="selected.filter(Boolean).length"
         />
       </ExpandableBox>
@@ -140,36 +162,36 @@ const recalculate = async () => {
       <ExpandableBox title="Predicted Ranks">
         <RankHistogram
           :data="simulation_results"
-          :colors="colors"
+          :colors
           :count="numSimulations"
           :key="selected.filter(Boolean).length"
         />
       </ExpandableBox>
-
       <CompetitorList
         :simulation-results="simulation_results"
-        :colors="colors"
+        :colors
         :competitors-list="competitorsList"
         :num-simulations="numSimulations"
-        :event="event"
+        :event
         v-model="inputtedTimes"
       />
 
-      <div
-        class="fixed bottom-4 right-4 z-50 transition-opacity duration-300 ease-in-out"
-        :class="{
-          'opacity-0': !inputtedTimesModified,
-          'opacity-100': inputtedTimesModified,
-        }"
-      >
-        <Button
-          @click="recalculate"
-          class="shadow-lg"
-          :disabled="recalculateLoading"
-        >
-          {{ recalculateLoading ? "Recalculating..." : "Recalculate" }}
-          <LoaderCircle v-show="recalculateLoading" class="animate-spin" />
-        </Button>
+      <div class="fixed bottom-4 right-4 z-50 flex">
+        <Transition name="fade">
+          <Button @click="reset" class="me-2" v-if="hasNonZeroTimes"
+            >Reset</Button
+          >
+        </Transition>
+        <Transition name="fade">
+          <Button
+            @click="recalculate"
+            :disabled="recalculateLoading"
+            v-if="inputtedTimesModified"
+          >
+            {{ recalculateLoading ? "Recalculating..." : "Recalculate" }}
+            <LoaderCircle v-show="recalculateLoading" class="animate-spin" />
+          </Button>
+        </Transition>
       </div>
     </div>
 
@@ -178,3 +200,15 @@ const recalculate = async () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

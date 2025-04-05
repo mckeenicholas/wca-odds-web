@@ -4,6 +4,8 @@ use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::event::{EventType, Mo3Event};
+
 #[derive(Serialize, Debug)]
 pub struct CompetitionResult {
     pub id: String,
@@ -121,7 +123,7 @@ fn merge_competition_results(
 
 async fn fetch_competitor_data(
     competitor: &str,
-    event: &str,
+    event: EventType,
     client: &Client,
 ) -> Result<(String, Vec<CompetitionResult>), &'static str> {
     let url = format!(
@@ -135,32 +137,44 @@ async fn fetch_competitor_data(
     Ok((response.name, results))
 }
 
-fn extract_competitor_results(response: &RequestPerson, event: &str) -> Vec<CompetitionResult> {
+fn extract_competitor_results(
+    response: &RequestPerson,
+    event: EventType,
+) -> Vec<CompetitionResult> {
     response
         .results
         .iter()
         .filter_map(|(comp_id, rounds)| {
-            rounds.get(event).map(|event_data| CompetitionResult {
-                id: comp_id.to_string(),
-                results: event_data
-                    .iter()
-                    .flat_map(|round| &round.solves)
-                    .cloned()
-                    .collect(),
-            })
+            rounds
+                .get(event.to_event_id())
+                .map(|event_data| CompetitionResult {
+                    id: comp_id.to_string(),
+                    results: event_data
+                        .iter()
+                        .flat_map(|round| &round.solves)
+                        .map(|solve| {
+                            if event == EventType::Mo3(Mo3Event::F333) {
+                                solve * 100
+                            } else {
+                                *solve
+                            }
+                        })
+                        .collect(),
+                })
         })
         .collect()
 }
 
+// Update the function signature and convert event to string only when needed
 pub async fn get_solve_data(
     competitors: Vec<String>,
-    event: String,
+    event: EventType,
 ) -> Result<Vec<PersonResult>, &'static str> {
     let client = reqwest::Client::new();
 
     let futures: Vec<_> = competitors
         .iter()
-        .map(|competitor| fetch_competitor_data(competitor, &event, &client))
+        .map(|competitor| fetch_competitor_data(competitor, event, &client))
         .collect();
 
     let results = join_all(futures).await;

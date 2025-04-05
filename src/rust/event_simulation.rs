@@ -1,6 +1,7 @@
+use crate::event::Mo3Event;
 use crate::simd::{
     calc_wca_average_5, calc_wca_best_3, calc_wca_mean_3, generate_skewnorm_vec, i32x4_to_slice,
-    DNF_TEMP_VALUE,
+    i32x4_truncate_down_100, DNF_TEMP_VALUE,
 };
 use crate::simulation::{CompetitorStats, SimulationContext, SimulationResult};
 use core::arch::wasm32::v128;
@@ -82,14 +83,13 @@ impl EventSimulation for Ao5Simulation {
         stats: &CompetitorStats,
         context: &mut SimulationContext,
     ) -> Vec<v128> {
-        let results = generate_skewnorm_vec(
+        generate_skewnorm_vec(
             5,
             stats,
             context.rng,
             context.config.include_dnf,
             competitor_data,
-        );
-        results.to_vec()
+        )
     }
 
     fn calculate_result(&self, solves: &[v128]) -> [i32; 4] {
@@ -98,7 +98,9 @@ impl EventSimulation for Ao5Simulation {
 }
 
 // Mean of 3 simulation
-pub struct Mo3Simulation;
+pub struct Mo3Simulation {
+    pub(crate) event: Mo3Event,
+}
 
 impl EventSimulation for Mo3Simulation {
     fn generate_solves(
@@ -114,7 +116,15 @@ impl EventSimulation for Mo3Simulation {
             context.config.include_dnf,
             competitor_data,
         );
-        results.to_vec()
+
+        if self.event == Mo3Event::F333 {
+            results
+                .into_iter()
+                .map(|solve_set| i32x4_truncate_down_100(solve_set))
+                .collect()
+        } else {
+            results
+        }
     }
 
     fn calculate_result(&self, solves: &[v128]) -> [i32; 4] {
@@ -132,14 +142,13 @@ impl EventSimulation for Bo3Simulation {
         stats: &CompetitorStats,
         context: &mut SimulationContext,
     ) -> Vec<v128> {
-        let results = generate_skewnorm_vec(
+        generate_skewnorm_vec(
             3,
             stats,
             context.rng,
             context.config.include_dnf,
             competitor_data,
-        );
-        results.to_vec()
+        )
     }
 
     fn calculate_result(&self, solves: &[v128]) -> [i32; 4] {

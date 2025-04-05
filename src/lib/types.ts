@@ -64,7 +64,7 @@ interface Registration {
   isCompeting: boolean;
 }
 
-interface Person {
+export interface Person {
   name: string;
   wcaId: string;
   countryIso2: string;
@@ -102,6 +102,16 @@ export interface ResultStats {
   rank_dist: number[];
   hist_values_single: Map<number, number>;
   hist_values_average: Map<number, number>;
+}
+
+export interface ChartTooltipProps {
+  title?: string;
+  data: {
+    name: string;
+    color: string;
+    value: number;
+  }[];
+  isFmc?: boolean;
 }
 
 export interface SimulationWorkerMessage {

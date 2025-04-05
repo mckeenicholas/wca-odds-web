@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -7,36 +6,17 @@ use web_sys::js_sys::Promise;
 
 mod calc;
 mod data;
+mod event;
 mod event_simulation;
 mod simd;
 mod simulation;
 
 use data::{get_competition_data, get_solve_data, PersonResult};
+use event::{Ao5Event, EventType};
 use simulation::{run_simulations, SimulationResult};
 
 thread_local! {
     static APP_STATE: AppState = AppState::new();
-}
-
-lazy_static! {
-    static ref EVENT_MAPPINGS: HashMap<&'static str, EventType> = HashMap::from([
-        ("222", EventType::Ao5),
-        ("333", EventType::Ao5),
-        ("444", EventType::Ao5),
-        ("555", EventType::Ao5),
-        ("333oh", EventType::Ao5),
-        ("skewb", EventType::Ao5),
-        ("pyram", EventType::Ao5),
-        ("minx", EventType::Ao5),
-        ("clock", EventType::Ao5),
-        ("sq1", EventType::Ao5),
-        ("666", EventType::Mo3),
-        ("777", EventType::Mo3),
-        ("333fm", EventType::Mo3),
-        ("333bf", EventType::Bo3),
-        ("444bf", EventType::Bo3),
-        ("555bf", EventType::Bo3),
-    ]);
 }
 
 #[derive(Debug)]
@@ -56,7 +36,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             competitors: RefCell::new(vec![]),
-            event: RefCell::new(EventType::Ao5),
+            event: RefCell::new(EventType::Ao5(Ao5Event::S333)),
         }
     }
 
@@ -86,27 +66,6 @@ impl AppState {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-pub enum EventType {
-    Ao5,
-    Mo3,
-    Bo3,
-}
-
-impl EventType {
-    fn from_event_id(event_id: &str) -> Option<Self> {
-        EVENT_MAPPINGS.get(event_id).copied()
-    }
-
-    fn num_attempts(&self) -> usize {
-        match self {
-            Self::Ao5 => 5,
-            Self::Mo3 => 3,
-            Self::Bo3 => 3,
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DatedCompetitionResult {
     pub date: i64,
@@ -132,20 +91,18 @@ macro_rules! console_log {
 pub fn load_data(competitors: Vec<String>, event_str: String, month_cutoff: i32) -> Promise {
     let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
 
-    // Set the event type immediately
     APP_STATE.with(|state| {
         state.set_event(event_type);
     });
 
     let future = async move {
-        let parsed_data = fetch_and_join(competitors, event_str, month_cutoff)
+        let parsed_data = fetch_and_join(competitors, event_type, month_cutoff)
             .await
             .map_err(|e| {
                 console_log!("Error fetching and joining data: {:?}", e);
                 serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()
             })?;
 
-        // Update the results in the app state
         APP_STATE.with(|state| {
             state.set_competitors(parsed_data);
         });
@@ -173,12 +130,6 @@ pub fn run_simulation(
             .iter_mut()
             .zip(entered_times)
             .for_each(|(ref mut competitor, times)| {
-                assert!(
-                    times.len() != state.get_event().num_attempts(),
-                    "Invalid number of times for competitor: {}.",
-                    competitor.name
-                );
-
                 competitor.entered_results = times;
             });
 
@@ -231,7 +182,7 @@ fn join_data(competitions: HashMap<String, i64>, results: Vec<PersonResult>) -> 
 
 pub async fn fetch_and_join(
     competitors: Vec<String>,
-    event: String,
+    event: EventType,
     month_cutoff: i32,
 ) -> Result<Vec<Competitor>, &'static str> {
     let competitions = get_competition_data(month_cutoff).await?;

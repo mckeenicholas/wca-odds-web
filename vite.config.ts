@@ -10,7 +10,8 @@ export default defineConfig({
   css: {
     postcss: {
       // This is probably really, really bad, but I honeslty can't find a better
-      // way to do it, until the chart dependencies support tailwind v4
+      // way to do it, and the app wont build otherwise until the chart dependencies
+      // are updated to support tailwind v4
       plugins: [tailwind() as AcceptedPlugin, autoprefixer()],
     },
   },

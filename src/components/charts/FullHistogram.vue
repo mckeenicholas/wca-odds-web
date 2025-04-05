@@ -1,16 +1,29 @@
 <script setup lang="ts">
 import { AreaChart } from "@/components/ui/chart-area";
-import { SimulationResult } from "@/lib/types";
-import { totalSolves } from "@/lib/utils";
+import {
+  SimulationResult,
+  SupportedWCAEvent,
+  ChartTooltipProps,
+} from "@/lib/types";
+import { totalSolves, renderTime } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
-import { ref, computed } from "vue";
+import { ref, computed, h } from "vue";
 import { Label } from "../ui/label";
 import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
 
-const props = defineProps<{
+const { data, event, colors } = defineProps<{
   data: SimulationResult[];
+  event: SupportedWCAEvent;
   colors: string[];
 }>();
+
+const histogramTooltip = computed(() => {
+  return (props: ChartTooltipProps) =>
+    h(HistogramCustomTooltip, {
+      ...props,
+      isFmc: event === "333fm",
+    });
+});
 
 const isAverage = ref<boolean>(false);
 
@@ -59,12 +72,12 @@ const reduceDataPoints = (
 const chartData = computed(() => {
   const resultTimes = new Map<number, Map<string, number>>();
 
-  props.data.forEach((person) => {
+  data.forEach((person) => {
     const results = isAverage.value
       ? person.results.hist_values_average
       : person.results.hist_values_single;
 
-    [...results].forEach(([key, time]) => {
+    [...results].forEach(([key, occurrences]) => {
       const name = person.name;
 
       if (!resultTimes.has(key)) {
@@ -79,7 +92,7 @@ const chartData = computed(() => {
         solveCount == 0
           ? 0
           : (timesMap.get(name) || 0) +
-              parseFloat((time / (solveCount / 100)).toFixed(4)),
+              parseFloat((occurrences / (solveCount / 100)).toFixed(4)),
       );
     });
   });
@@ -94,9 +107,7 @@ const chartData = computed(() => {
   return reduceDataPoints(values);
 });
 
-const names = computed(() =>
-  props.data.map((person) => person.name),
-) as unknown as "time"[];
+const names = data.map((person) => person.name) as unknown as "time"[];
 </script>
 
 <template>
@@ -106,11 +117,15 @@ const names = computed(() =>
       :data="chartData"
       index="time"
       :categories="names"
-      :colors="colors"
+      :colors
       :showLegend="false"
-      :customTooltip="HistogramCustomTooltip"
-      :showXAxis="false"
+      :customTooltip="histogramTooltip"
+      :showXAxis="true"
       :yFormatter="(value) => `${value}%`"
+      :xFormatter="
+        (value) =>
+          renderTime(chartData[value as number].time * 10, event === '333fm')
+      "
     />
     <div class="ms-8 mt-2 flex items-center">
       <Label for="isSingle">Single</Label>

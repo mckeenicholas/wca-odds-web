@@ -86,7 +86,8 @@ const model = defineModel<number[][]>({ required: true });
                         />
                       </TooltipTrigger>
                       <TooltipContent>
-                        Warning: User has low data
+                        User only has performed {{ result.sample_size }} solves
+                        since date cutoff.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -109,6 +110,7 @@ const model = defineModel<number[][]>({ required: true });
               :histSingle="result.results.hist_values_single"
               :histAverage="result.results.hist_values_average"
               :simulations="numSimulations * eventAttempts[event]"
+              :event
               class="border rounded-md m-2 p-2"
             />
             <div class="flex gap-4 items-center px-2">
@@ -119,7 +121,10 @@ const model = defineModel<number[][]>({ required: true });
               >
                 <span class="whitespace-nowrap">Attempt {{ attemptIdx }}:</span>
                 <div class="max-w-24">
-                  <ResultEntryField v-model="model[personIdx][attemptIdx]" />
+                  <ResultEntryField
+                    :event
+                    v-model="model[personIdx][attemptIdx - 1]"
+                  />
                 </div>
               </div>
             </div>

@@ -23,7 +23,10 @@ const selectedEventId = defineModel<string>("selectedEventId");
 const simCount = defineModel<number>("simCount");
 const monthCount = defineModel<number>("monthCount");
 const includeDnf = defineModel<boolean>("includeDnf");
-const {eventIds, disableRun = false } = defineProps<{ eventIds: SupportedWCAEvent[], disableRun?: boolean }>();
+const { eventIds, disableRun = false } = defineProps<{
+  eventIds: SupportedWCAEvent[];
+  disableRun?: boolean;
+}>();
 
 const emit = defineEmits<{
   (event: "runSimulation"): void;
@@ -71,7 +74,9 @@ const emit = defineEmits<{
     <Switch id="includeDNF" v-model="includeDnf" />
 
     <div class="flex flex-grow justify-end">
-      <Button @click="() => emit('runSimulation')" :disabled="disableRun">Run Simulation</Button>
+      <Button @click="() => emit('runSimulation')" :disabled="disableRun"
+        >Run Simulation</Button
+      >
     </div>
   </div>
 </template>

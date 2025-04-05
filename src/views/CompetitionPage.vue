@@ -1,33 +1,34 @@
 <script setup lang="ts">
 import { watch, ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { fetchWCAInfo } from "@/lib/utils";
-import { wcif, SupportedWCAEvent } from "@/lib/types";
+import { wcif, SupportedWCAEvent, Person } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
 
+interface Competitor {
+  id: string;
+  country: string;
+  name: string;
+  rank: number;
+  selected: boolean;
+}
+
 interface EventRegistration {
-  [key: string]: {
-    id: string;
-    name: string;
-    country: string;
-    rank: number;
-    selected: boolean;
-  }[];
+  [key: string]: Competitor[];
 }
 
 const route = useRoute();
+const router = useRouter();
+
 const selectedCompetitors = ref<EventRegistration>({});
-const selectedEventId = ref<string>("");
+const selectedEventId = ref<SupportedWCAEvent>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
 const includeDnf = ref<boolean>(false);
-
-const defaultShownNum = 64;
-const defaultSelectedNum = 16;
 
 const { isPending, isError, data, error } = useQuery({
   queryKey: ["competition", route.params.id],
@@ -37,106 +38,110 @@ const { isPending, isError, data, error } = useQuery({
     ),
 });
 
-watch(data, () => {
-  const response = data.value;
-  if (isError.value || !response) {
-    return;
-  }
+const eventIds = computed(
+  () => data.value?.events.map((event) => event.id) ?? [],
+);
 
-  selectedEventId.value = response.events[0].id;
-  let competitorsByEvent: EventRegistration = {};
+const numSelected = computed(
+  () =>
+    selectedCompetitors.value[selectedEventId.value]?.filter((p) => p.selected)
+      .length ?? 0,
+);
 
-  response.persons.forEach((person) => {
-    if (
-      person.registration?.status === "accepted" &&
-      person.registration?.isCompeting &&
-      person.wcaId
-    ) {
-      person.registration.eventIds.forEach((event: SupportedWCAEvent) => {
-        if (!competitorsByEvent[event]) {
-          competitorsByEvent[event] = [];
-        }
+const currentCompetitors = computed(
+  () => selectedCompetitors.value[selectedEventId.value] ?? [],
+);
 
-        const worldRank = person.personalBests.find(
-          (personalBest) => personalBest.eventId === event,
-        )?.worldRanking;
+const processCompetitor = (
+  person: Person,
+  event: SupportedWCAEvent,
+): Competitor | null => {
+  const worldRank = person.personalBests.find(
+    (pb) => pb.eventId === event,
+  )?.worldRanking;
+  if (!worldRank) return null;
 
-        if (worldRank) {
-          competitorsByEvent[event].push({
-            id: person.wcaId,
-            country: person.countryIso2,
-            name: person.name,
-            rank: worldRank,
-            selected: false,
-          });
-        }
-      });
-    }
-  });
-
-  Object.values(competitorsByEvent).forEach((competitors) => {
-    competitors.sort((a, b) => a.rank - b.rank);
-
-    competitors.forEach(
-      (competitor, index) => (competitor.selected = index < defaultSelectedNum),
-    );
-
-    competitors.splice(defaultShownNum);
-  });
-
-  selectedCompetitors.value = competitorsByEvent;
-});
+  return {
+    id: person.wcaId,
+    country: person.countryIso2,
+    name: person.name,
+    rank: worldRank,
+    selected: false,
+  };
+};
 
 const runSimulation = () => {
-  if (data.value) {
-    const eventSelectedCompetitors = selectedCompetitors.value[
-      selectedEventId.value
-    ]
-      .filter((item) => item.selected)
-      .map((item) => item.id);
-    const queryParams = new URLSearchParams({
+  if (!data.value) return;
+
+  const selectedIds = currentCompetitors.value
+    .filter((item) => item.selected)
+    .map((item) => item.id);
+
+  router.push({
+    path: "/simulation",
+    query: {
       name: data.value.name,
       eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
       includeDnf: includeDnf.value.toString(),
-      competitors: eventSelectedCompetitors.join(","),
-    });
-    const url = `/simulation?${queryParams.toString()}`;
-    window.location.href = url;
-  }
+      competitors: selectedIds.join(","),
+    },
+  });
 };
 
-const eventIds = computed(() => {
-  return data.value
-    ? data.value.events.map((event: { id: SupportedWCAEvent }) => event.id)
-    : [];
-});
+watch(data, () => {
+  if (isError.value || !data.value) return;
 
-const numSelected = computed(() => {
-  return selectedCompetitors.value[selectedEventId.value]
-    ? selectedCompetitors.value[selectedEventId.value].filter(
-        (person) => person.selected,
-      ).length
-    : 0;
-})
+  selectedEventId.value = data.value.events[0].id;
+  const competitorsByEvent: EventRegistration = {};
+
+  data.value.persons
+    .filter(
+      (person) =>
+        person.registration?.status === "accepted" &&
+        person.registration?.isCompeting &&
+        person.wcaId,
+    )
+    .forEach((person) => {
+      person.registration.eventIds.forEach((event: SupportedWCAEvent) => {
+        if (!competitorsByEvent[event]) {
+          competitorsByEvent[event] = [];
+        }
+
+        const competitor = processCompetitor(person, event);
+        if (competitor) {
+          competitorsByEvent[event].push(competitor);
+        }
+      });
+    });
+
+  Object.values(competitorsByEvent).forEach((competitors) => {
+    competitors.sort((a, b) => a.rank - b.rank);
+    competitors.forEach((c, i) => (c.selected = i < 16));
+    competitors.splice(64);
+  });
+
+  selectedCompetitors.value = competitorsByEvent;
+});
 </script>
 
 <template>
   <div class="flex flex-col items-center justify-center">
-    <div v-if="isPending" class="text-2xl m-4">
-      <LoadingMessage message="Loading WCA Data" />
+    <div v-if="isPending">
+      <LoadingMessage message="Loading WCA Data" class="text-2xl m-4" />
     </div>
-    <div v-else-if="isError || !data?.name">
+
+    <div v-else-if="isError || !data?.name" class="text-red-500">
       Error fetching data: {{ error }}
     </div>
-    <div v-else>
-      <h1 class="text-center text-2xl font-bold m-4">
-        {{ data.name }}
-      </h1>
+
+    <template v-else>
+      <h1 class="text-center text-2xl font-bold m-4">{{ data.name }}</h1>
+
       <div class="min-w-[70vw]">
         <ControlPanel
-          v-bind:event-ids="eventIds"
+          :event-ids="eventIds"
           v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
@@ -145,23 +150,31 @@ const numSelected = computed(() => {
           @run-simulation="runSimulation"
         />
       </div>
-      <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll" v-if="selectedCompetitors[selectedEventId]?.length">
+
+      <div v-if="!currentCompetitors.length" class="text-center m-6 text-lg">
+        No one is registered for this event
+      </div>
+
+      <ol
+        v-else
+        class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll"
+      >
         <li
-          v-for="person in selectedCompetitors[selectedEventId]"
-          @click="() => (person.selected = !person.selected)"
+          v-for="person in currentCompetitors"
           :key="person.id"
+          @click="person.selected = !person.selected"
           class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
         >
           <span :class="{ 'text-muted-foreground': !person.selected }">
             <FlagIcon :code="person.country" :muted="!person.selected" />
             <a
-              @click.stop
               :href="`https://worldcubeassociation.org/persons/${person.id}`"
               class="hover:underline ms-2"
+              @click.stop
             >
               {{ person.name }}
-            </a></span
-          >
+            </a>
+          </span>
           <Checkbox
             v-model:checked="person.selected"
             @click.stop
@@ -169,9 +182,6 @@ const numSelected = computed(() => {
           />
         </li>
       </ol>
-      <div v-else class="text-center m-6 text-lg">
-        No one is registered for this event
-        </div>
-    </div>
+    </template>
   </div>
 </template>

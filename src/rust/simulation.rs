@@ -38,7 +38,6 @@ pub struct SimulationResult {
     pub win_count: u32,
     pub pod_count: u32,
     pub total_rank: u32,
-    pub average_result: u32,
     pub mean_no_dnf: u32,
     pub rank_dist: Vec<u32>,
     pub hist_values_single: HashMap<i32, i32>,
@@ -51,7 +50,6 @@ impl SimulationResult {
             win_count: 0,
             pod_count: 0,
             total_rank: 0,
-            average_result: 0,
             mean_no_dnf: 0,
             rank_dist: vec![0; num_competitors],
             hist_values_single: HashMap::new(),
@@ -98,7 +96,7 @@ pub fn run_simulations(
             &mut simulation_results,
         );
 
-        update_rankings(&mut simulation_results, sim_results, competitors.len());
+        update_rankings(&mut simulation_results, sim_results);
     }
 
     simulation_results
@@ -106,9 +104,9 @@ pub fn run_simulations(
 
 fn get_event_simulator(event_type: EventType) -> Box<dyn EventSimulation> {
     match event_type {
-        EventType::Ao5 => Box::new(Ao5Simulation),
-        EventType::Mo3 => Box::new(Mo3Simulation),
-        EventType::Bo3 => Box::new(Bo3Simulation),
+        EventType::Ao5(_) => Box::new(Ao5Simulation),
+        EventType::Mo3(mo3_event) => Box::new(Mo3Simulation { event: mo3_event }),
+        EventType::Bo3(_) => Box::new(Bo3Simulation),
     }
 }
 
@@ -211,11 +209,7 @@ fn run_simulation_batch(
         .collect()
 }
 
-fn update_rankings(
-    simulation_results: &mut [SimulationResult],
-    solve_results: Vec<[i32; 4]>,
-    num_competitors: usize,
-) {
+fn update_rankings(simulation_results: &mut [SimulationResult], solve_results: Vec<[i32; 4]>) {
     let solves_by_sim = transpose_solves(solve_results);
 
     for i in 0..4 {
@@ -231,9 +225,9 @@ fn update_rankings(
         }
 
         // Update rankings
-        for i in 0..num_competitors {
-            simulation_results[i].total_rank += (indices[i] as u32) + 1;
-            simulation_results[indices[i]].rank_dist[i] += 1;
+        for (position, &competitor_index) in indices.iter().enumerate() {
+            simulation_results[competitor_index].rank_dist[position] += 1;
+            simulation_results[competitor_index].total_rank += (position as u32) + 1;
         }
     }
 }

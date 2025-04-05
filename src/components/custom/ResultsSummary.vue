@@ -53,7 +53,7 @@ const expectedAvg = toClockFormat(resultsSorted[0].results.mean_no_dnf);
       </div>
     </div>
     <div class="border rounded-md p-2">
-      <PieChart :data="simulationResults" :colors="colors" />
+      <PieChart :data="simulationResults" :num-simulations :colors />
     </div>
   </div>
 </template>

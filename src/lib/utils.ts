@@ -1,5 +1,5 @@
 import type { Updater } from "@tanstack/vue-table";
-import type { Ref } from "vue";
+import { type Ref } from "vue";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -62,4 +62,23 @@ export const toClockFormat = (centiseconds: number): string => {
     .toISOString()
     .substr(11, 11)
     .replace(/^[0:]*(?!\.)/g, "");
+};
+
+export const toFMC = (result: number): string => {
+  if (result === -1) return "DNF";
+  if (result === -2) return "DNS";
+
+  if (result % 100 === 30) {
+    return ((result + 3) / 100).toString();
+  }
+
+  if (result % 100 === 60) {
+    return ((result + 7) / 100).toString();
+  }
+
+  return (result / 100).toString();
+};
+
+export const renderTime = (time: number, isFMC: boolean) => {
+  return isFMC ? toFMC(time) : toClockFormat(time);
 };

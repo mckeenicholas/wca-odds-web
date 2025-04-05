@@ -9,11 +9,12 @@ import ControlPanel from "@/components/custom/ControlPanel.vue";
 import { supportedWCAEvents } from "@/lib/types";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
 import debounce from "debounce";
+import { useRouter } from "vue-router";
 
 interface Person {
   name: string;
   wca_id: string;
-  country: { iso2: string}
+  country: { iso2: string };
 }
 
 interface SearchResult {
@@ -30,30 +31,22 @@ const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
 const includeDnf = ref<boolean>(false);
 
-const fetchPersonsResult = async (): Promise<Person[]> => {
-  if (input.value === "") {
-    return [];
-  }
+const searchPersons = async (): Promise<Person[]> => {
+  if (!input.value.trim()) return [];
 
   const response = await fetchWCAInfo<SearchResult>(
     `https://api.worldcubeassociation.org/search/users?q=${input.value}`,
   );
-  return response.result.filter(({ wca_id }) => wca_id != null);
+
+  return response.result.filter((person) => person.wca_id);
 };
 
 const { isFetching, isError, data, error, refetch } = useQuery({
   queryKey: ["userSearch", input.value],
-  queryFn: fetchPersonsResult,
+  queryFn: searchPersons,
   enabled: false,
 });
 
-const debouncedRefetch = debounce(() => refetch(), 250);
-
-watch(input, () => {
-  debouncedRefetch();
-});
-
-// Update localStorage when competitors change
 watch(
   competitors,
   (newCompetitors) => {
@@ -62,37 +55,44 @@ watch(
   { deep: true },
 );
 
-const handleSearch = () => {
-  refetch();
-};
+watch(
+  input,
+  debounce(() => refetch(), 250),
+);
 
 const addCompetitor = (competitor: Person) => {
-  // Prevent duplicates
-  if (!competitors.value.some((c) => c.wca_id === competitor.wca_id)) {
+  const isDuplicate = competitors.value.some(
+    (c) => c.wca_id === competitor.wca_id,
+  );
+  if (!isDuplicate) {
     competitors.value.push(competitor);
     input.value = "";
-    handleSearch();
+    refetch();
   }
 };
 
 const removeCompetitor = (competitorId: string) => {
   competitors.value = competitors.value.filter(
-    (person) => person.wca_id != competitorId,
+    (p) => p.wca_id !== competitorId,
   );
 };
 
+const router = useRouter();
 const runSimulation = () => {
-    const queryParams = new URLSearchParams({
+  router.push({
+    path: "/simulation",
+    query: {
       name: "Custom Simulation",
       eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
+      includeDnf: includeDnf.value.toString(),
       competitors: competitors.value.map((c: Person) => c.wca_id).join(","),
-    });
-    const url = `/simulation?${queryParams.toString()}`;
-    window.location.href = url;
+    },
+  });
 };
 </script>
+
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
@@ -100,7 +100,7 @@ const runSimulation = () => {
       <div class="flex flex-row min-w-[70vw] relative">
         <Input
           v-model="input"
-          @keyup.enter="handleSearch"
+          @keyup.enter="refetch()"
           placeholder="Competitor Name..."
           :class="{ '-me-2': true, 'rounded-b-none': input }"
         />

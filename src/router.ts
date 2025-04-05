@@ -1,10 +1,5 @@
 import { createWebHistory, createRouter } from "vue-router";
 
-// import HomePage from "";
-// import CompetitionPage from "./views/CompetitionPage.vue";
-// import SimulationPage from "./views/SimulationPage.vue";
-// import CustomPage from "./views/CustomPage.vue";
-
 const HomePage = () => import("./views/HomePage.vue");
 const CompetitionPage = () => import("./views/CompetitionPage.vue");
 const SimulationPage = () => import("./views/SimulationPage.vue");
