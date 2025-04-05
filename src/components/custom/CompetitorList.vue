@@ -86,7 +86,8 @@ const model = defineModel<number[][]>({ required: true });
                         />
                       </TooltipTrigger>
                       <TooltipContent>
-                        User only has performed {{ result.sample_size }} solves since date cutoff.
+                        User only has performed {{ result.sample_size }} solves
+                        since date cutoff.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
