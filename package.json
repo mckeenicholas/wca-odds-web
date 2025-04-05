@@ -15,6 +15,7 @@
   "dependencies": {
     "@tanstack/vue-query": "^5.71.1",
     "@tanstack/vue-table": "^8.21.2",
+    "@types/lodash-es": "^4.17.12",
     "@unovis/ts": "^1.5.1",
     "@unovis/vue": "^1.5.1",
     "@vueuse/core": "^10.11.1",
