@@ -67,6 +67,7 @@ interface Registration {
 interface Person {
   name: string;
   wcaId: string;
+  countryIso2: string;
   personalBests: PersonalBest[];
   registration: Registration;
 }

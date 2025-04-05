@@ -7,11 +7,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
+import FlagIcon from "@/components/custom/FlagIcon.vue";
 
 interface EventRegistration {
   [key: string]: {
     id: string;
     name: string;
+    country: string;
     rank: number;
     selected: boolean;
   }[];
@@ -62,6 +64,7 @@ watch(data, () => {
         if (worldRank) {
           competitorsByEvent[event].push({
             id: person.wcaId,
+            country: person.countryIso2,
             name: person.name,
             rank: worldRank,
             selected: false,
@@ -141,10 +144,11 @@ const eventIds = computed(() => {
           class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
         >
           <span :class="{ 'text-muted-foreground': !person.selected }">
+            <FlagIcon :code="person.country" :muted="!person.selected" />
             <a
               @click.stop
               :href="`https://worldcubeassociation.org/persons/${person.id}`"
-              class="hover:underline"
+              class="hover:underline ms-2"
             >
               {{ person.name }}
             </a></span
