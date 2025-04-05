@@ -27,7 +27,7 @@ const countryName = computed(() => {
   <TooltipProvider :delayDuration="250">
     <Tooltip>
       <TooltipTrigger>
-        <span :class="[`fi fi-${code.toLowerCase()}`, { 'opacity-50': muted }]">
+        <span :class="[`shadow-md fi fi-${code.toLowerCase()}`, { 'opacity-50': muted }]">
         </span>
       </TooltipTrigger>
       <TooltipContent>

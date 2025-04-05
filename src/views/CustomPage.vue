@@ -7,11 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X } from "lucide-vue-next";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import { supportedWCAEvents } from "@/lib/types";
+import FlagIcon from "@/components/custom/FlagIcon.vue";
 import debounce from "debounce";
 
 interface Person {
   name: string;
   wca_id: string;
+  country: { iso2: string}
 }
 
 interface SearchResult {
@@ -80,7 +82,6 @@ const removeCompetitor = (competitorId: string) => {
 };
 
 const runSimulation = () => {
-  if (data.value) {
     const queryParams = new URLSearchParams({
       name: "Custom Simulation",
       eventId: selectedEventId.value,
@@ -90,7 +91,6 @@ const runSimulation = () => {
     });
     const url = `/simulation?${queryParams.toString()}`;
     window.location.href = url;
-  }
 };
 </script>
 <template>
@@ -102,7 +102,7 @@ const runSimulation = () => {
           v-model="input"
           @keyup.enter="handleSearch"
           placeholder="Competitor Name..."
-          :class="`-me-2 ${input ? 'rounded-b-none' : ''}`"
+          :class="{ '-me-2': true, 'rounded-b-none': input }"
         />
         <span
           class="absolute end-0 inset-y-0 flex items-center justify-center px-2"
@@ -133,12 +133,11 @@ const runSimulation = () => {
                 :onclick="() => addCompetitor(person)"
               >
                 <div class="flex justify-between items-center">
-                  <p>
-                    {{ person.name }}
-                  </p>
-                  <p class="text-muted-foreground">
-                    {{ person.wca_id }}
-                  </p>
+                  <div class="flex items-center gap-2">
+                    <FlagIcon :code="person.country.iso2" />
+                    <span>{{ person.name }}</span>
+                  </div>
+                  <span class="text-muted-foreground">{{ person.wca_id }}</span>
                 </div>
               </li>
             </ol>
@@ -153,7 +152,8 @@ const runSimulation = () => {
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
           v-bind:include-dnf="includeDnf"
-          v-on:run-simulation="runSimulation"
+          :disableRun="competitors.length < 2"
+          @run-simulation="runSimulation"
         />
       </div>
 

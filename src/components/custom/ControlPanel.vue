@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { eventNames, SupportedWCAEvent } from "@/lib/types";
-import { ref, watch } from "vue";
 import {
   Select,
   SelectTrigger,
@@ -20,51 +19,24 @@ import {
 } from "@/components/ui/number-field";
 import { Switch } from "@/components/ui/switch";
 
-const props = defineProps<{
-  selectedEventId: string;
-  eventIds: SupportedWCAEvent[];
-  simCount: number;
-  monthCount: number;
-  includeDnf: boolean;
-}>();
+const selectedEventId = defineModel<string>("selectedEventId");
+const simCount = defineModel<number>("simCount");
+const monthCount = defineModel<number>("monthCount");
+const includeDnf = defineModel<boolean>("includeDnf");
+const {eventIds, disableRun = false } = defineProps<{ eventIds: SupportedWCAEvent[], disableRun?: boolean }>();
 
 const emit = defineEmits<{
-  (event: "update:selectedEventId", value: string): void;
-  (event: "update:simCount", value: number): void;
-  (event: "update:monthCount", value: number): void;
-  (event: "update:includeDnf", value: boolean): void;
   (event: "runSimulation"): void;
 }>();
-
-const simCountValue = ref(props.simCount);
-const selectedEventValue = ref(props.selectedEventId);
-const monthCountValue = ref(props.monthCount);
-const includeDNFValue = ref(props.includeDnf);
-
-watch(simCountValue, (newValue) => {
-  emit("update:simCount", newValue);
-});
-
-watch(selectedEventValue, (newValue) => {
-  emit("update:selectedEventId", newValue);
-});
-
-watch(monthCountValue, (newValue) => {
-  emit("update:monthCount", newValue);
-});
-
-watch(includeDNFValue, (newValue) => {
-  emit("update:includeDnf", newValue);
-});
 </script>
 
 <template>
-  <Select v-model="selectedEventValue">
+  <Select v-model="selectedEventId">
     <SelectTrigger class="ms-0">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>
-      <SelectItem v-for="event of props.eventIds" :key="event" :value="event">
+      <SelectItem v-for="event of eventIds" :key="event" :value="event">
         {{ eventNames[event] }}
       </SelectItem>
     </SelectContent>
@@ -75,7 +47,7 @@ watch(includeDNFValue, (newValue) => {
       placeholder="100000"
       class="min-w-16 max-w-36"
       id="simCount"
-      v-model.number="simCountValue"
+      v-model.number="simCount"
     />
     <Label for="resultCutoff">Using results from past</Label>
     <NumberField
@@ -83,7 +55,7 @@ watch(includeDNFValue, (newValue) => {
       :min="1"
       id="resultCutoff"
       class="w-24"
-      v-model="monthCountValue"
+      v-model="monthCount"
     >
       <NumberFieldContent>
         <NumberFieldDecrement />
@@ -92,14 +64,14 @@ watch(includeDNFValue, (newValue) => {
       </NumberFieldContent>
     </NumberField>
     <Label for="resultCutoff">{{
-      props.monthCount === 1 ? "month" : "months"
+      monthCount === 1 ? "month" : "months"
     }}</Label>
 
     <Label for="includeDNF">Include DNFs in Calculation</Label>
-    <Switch id="includeDNF" v-model="includeDNFValue" />
+    <Switch id="includeDNF" v-model="includeDnf" />
 
     <div class="flex flex-grow justify-end">
-      <Button @click="() => emit('runSimulation')">Run Simulation</Button>
+      <Button @click="() => emit('runSimulation')" :disabled="disableRun">Run Simulation</Button>
     </div>
   </div>
 </template>

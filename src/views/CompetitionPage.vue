@@ -99,7 +99,7 @@ const runSimulation = () => {
       eventId: selectedEventId.value,
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
-      includeDnf: includeDnf.value.toString(), // Updated to match new naming
+      includeDnf: includeDnf.value.toString(),
       competitors: eventSelectedCompetitors.join(","),
     });
     const url = `/simulation?${queryParams.toString()}`;
@@ -112,6 +112,14 @@ const eventIds = computed(() => {
     ? data.value.events.map((event: { id: SupportedWCAEvent }) => event.id)
     : [];
 });
+
+const numSelected = computed(() => {
+  return selectedCompetitors.value[selectedEventId.value]
+    ? selectedCompetitors.value[selectedEventId.value].filter(
+        (person) => person.selected,
+      ).length
+    : 0;
+})
 </script>
 
 <template>
@@ -133,10 +141,11 @@ const eventIds = computed(() => {
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
           v-model:include-dnf="includeDnf"
+          :disable-run="numSelected < 2"
           @run-simulation="runSimulation"
         />
       </div>
-      <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll">
+      <ol class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll" v-if="selectedCompetitors[selectedEventId]?.length">
         <li
           v-for="person in selectedCompetitors[selectedEventId]"
           @click="() => (person.selected = !person.selected)"
@@ -160,6 +169,9 @@ const eventIds = computed(() => {
           />
         </li>
       </ol>
+      <div v-else class="text-center m-6 text-lg">
+        No one is registered for this event
+        </div>
     </div>
   </div>
 </template>
