@@ -86,7 +86,7 @@ const model = defineModel<number[][]>({ required: true });
                         />
                       </TooltipTrigger>
                       <TooltipContent>
-                        Warning: User has low data
+                        User only has performed {{ result.sample_size }} solves since date cutoff.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
