@@ -117,6 +117,7 @@ pub struct DatedCompetitionResult {
 pub struct SimulationReturn {
     name: String,
     results: SimulationResult,
+    sample_size: u32,
 }
 
 #[macro_export]
@@ -186,31 +187,8 @@ pub fn run_simulation(
             .map(|(competitor, results)| SimulationReturn {
                 name: competitor.name.clone(),
                 results,
-            })
-            .collect();
-
-        serde_wasm_bindgen::to_value(&results).unwrap()
-    })
-}
-
-#[wasm_bindgen]
-pub fn run_odds_simulation(num_simulations: u32, include_dnf: bool) -> JsValue {
-    APP_STATE.with(|state| {
-        let competitors = state.get_competitors().borrow();
-
-        let simulated_data = run_simulations(
-            num_simulations,
-            &competitors,
-            state.get_event(),
-            include_dnf,
-        );
-
-        let results: Vec<_> = competitors
-            .iter()
-            .zip(simulated_data)
-            .map(|(competitor, results)| SimulationReturn {
-                name: competitor.name.clone(),
-                results,
+                sample_size: competitor.results.len() as u32
+                    * state.event.borrow().num_attempts() as u32,
             })
             .collect();
 
