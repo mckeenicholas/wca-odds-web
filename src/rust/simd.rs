@@ -113,6 +113,10 @@ pub fn simd_gen_skewnorm(
 ) -> v128 {
     let normal_dist = Normal::new(0.0, 1.0).expect("Failed to initialize normal distribution");
 
+    if stats.location.is_nan() || stats.shape.is_nan() || stats.dnf_rate.is_nan() {
+        return i32x4_splat(DNF_TEMP_VALUE);
+    }
+
     let u0 = gen_random_f32x4(&normal_dist, rand_source);
     let v = gen_random_f32x4(&normal_dist, rand_source);
 
