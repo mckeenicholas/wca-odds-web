@@ -128,6 +128,7 @@ const reset = () => {
   );
 
   inputtedTimes.value.splice(0, inputtedTimes.value.length, ...newTimes);
+  recalculate();
 };
 </script>
 

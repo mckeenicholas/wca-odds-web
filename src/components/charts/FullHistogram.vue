@@ -6,10 +6,9 @@ import {
   ChartTooltipProps,
 } from "@/lib/types";
 import { totalSolves, renderTime } from "@/lib/utils";
-import { Switch } from "@/components/ui/switch";
 import { ref, computed, h } from "vue";
-import { Label } from "../ui/label";
 import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
+import MultiLabelSwitch from "./MultiLabelSwitch.vue";
 
 const { data, event, colors } = defineProps<{
   data: SimulationResult[];
@@ -26,6 +25,7 @@ const histogramTooltip = computed(() => {
 });
 
 const isAverage = ref<boolean>(false);
+const isCDF = ref<boolean>(false);
 
 const reduceDataPoints = (
   values: Array<Record<string, number>>,
@@ -70,6 +70,28 @@ const reduceDataPoints = (
 };
 
 const chartData = computed(() => {
+  const [min, max] = data.reduce(
+    ([minAccPerson, maxAccPerson], person) => {
+      const results = isAverage.value
+        ? person.results.hist_values_average
+        : person.results.hist_values_single;
+
+      const [minPerson, maxPerson] = [...results].reduce(
+        ([minAcc, maxAcc], [time]) => [
+          Math.min(time, minAcc),
+          Math.max(time, maxAcc),
+        ],
+        [Number.MAX_SAFE_INTEGER, 0],
+      );
+
+      return [
+        Math.min(minPerson, minAccPerson),
+        Math.max(maxPerson, maxAccPerson),
+      ];
+    },
+    [Number.MAX_SAFE_INTEGER, 0],
+  );
+
   const resultTimes = new Map<number, Map<string, number>>();
 
   data.forEach((person) => {
@@ -77,24 +99,29 @@ const chartData = computed(() => {
       ? person.results.hist_values_average
       : person.results.hist_values_single;
 
-    [...results].forEach(([key, occurrences]) => {
-      const name = person.name;
+    const solveCount = totalSolves(results);
 
-      if (!resultTimes.has(key)) {
-        resultTimes.set(key, new Map<string, number>());
+    for (let i = min; i <= max; i++) {
+      const numOccurrences = results.get(i) ?? 0;
+
+      if (!resultTimes.has(i)) {
+        resultTimes.set(i, new Map<string, number>());
       }
 
-      const timesMap = resultTimes.get(key)!;
-      const solveCount = totalSolves(results);
+      const timesMap = resultTimes.get(i)!;
 
-      timesMap.set(
-        name,
-        solveCount == 0
-          ? 0
-          : (timesMap.get(name) || 0) +
-              parseFloat((occurrences / (solveCount / 100)).toFixed(4)),
+      const curVal = parseFloat(
+        (numOccurrences / (solveCount / 100)).toFixed(4),
       );
-    });
+
+      if (isCDF.value) {
+        const prevTime =
+          i === min ? 0 : resultTimes.get(i - 1)!.get(person.name)!;
+        timesMap.set(person.name, prevTime + curVal);
+      } else {
+        timesMap.set(person.name, curVal);
+      }
+    }
   });
 
   const values = [...resultTimes.entries()]
@@ -106,6 +133,9 @@ const chartData = computed(() => {
 
   return reduceDataPoints(values);
 });
+
+const xFormatter = (value: number | Date) =>
+  renderTime(chartData.value[value as number].time * 10, event === "333fm");
 
 const names = data.map((person) => person.name) as unknown as "time"[];
 </script>
@@ -122,15 +152,11 @@ const names = data.map((person) => person.name) as unknown as "time"[];
       :customTooltip="histogramTooltip"
       :showXAxis="true"
       :yFormatter="(value) => `${value}%`"
-      :xFormatter="
-        (value) =>
-          renderTime(chartData[value as number].time * 10, event === '333fm')
-      "
+      :xFormatter
     />
-    <div class="ms-8 mt-2 flex items-center">
-      <Label for="isSingle">Single</Label>
-      <Switch v-model="isAverage" id="isSingle" class="mx-3" />
-      <Label for="isSingle">Average</Label>
+    <div class="flex">
+      <MultiLabelSwitch left="Single" right="Average" v-model="isAverage" />
+      <MultiLabelSwitch left="Probability" right="Cumulative" v-model="isCDF" />
     </div>
   </div>
 </template>

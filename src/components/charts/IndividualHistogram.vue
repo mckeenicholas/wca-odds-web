@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { AreaChart } from "@/components/ui/chart-area";
 import { totalSolves, renderTime } from "@/lib/utils";
-import { computed, h } from "vue";
+import { computed, h, ref } from "vue";
 import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
 import { ChartTooltipProps, SupportedWCAEvent } from "@/lib/types";
+import MultiLabelSwitch from "./MultiLabelSwitch.vue";
 
 interface DataPoint {
   time: number;
@@ -25,6 +26,8 @@ const histogramTooltip = computed(() => {
       isFmc: event === "333fm",
     });
 });
+
+const isCDF = ref<boolean>(false);
 
 const solveCount = computed(() => totalSolves(histSingle));
 const avgCount = computed(() => totalSolves(histAverage));
@@ -50,21 +53,40 @@ const data = computed(() => {
   const dataFormatted = [
     ...new Set([...histSingle.keys(), ...histAverage.keys()]),
   ]
-    .reduce((acc: DataPoint[], time) => {
+    .sort((a, b) => a - b)
+    .reduce((acc: DataPoint[], time, idx) => {
+      console.log(time);
+
+      const prevTimeSingle = isCDF.value
+        ? idx === 0
+          ? 0
+          : acc[idx - 1].single
+        : 0;
+      const prevTimeAverage = isCDF.value
+        ? idx === 0
+          ? 0
+          : acc[idx - 1].average
+        : 0;
+
       const single = parseFloat(
-        ((histSingle.get(time) || 0) / (solveCount.value / 100)).toFixed(4),
+        (
+          (histSingle.get(time) || 0) / (solveCount.value / 100) +
+          prevTimeSingle
+        ).toFixed(4),
       );
       const average = parseFloat(
-        ((histAverage.get(time) || 0) / (avgCount.value / 100)).toFixed(4),
+        (
+          (histAverage.get(time) || 0) / (avgCount.value / 100) +
+          prevTimeAverage
+        ).toFixed(4),
       );
 
       if (single > 0.0001 || average > 0.0001) {
-        acc.push({ time, single, average });
+        return [...acc, { time, single, average }];
       }
 
       return acc;
-    }, [])
-    .sort((a, b) => a.time - b.time);
+    }, []);
 
   if (dataFormatted.length >= 5) {
     return dataFormatted;
@@ -75,13 +97,14 @@ const data = computed(() => {
   return padChartData(dataFormatted);
 });
 
-console.log(data);
+const xFormatter = (value: number | Date) =>
+  renderTime(data.value[value as number].time * 10, event === "333fm");
 </script>
 
 <template>
-  <div class="m-10">
+  <div class="my-4 mx-4">
     <AreaChart
-      class="mb-2"
+      class="-ms-6"
       :data
       index="time"
       :categories="['single', 'average']"
@@ -89,10 +112,8 @@ console.log(data);
       :custom-tooltip="histogramTooltip"
       :showXAxis="true"
       :yFormatter="(value) => `${value}%`"
-      :xFormatter="
-        (value) =>
-          renderTime(data[value as number].time * 10, event === '333fm')
-      "
+      :xFormatter
     />
+    <MultiLabelSwitch left="Probability" right="Cumulative" v-model="isCDF" />
   </div>
 </template>

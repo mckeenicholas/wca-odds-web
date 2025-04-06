@@ -111,7 +111,6 @@ const model = defineModel<number[][]>({ required: true });
               :histAverage="result.results.hist_values_average"
               :simulations="numSimulations * eventAttempts[event]"
               :event
-              class="border rounded-md m-2 p-2"
             />
             <div class="flex gap-4 items-center px-2">
               <div
