@@ -28,7 +28,7 @@ const selectedCompetitors = ref<EventRegistration>({});
 const selectedEventId = ref<SupportedWCAEvent>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
-const includeDnf = ref<boolean>(false);
+const includeDnf = ref<boolean>(true);
 
 const { isPending, isError, data, error } = useQuery({
   queryKey: ["competition", route.params.id],

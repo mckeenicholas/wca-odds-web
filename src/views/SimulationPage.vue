@@ -25,14 +25,14 @@ import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-vue-next";
 
 const router = useRouter();
-const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
+const { competitors, eventId, name, simCount, monthCutoff, includeDnf } =
   router.currentRoute.value.query;
 
 if (!competitors || !eventId || !name || !simCount || !monthCutoff) {
   throw new Error("One or more required parameters are null or undefined.");
 }
 
-const includeDNF = (includeDNFFlag ?? false) as boolean;
+const includeDNF = includeDnf === "true";
 const competitorsList = competitors.toString().split(",");
 const numSimulations = parseInt(simCount as string);
 const monthCutoffNum = parseInt(monthCutoff.toString());
@@ -43,7 +43,6 @@ const error = ref<string>("");
 const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const recalculateLoading = ref<boolean>(false);
-const selected = ref<boolean[]>(new Array(competitorsList?.length).fill(true));
 
 const attemptsCount = computed(() => eventAttempts[event]);
 
@@ -152,12 +151,7 @@ const reset = () => {
       />
 
       <ExpandableBox title="Results Histogram" class="mb-2">
-        <FullHistogram
-          :data="simulation_results"
-          :event
-          :colors
-          :key="selected.filter(Boolean).length"
-        />
+        <FullHistogram :data="simulation_results" :event :colors />
       </ExpandableBox>
 
       <ExpandableBox title="Predicted Ranks">
@@ -165,7 +159,6 @@ const reset = () => {
           :data="simulation_results"
           :colors
           :count="numSimulations"
-          :key="selected.filter(Boolean).length"
         />
       </ExpandableBox>
       <CompetitorList

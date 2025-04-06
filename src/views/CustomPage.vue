@@ -29,7 +29,7 @@ const competitors = ref<Person[]>(
 const selectedEventId = ref<string>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
-const includeDnf = ref<boolean>(false);
+const includeDnf = ref<boolean>(true);
 
 const searchPersons = async (): Promise<Person[]> => {
   if (!input.value.trim()) return [];
