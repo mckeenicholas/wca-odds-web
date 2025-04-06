@@ -61,7 +61,6 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       }
 
       if (argsHaveChanged(competitorList, eventType, monthCutoff)) {
-        console.log("Loading new competition data");
         const result = await load_data(competitorList, eventType, monthCutoff);
 
         if (!result) {

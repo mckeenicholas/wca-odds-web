@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, ref, computed } from "vue";
+import { watch, ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchWCAInfo } from "@/lib/utils";
 import { wcif, SupportedWCAEvent, Person } from "@/lib/types";
@@ -90,7 +90,7 @@ const runSimulation = () => {
   });
 };
 
-watch(data, () => {
+const updateSelected = () => {
   if (isError.value || !data.value) return;
 
   selectedEventId.value = data.value.events[0].id;
@@ -123,7 +123,11 @@ watch(data, () => {
   });
 
   selectedCompetitors.value = competitorsByEvent;
-});
+};
+
+watch(data, updateSelected);
+
+onMounted(updateSelected);
 </script>
 
 <template>
