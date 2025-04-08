@@ -67,7 +67,7 @@ onBeforeUnmount(() => {
   <div class="flex flex-col items-center justify-center">
     <div>
       <h1 class="text-center text-3xl font-bold m-6">
-        WCA Competition Simulator
+        WCA Competition Predictor
       </h1>
       <h1 class="text-center text-xl m-4">Find a competition</h1>
       <div class="flex flex-row space-x-4 min-w-[70vw]">

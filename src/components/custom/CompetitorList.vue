@@ -11,13 +11,14 @@ import {
   SupportedWCAEvent,
 } from "@/lib/types";
 import ResultEntryField from "@/components/custom/ResultEntryField.vue";
-import { CircleAlert } from "lucide-vue-next";
+import { ChevronDown, CircleAlert } from "lucide-vue-next";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ref } from "vue";
 
 const lowDataWarningThreshold = 12 as const;
 
@@ -30,12 +31,14 @@ const { simulationResults, colors, competitorsList, numSimulations, event } =
     event: SupportedWCAEvent;
   }>();
 
+const isOpen = ref<boolean[]>(Array(simulationResults.length).fill(false));
+
 const model = defineModel<number[][]>({ required: true });
 </script>
 
 <template>
   <div class="border rounded-md mt-2">
-    <div class="flex justify-between py-2 px-4">
+    <div class="flex justify-between py-2 px-4 me-5">
       <div class="flex-1 text-left">Name</div>
       <div class="flex-1 text-center">Chance of winning</div>
       <div class="flex-1 text-center">Chance of podiuming</div>
@@ -48,7 +51,7 @@ const model = defineModel<number[][]>({ required: true });
         :key="personIdx"
         class="p-1 rounded-md"
       >
-        <Collapsible>
+        <Collapsible v-model:open="isOpen[personIdx]">
           <CollapsibleTrigger as-child>
             <div
               class="flex justify-between p-2 ps-1 cursor-pointer hover:bg-secondary rounded-md"
@@ -102,6 +105,9 @@ const model = defineModel<number[][]>({ required: true });
               <div class="flex-1 text-center">
                 {{ result.results.total_rank / numSimulations }}
               </div>
+              <ChevronDown
+                :class="`scale-75 transition-transform duration-450 ${isOpen[personIdx] ? '' : '-rotate-180'}`"
+              />
             </div>
           </CollapsibleTrigger>
           <CollapsibleContent class="space-y-2">
