@@ -52,7 +52,7 @@ pub fn generate_skewnorm_vec(
     for i in 0..count {
         values.push(if i < entered_times.len() && entered_times[i] != 0 {
             if entered_times[i] < 0 {
-                // For some reason using i32::max doesnt work here, which is the reason
+                // For some reason using i32::max doesn't work here, which is the reason
                 // for the number below, which is generally the highest allowed time for
                 // speedsolving events
                 i32x4_splat(DNF_TEMP_VALUE)

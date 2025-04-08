@@ -55,8 +55,6 @@ const data = computed(() => {
   ]
     .sort((a, b) => a - b)
     .reduce((acc: DataPoint[], time, idx) => {
-      console.log(time);
-
       const prevTimeSingle = isCDF.value
         ? idx === 0
           ? 0
