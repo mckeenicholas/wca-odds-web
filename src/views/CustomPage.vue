@@ -10,6 +10,7 @@ import { supportedWCAEvents } from "@/lib/types";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
 import debounce from "debounce";
 import { useRouter } from "vue-router";
+import BackButton from "@/components/custom/BackButton.vue";
 
 interface Person {
   name: string;
@@ -94,6 +95,7 @@ const runSimulation = () => {
 </script>
 
 <template>
+  <BackButton />
   <div class="flex flex-col items-center justify-center">
     <div>
       <h1 class="text-center text-xl m-4">Add a competitor</h1>
@@ -113,7 +115,7 @@ const runSimulation = () => {
         <!-- Popover Content -->
         <div
           v-if="input"
-          class="absolute top-full left-0 z-50 w-full bg-white shadow-md border border-t-0 rounded-b-md mt-0 overflow-y-scroll max-h-[40vh]"
+          class="absolute top-full left-0 z-50 w-full bg-[hsl(var(--popover))] shadow-md border border-t-0 rounded-b-md mt-0 overflow-y-scroll max-h-[40vh]"
         >
           <div v-if="isFetching" class="px-3">
             <Skeleton v-for="index in 3" class="h-6 my-4" :key="index" />
@@ -151,7 +153,7 @@ const runSimulation = () => {
           v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
-          v-bind:include-dnf="includeDnf"
+          v-model="includeDnf"
           :disableRun="competitors.length < 2"
           @run-simulation="runSimulation"
         />

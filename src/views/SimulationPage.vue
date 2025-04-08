@@ -23,6 +23,7 @@ import CompetitorList from "@/components/custom/CompetitorList.vue";
 import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-vue-next";
+import BackButton from "@/components/custom/BackButton.vue";
 
 const router = useRouter();
 const { competitors, eventId, name, simCount, monthCutoff, includeDNFFlag } =
@@ -133,6 +134,7 @@ const reset = () => {
 </script>
 
 <template>
+  <BackButton />
   <div class="content-main flex flex-col items-center justify-center mx-2">
     <CompetitionHeader :name="name as string" />
 

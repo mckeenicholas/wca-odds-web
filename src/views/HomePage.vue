@@ -66,6 +66,9 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
+      <h1 class="text-center text-3xl font-bold m-6">
+        WCA Competition Simulator
+      </h1>
       <h1 class="text-center text-xl m-4">Find a competition</h1>
       <div class="flex flex-row space-x-4 min-w-[70vw]">
         <Input
@@ -110,9 +113,9 @@ onBeforeUnmount(() => {
           </li>
         </ol>
       </div>
-      <div v-else class="text-center m-4">No competitions found</div>
+      <div v-else-if="input" class="text-center m-4">No competitions found</div>
     </div>
-    <div class="mt-4 items-center justify-center">
+    <div class="mt-8 items-center justify-center">
       <RouterLink to="/custom">
         <Button> Or select competitors manually </Button>
       </RouterLink>
