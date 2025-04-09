@@ -10,6 +10,8 @@ import {
 } from "./components/ui/dropdown-menu";
 import { Moon, Sun, Github } from "lucide-vue-next";
 
+const versionNum = "0.3.2";
+
 const mode = useColorMode();
 </script>
 
@@ -53,7 +55,7 @@ const mode = useColorMode();
       >
         <Github class="h-4 w-4" />
       </a>
-      <span>v0.2.1</span>
+      <span>v{{ versionNum }}</span>
     </footer>
   </div>
 </template>

@@ -9,12 +9,18 @@ import { totalSolves, renderTime } from "@/lib/utils";
 import { ref, computed, h } from "vue";
 import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
 import MultiLabelSwitch from "./MultiLabelSwitch.vue";
+import Checkbox from "../ui/checkbox/Checkbox.vue";
+import { Select, SelectTrigger, SelectContent } from "@/components/ui/select";
+import { Label } from "../ui/label";
+import ColoredCircle from "../custom/ColoredCircle.vue";
 
 const { data, event, colors } = defineProps<{
   data: SimulationResult[];
   event: SupportedWCAEvent;
   colors: string[];
 }>();
+
+const enabled = ref<boolean[]>(Array(data.length).fill(true));
 
 const histogramTooltip = computed(() => {
   return (props: ChartTooltipProps) =>
@@ -164,7 +170,11 @@ const generateHistogramData = (
 ): Map<number, Map<string, number>> => {
   const resultTimes = new Map<number, Map<string, number>>();
 
-  data.forEach((person) => {
+  data.forEach((person, idx) => {
+    if (!enabled.value[idx]) {
+      return;
+    }
+
     const results = isAverage
       ? person.results.hist_values_average
       : person.results.hist_values_single;
@@ -244,9 +254,35 @@ const names = data.map((person) => person.name) as unknown as "time"[];
       :yFormatter="(value) => `${value}%`"
       :xFormatter
     />
-    <div class="flex">
+    <div class="lg:flex sm:flex-col">
       <MultiLabelSwitch left="Single" right="Average" v-model="isAverage" />
       <MultiLabelSwitch left="Probability" right="Cumulative" v-model="isCDF" />
+      <div class="ms-4 flex flex-grow justify-end">
+        <Select>
+          <SelectTrigger class="min-w-36 mt-2"> Competitors </SelectTrigger>
+          <SelectContent>
+            <ul>
+              <li
+                v-for="(result, idx) in data"
+                :key="idx"
+                class="mx-2 flex items-center"
+              >
+                <Checkbox
+                  :id="`checkbox-${idx}`"
+                  v-model:checked="enabled[idx]"
+                />
+                <Label
+                  :for="`checkbox-${idx}`"
+                  class="flex items-center text-md font-normal"
+                >
+                  <ColoredCircle :color="colors[idx]" />
+                  {{ result.name }}
+                </Label>
+              </li>
+            </ul>
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   </div>
 </template>

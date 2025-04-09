@@ -93,7 +93,7 @@ const { width } = useWindowSize();
   <div v-else>
     <ExpandableBox title="Options" class="my-2">
       <hr class="mx-2 mb-2" />
-      <div class="flex flex-col items-center">
+      <div class="flex flex-col items-center p-2">
         <div class="flex items-center space-x-2 mb-4">
           <Label for="simCount">Number of simulations:</Label>
           <Input
