@@ -118,14 +118,16 @@ const model = defineModel<number[][]>({ required: true });
               :simulations="numSimulations * eventAttempts[event]"
               :event
             />
-            <div class="flex gap-4 items-center px-2">
+            <div
+              class="flex flex-col lg:flex-row items-center px-2 lg:gap-4 lg:ms-2"
+            >
               <div
                 v-for="attemptIdx in eventAttempts[event]"
                 v-bind:key="attemptIdx"
-                class="flex items-center gap-2"
+                class="flex mb-2 lg:mb-0 items-center gap-2"
               >
                 <span class="whitespace-nowrap">Attempt {{ attemptIdx }}:</span>
-                <div class="max-w-24">
+                <div class="lg:max-w-24">
                   <ResultEntryField
                     :event
                     v-model="model[personIdx][attemptIdx - 1]"

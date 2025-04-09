@@ -19,12 +19,14 @@ const chartData = computed(() =>
 </script>
 
 <template>
-  <DonutChart
-    index="name"
-    :category="'wins'"
-    :data="chartData"
-    :type="'pie'"
-    :colors
-    :custom-tooltip="PercentageTooltip"
-  />
+  <div class="max-w-96">
+    <DonutChart
+      index="name"
+      :category="'wins'"
+      :data="chartData"
+      :type="'pie'"
+      :colors
+      :custom-tooltip="PercentageTooltip"
+    />
+  </div>
 </template>

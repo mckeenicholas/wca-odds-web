@@ -143,7 +143,7 @@ const reset = () => {
 
     <div
       v-else-if="simulation_results"
-      class="lg:min-w-[1000px] md:min-w-full sm:min-w-full border-lg"
+      class="lg:min-w-[1000px] md:min-w-full border-lg"
     >
       <ResultsSummary
         :simulation-results="simulation_results"

@@ -145,7 +145,7 @@ onMounted(updateSelected);
     <template v-else>
       <h1 class="text-center text-2xl font-bold m-4">{{ data.name }}</h1>
 
-      <div class="min-w-[70vw]">
+      <div>
         <ControlPanel
           :event-ids="eventIds"
           v-model:month-count="monthCount"
@@ -155,39 +155,39 @@ onMounted(updateSelected);
           :disable-run="numSelected < 2"
           @run-simulation="runSimulation"
         />
-      </div>
 
-      <div v-if="!currentCompetitors.length" class="text-center m-6 text-lg">
-        No one is registered for this event
-      </div>
+        <div v-if="!currentCompetitors.length" class="text-center m-6 text-lg">
+          No one is registered for this event
+        </div>
 
-      <ol
-        v-else
-        class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll"
-      >
-        <li
-          v-for="person in currentCompetitors"
-          :key="person.id"
-          @click="person.selected = !person.selected"
-          class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
+        <ol
+          v-else
+          class="max-h-[75vh] rounded-md border min-w-[70vw] overflow-y-scroll"
         >
-          <span :class="{ 'text-muted-foreground': !person.selected }">
-            <FlagIcon :code="person.country" :muted="!person.selected" />
-            <a
-              :href="`https://worldcubeassociation.org/persons/${person.id}`"
-              class="hover:underline ms-2"
+          <li
+            v-for="person in currentCompetitors"
+            :key="person.id"
+            @click="person.selected = !person.selected"
+            class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
+          >
+            <span :class="{ 'text-muted-foreground': !person.selected }">
+              <FlagIcon :code="person.country" :muted="!person.selected" />
+              <a
+                :href="`https://worldcubeassociation.org/persons/${person.id}`"
+                class="hover:underline ms-2"
+                @click.stop
+              >
+                {{ person.name }}
+              </a>
+            </span>
+            <Checkbox
+              v-model:checked="person.selected"
               @click.stop
-            >
-              {{ person.name }}
-            </a>
-          </span>
-          <Checkbox
-            v-model:checked="person.selected"
-            @click.stop
-            class="me-2"
-          />
-        </li>
-      </ol>
+              class="me-2"
+            />
+          </li>
+        </ol>
+      </div>
     </template>
   </div>
 </template>

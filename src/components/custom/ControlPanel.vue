@@ -18,6 +18,10 @@ import {
   NumberFieldInput,
 } from "@/components/ui/number-field";
 import { Switch } from "@/components/ui/switch";
+import { useWindowSize } from "@vueuse/core";
+import ExpandableBox from "./ExpandableBox.vue";
+
+const breakpoint = 1100;
 
 const selectedEventId = defineModel<string>("selectedEventId");
 const simCount = defineModel<number>("simCount");
@@ -31,11 +35,13 @@ const { eventIds, disableRun = false } = defineProps<{
 const emit = defineEmits<{
   (event: "runSimulation"): void;
 }>();
+
+const { width } = useWindowSize();
 </script>
 
 <template>
   <Select v-model="selectedEventId">
-    <SelectTrigger class="ms-0">
+    <SelectTrigger class="ms-0 min-h-[42px]">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>
@@ -44,7 +50,10 @@ const emit = defineEmits<{
       </SelectItem>
     </SelectContent>
   </Select>
-  <div class="border rounded-md my-2 p-2 flex items-center space-x-4">
+  <div
+    v-if="width >= breakpoint"
+    class="border rounded-md my-2 p-2 flex items-center space-x-4"
+  >
     <Label for="simCount">Number of simulations:</Label>
     <Input
       placeholder="100000"
@@ -52,28 +61,75 @@ const emit = defineEmits<{
       id="simCount"
       v-model.number="simCount"
     />
-    <Label for="resultCutoff">Using results from past</Label>
-    <NumberField
-      :default-value="18"
-      :min="1"
-      id="resultCutoff"
-      class="w-24"
-      v-model="monthCount"
-    >
-      <NumberFieldContent>
-        <NumberFieldDecrement />
-        <NumberFieldInput />
-        <NumberFieldIncrement />
-      </NumberFieldContent>
-    </NumberField>
-    <Label for="resultCutoff">{{
-      monthCount === 1 ? "month" : "months"
-    }}</Label>
+    <div class="flex items-center space-x-2">
+      <Label for="resultCutoff">Using results from the past</Label>
+      <NumberField
+        :default-value="18"
+        :min="1"
+        id="resultCutoff"
+        class="w-24"
+        v-model="monthCount"
+      >
+        <NumberFieldContent>
+          <NumberFieldDecrement />
+          <NumberFieldInput />
+          <NumberFieldIncrement />
+        </NumberFieldContent>
+      </NumberField>
+      <Label for="resultCutoff">{{
+        monthCount === 1 ? "month" : "months"
+      }}</Label>
+    </div>
 
     <Label for="includeDNF">Include DNFs in Calculation</Label>
     <Switch id="includeDNF" v-model="includeDnf" />
 
     <div class="flex flex-grow justify-end">
+      <Button @click="() => emit('runSimulation')" :disabled="disableRun"
+        >Run Simulation</Button
+      >
+    </div>
+  </div>
+  <div v-else>
+    <ExpandableBox title="Options" class="my-2">
+      <hr class="mx-2 mb-2" />
+      <div class="flex flex-col items-center">
+        <div class="flex items-center space-x-2 mb-4">
+          <Label for="simCount">Number of simulations:</Label>
+          <Input
+            placeholder="100000"
+            class="min-w-16 max-w-36"
+            id="simCount"
+            v-model.number="simCount"
+          />
+        </div>
+        <div class="flex items-center space-x-2 mb-4">
+          <Label for="resultCutoff">Using results from the past</Label>
+          <NumberField
+            :default-value="18"
+            :min="1"
+            id="resultCutoff"
+            class="w-24"
+            v-model="monthCount"
+          >
+            <NumberFieldContent>
+              <NumberFieldDecrement />
+              <NumberFieldInput />
+              <NumberFieldIncrement />
+            </NumberFieldContent>
+          </NumberField>
+          <Label for="resultCutoff">{{
+            monthCount === 1 ? "month" : "months"
+          }}</Label>
+        </div>
+
+        <div class="flex items-center space-x-2 mb-4">
+          <Label for="includeDNF">Include DNFs in Calculation</Label>
+          <Switch id="includeDNF" v-model="includeDnf" />
+        </div>
+      </div>
+    </ExpandableBox>
+    <div class="flex flex-col mb-2">
       <Button @click="() => emit('runSimulation')" :disabled="disableRun"
         >Run Simulation</Button
       >
