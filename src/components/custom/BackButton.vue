@@ -6,7 +6,7 @@ const router = useRouter();
 </script>
 
 <template>
-  <Button variant="outline" class="absolute m-4" @click="router.back()"
+  <Button variant="outline" class="absolute m-2" @click="router.back()"
     >Back</Button
   >
 </template>

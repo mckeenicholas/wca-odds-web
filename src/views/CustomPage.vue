@@ -8,9 +8,8 @@ import { Search, X } from "lucide-vue-next";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import { supportedWCAEvents } from "@/lib/types";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
-import debounce from "debounce";
 import { useRouter } from "vue-router";
-import BackButton from "@/components/custom/BackButton.vue";
+import { useDebounceFn } from "@vueuse/core";
 
 interface Person {
   name: string;
@@ -22,6 +21,7 @@ interface SearchResult {
   result: Person[];
 }
 
+const router = useRouter();
 const input = ref<string>("");
 const competitors = ref<Person[]>(
   JSON.parse(localStorage.getItem("competitors") || "[]"),
@@ -56,16 +56,10 @@ watch(
   { deep: true },
 );
 
-watch(
-  input,
-  debounce(() => refetch(), 250),
-);
+const debouncedInput = useDebounceFn(refetch);
 
 const addCompetitor = (competitor: Person) => {
-  const isDuplicate = competitors.value.some(
-    (c) => c.wca_id === competitor.wca_id,
-  );
-  if (!isDuplicate) {
+  if (!competitors.value.some((c) => c.wca_id === competitor.wca_id)) {
     competitors.value.push(competitor);
     input.value = "";
     refetch();
@@ -78,7 +72,6 @@ const removeCompetitor = (competitorId: string) => {
   );
 };
 
-const router = useRouter();
 const runSimulation = () => {
   router.push({
     path: "/simulation",
@@ -95,7 +88,6 @@ const runSimulation = () => {
 </script>
 
 <template>
-  <BackButton />
   <div class="flex flex-col items-center justify-center">
     <div>
       <h1 class="text-center text-xl m-4">Add a competitor</h1>
@@ -103,6 +95,7 @@ const runSimulation = () => {
         <Input
           v-model="input"
           @keyup.enter="refetch()"
+          @input="debouncedInput"
           placeholder="Competitor Name..."
           :class="{ '-me-2': true, 'rounded-b-none': input }"
         />

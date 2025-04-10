@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
-import BackButton from "@/components/custom/BackButton.vue";
 
 interface Competitor {
   id: string;
@@ -132,7 +131,6 @@ onMounted(updateSelected);
 </script>
 
 <template>
-  <BackButton />
   <div class="flex flex-col items-center justify-center">
     <div v-if="isPending">
       <LoadingMessage message="Loading WCA Data" class="text-2xl m-4" />
@@ -180,11 +178,7 @@ onMounted(updateSelected);
                 {{ person.name }}
               </a>
             </span>
-            <Checkbox
-              v-model:checked="person.selected"
-              @click.stop
-              class="me-2"
-            />
+            <Checkbox v-model="person.selected" @click.stop class="me-2" />
           </li>
         </ol>
       </div>

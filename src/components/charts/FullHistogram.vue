@@ -254,7 +254,7 @@ const names = data.map((person) => person.name) as unknown as "time"[];
       :yFormatter="(value) => `${value}%`"
       :xFormatter
     />
-    <div class="lg:flex sm:flex-col">
+    <div class="lg:flex">
       <MultiLabelSwitch left="Single" right="Average" v-model="isAverage" />
       <MultiLabelSwitch left="Probability" right="Cumulative" v-model="isCDF" />
       <div class="ms-4 flex flex-grow justify-end">
@@ -267,10 +267,7 @@ const names = data.map((person) => person.name) as unknown as "time"[];
                 :key="idx"
                 class="mx-2 flex items-center"
               >
-                <Checkbox
-                  :id="`checkbox-${idx}`"
-                  v-model:checked="enabled[idx]"
-                />
+                <Checkbox :id="`checkbox-${idx}`" v-model="enabled[idx]" />
                 <Label
                   :for="`checkbox-${idx}`"
                   class="flex items-center text-md font-normal"

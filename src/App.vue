@@ -9,13 +9,17 @@ import {
   DropdownMenuTrigger,
 } from "./components/ui/dropdown-menu";
 import { Moon, Sun, Github } from "lucide-vue-next";
+import BackButton from "./components/custom/BackButton.vue";
+import { useRoute } from "vue-router";
 
 const versionNum = "0.3.2";
 
 const mode = useColorMode();
+const route = useRoute();
 </script>
 
 <template>
+  <BackButton v-if="route.path !== '/'" />
   <div class="flex flex-col min-h-screen">
     <main class="flex-grow">
       <div class="absolute top-2 right-2">
@@ -38,7 +42,7 @@ const mode = useColorMode();
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <RouterView />
+      <RouterView class="mt-8 lg:mt-0 md:mt-0" />
     </main>
     <footer
       class="h-12 py-2 px-4 text-sm text-muted-foreground flex items-center justify-end font-semibold"

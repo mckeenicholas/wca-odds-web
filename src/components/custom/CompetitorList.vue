@@ -11,7 +11,7 @@ import {
   SupportedWCAEvent,
 } from "@/lib/types";
 import ResultEntryField from "@/components/custom/ResultEntryField.vue";
-import { ChevronDown, CircleAlert } from "lucide-vue-next";
+import { ChevronUp, CircleAlert } from "lucide-vue-next";
 import {
   Tooltip,
   TooltipContent,
@@ -94,8 +94,9 @@ const model = defineModel<number[][]>({ required: true });
               <div class="flex-1 text-center">
                 {{ result.results.total_rank / numSimulations }}
               </div>
-              <ChevronDown
-                :class="`scale-75 transition-transform duration-450 ${isOpen[personIdx] ? '' : '-rotate-180'}`"
+              <ChevronUp
+                class="scale-75 transition-transform duration-450"
+                :class="{ '-rotate-180': isOpen[personIdx] }"
               />
             </div>
           </CollapsibleTrigger>

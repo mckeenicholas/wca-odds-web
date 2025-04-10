@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { RouterLink } from "vue-router";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchWCAInfo } from "@/lib/utils";
 import { useQuery } from "@tanstack/vue-query";
-import debounce from "debounce";
+import { useDebounceFn } from "@vueuse/core";
 
 interface Competition {
   start_date: string;
@@ -41,17 +41,10 @@ const { isFetching, isError, data, error, refetch } = useQuery({
   enabled: false,
 });
 
-const debouncedRefetch = debounce(() => refetch(), 250);
-const debouncedUpdateURL = debounce((value: string) => updateURL(value), 250);
-
-watch(input, (value) => {
-  debouncedRefetch();
-  debouncedUpdateURL(value);
-});
-
-const handleSearch = () => {
+const debounceInput = useDebounceFn(() => {
   refetch();
-};
+  updateURL(input.value);
+}, 250);
 
 onMounted(() => {
   syncInputWithURL();
@@ -73,11 +66,12 @@ onBeforeUnmount(() => {
       <div class="flex flex-row space-x-4 min-w-[70vw]">
         <Input
           v-model="input"
-          @keyup.enter="handleSearch"
+          @keyup.enter="refetch()"
           placeholder="Competition Name..."
           class="-me-2"
+          @input="debounceInput"
         />
-        <Button @click="handleSearch">Search</Button>
+        <Button @click="refetch()">Search</Button>
       </div>
       <div v-if="isFetching && input" class="mt-2">
         <div class="border rounded-md px-3 pt-1 max-h-[75vh] overflow-y-scroll">
