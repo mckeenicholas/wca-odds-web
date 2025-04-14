@@ -100,7 +100,7 @@ const xFormatter = (value: number | Date) =>
 </script>
 
 <template>
-  <div class="my-4 mx-4">
+  <div class="mb-4 mt-2 ms-4 -me-6">
     <AreaChart
       class="-ms-6"
       :data

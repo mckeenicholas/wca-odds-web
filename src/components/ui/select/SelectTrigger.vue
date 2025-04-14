@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   type SelectTriggerProps,
   useForwardProps,
-} from "reka-ui";
+} from "radix-vue";
 import { computed, type HTMLAttributes } from "vue";
 
 const props = defineProps<

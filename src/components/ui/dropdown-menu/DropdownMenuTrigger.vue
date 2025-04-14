@@ -3,7 +3,7 @@ import {
   DropdownMenuTrigger,
   type DropdownMenuTriggerProps,
   useForwardProps,
-} from "reka-ui";
+} from "radix-vue";
 
 const props = defineProps<DropdownMenuTriggerProps>();
 

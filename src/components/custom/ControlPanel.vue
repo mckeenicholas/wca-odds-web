@@ -82,7 +82,7 @@ const { width } = useWindowSize();
     </div>
 
     <Label for="includeDNF">Include DNFs in Calculation</Label>
-    <Switch id="includeDNF" v-model="includeDnf" />
+    <Switch id="includeDNF" v-model:checked="includeDnf" />
 
     <div class="flex flex-grow justify-end">
       <Button @click="() => emit('runSimulation')" :disabled="disableRun"
@@ -125,7 +125,7 @@ const { width } = useWindowSize();
 
         <div class="flex items-center space-x-2 mb-4">
           <Label for="includeDNF">Include DNFs in Calculation</Label>
-          <Switch id="includeDNF" v-model="includeDnf" />
+          <Switch id="includeDNF" v-model:checked="includeDnf" />
         </div>
       </div>
     </ExpandableBox>

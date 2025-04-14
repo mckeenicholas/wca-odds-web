@@ -17,9 +17,7 @@ interface Competitor {
   selected: boolean;
 }
 
-interface EventRegistration {
-  [key: string]: Competitor[];
-}
+type EventRegistration = Partial<Record<SupportedWCAEvent, Competitor[]>>;
 
 const route = useRoute();
 const router = useRouter();
@@ -178,7 +176,11 @@ onMounted(updateSelected);
                 {{ person.name }}
               </a>
             </span>
-            <Checkbox v-model="person.selected" @click.stop class="me-2" />
+            <Checkbox
+              v-model:checked="person.selected"
+              @click.stop
+              class="me-2"
+            />
           </li>
         </ol>
       </div>

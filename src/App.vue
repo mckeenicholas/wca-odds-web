@@ -12,7 +12,7 @@ import { Moon, Sun, Github } from "lucide-vue-next";
 import BackButton from "./components/custom/BackButton.vue";
 import { useRoute } from "vue-router";
 
-const versionNum = "0.3.2";
+const versionNum = "0.3.3";
 
 const mode = useColorMode();
 const route = useRoute();
@@ -22,9 +22,9 @@ const route = useRoute();
   <BackButton v-if="route.path !== '/'" />
   <div class="flex flex-col min-h-screen">
     <main class="flex-grow">
-      <div class="absolute top-2 right-2">
+      <div class="flex flex-row w-full justify-end">
         <DropdownMenu>
-          <DropdownMenuTrigger as-child>
+          <DropdownMenuTrigger as-child class="m-2">
             <Button variant="outline" class="px-2.5">
               <Moon
                 class="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0"
@@ -42,7 +42,7 @@ const route = useRoute();
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <RouterView class="mt-8 lg:mt-0 md:mt-0" />
+      <RouterView class="md:-mt-14 lg:-mt-14 -mt-4" />
     </main>
     <footer
       class="h-12 py-2 px-4 text-sm text-muted-foreground flex items-center justify-end font-semibold"
@@ -56,6 +56,7 @@ const route = useRoute();
       <a
         href="https://github.com/mckeenicholas/wca-odds-web"
         class="hover:text-gray-400 mr-3"
+        aria-label="GitHub Repository"
       >
         <Github class="h-4 w-4" />
       </a>
@@ -74,7 +75,7 @@ const route = useRoute();
   border-radius: 4px;
 }
 
-html {
-  scrollbar-gutter: stable;
+body {
+  overflow-y: scroll;
 }
 </style>

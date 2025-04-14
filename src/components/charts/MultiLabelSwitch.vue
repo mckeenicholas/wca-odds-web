@@ -9,7 +9,7 @@ const model = defineModel<boolean>();
 <template>
   <div class="ms-8 mt-2 flex items-center">
     <Label for="isSingle">{{ left }}</Label>
-    <Switch v-model="model" id="isSingle" class="mx-3" />
+    <Switch v-model:checked="model" id="isSingle" class="mx-3" />
     <Label for="isSingle">{{ right }}</Label>
   </div>
 </template>

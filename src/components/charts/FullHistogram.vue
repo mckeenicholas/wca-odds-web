@@ -241,7 +241,7 @@ const names = data.map((person) => person.name) as unknown as "time"[];
 </script>
 
 <template>
-  <div class="mb-4 mt-2 mx-4">
+  <div class="mb-4 mt-2 ms-4 -me-6">
     <AreaChart
       class="-ms-6"
       :data="chartData"
@@ -254,20 +254,23 @@ const names = data.map((person) => person.name) as unknown as "time"[];
       :yFormatter="(value) => `${value}%`"
       :xFormatter
     />
-    <div class="lg:flex">
+    <div class="lg:flex lg:pe-10">
       <MultiLabelSwitch left="Single" right="Average" v-model="isAverage" />
       <MultiLabelSwitch left="Probability" right="Cumulative" v-model="isCDF" />
       <div class="ms-4 flex flex-grow justify-end">
         <Select>
           <SelectTrigger class="min-w-36 mt-2"> Competitors </SelectTrigger>
           <SelectContent>
-            <ul>
+            <ul class="min-w-7xl">
               <li
                 v-for="(result, idx) in data"
                 :key="idx"
-                class="mx-2 flex items-center"
+                class="mx-2 flex items-center flex-grow"
               >
-                <Checkbox :id="`checkbox-${idx}`" v-model="enabled[idx]" />
+                <Checkbox
+                  :id="`checkbox-${idx}`"
+                  v-model:checked="enabled[idx]"
+                />
                 <Label
                   :for="`checkbox-${idx}`"
                   class="flex items-center text-md font-normal"

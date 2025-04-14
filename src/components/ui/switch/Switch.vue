@@ -6,7 +6,7 @@ import {
   type SwitchRootProps,
   SwitchThumb,
   useForwardPropsEmits,
-} from "reka-ui";
+} from "radix-vue";
 import { computed, type HTMLAttributes } from "vue";
 
 const props = defineProps<

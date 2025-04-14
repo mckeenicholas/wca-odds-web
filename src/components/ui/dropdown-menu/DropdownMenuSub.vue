@@ -4,7 +4,7 @@ import {
   type DropdownMenuSubEmits,
   type DropdownMenuSubProps,
   useForwardPropsEmits,
-} from "reka-ui";
+} from "radix-vue";
 
 const props = defineProps<DropdownMenuSubProps>();
 const emits = defineEmits<DropdownMenuSubEmits>();
