@@ -56,15 +56,30 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       } = payload;
 
       if (!initialized) {
-        await init();
-        initialized = true;
+        try {
+          await init();
+          initialized = true;
+        } catch (error) {
+          console.error("Error initializing WASM:", error);
+          self.postMessage({
+            type: "SIMULATION_ERROR",
+            error: `Failed to initialize WASM: ${error instanceof Error ? error.message : String(error)}`,
+          });
+          return;
+        }
       }
 
       if (argsHaveChanged(competitorList, eventType, monthCutoff)) {
         const result = await load_data(competitorList, eventType, monthCutoff);
 
         if (!result) {
-          throw new Error("Failed to load competition data");
+          const errorMessage = "Failed to load competition data in worker.";
+          console.error(errorMessage);
+          self.postMessage({
+            type: "SIMULATION_ERROR",
+            error: errorMessage,
+          });
+          return;
         }
 
         updateLoadArgs(competitorList, eventType, monthCutoff);
@@ -80,6 +95,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       self.postMessage(message);
     }
   } catch (error) {
+    console.error("Error in worker:", error);
     self.postMessage({
       type: "SIMULATION_ERROR",
       error: error instanceof Error ? error.message : String(error),

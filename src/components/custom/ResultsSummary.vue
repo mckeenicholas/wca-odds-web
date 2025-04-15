@@ -1,34 +1,31 @@
 <script setup lang="ts">
 import PieChart from "@/components/charts/PieChart.vue";
-import { SimulationResult, SupportedWCAEvent, eventNames } from "@/lib/types";
+import { SimulationResultProps, eventNames } from "@/lib/types";
 import { toClockFormat } from "@/lib/utils";
+import { computed } from "vue";
 
-const { simulationResults, colors, numSimulations, event } = defineProps<{
-  simulationResults: SimulationResult[];
-  colors: string[];
-  numSimulations: number;
-  event: SupportedWCAEvent;
-}>();
+const { data, colors, numSimulations, event } =
+  defineProps<SimulationResultProps>();
 
-const resultsSorted = [...simulationResults].sort(
-  (a, b) => b.results.win_count - a.results.win_count,
+const topCompetitor = computed(
+  () => [...data].sort((a, b) => b.results.win_count - a.results.win_count)[0],
 );
 
-const avgRank = (resultsSorted[0].results.total_rank / numSimulations).toFixed(
-  2,
+const avgRank = computed(() =>
+  (topCompetitor.value.results.total_rank / numSimulations).toFixed(2),
 );
 
-const winChance = (
-  (resultsSorted[0].results.win_count / numSimulations) *
-  100
-).toFixed(2);
+const winChance = computed(() =>
+  ((topCompetitor.value.results.win_count / numSimulations) * 100).toFixed(2),
+);
 
-const podiumChance = (
-  (resultsSorted[0].results.pod_count / numSimulations) *
-  100
-).toFixed(2);
+const podiumChance = computed(() =>
+  ((topCompetitor.value.results.pod_count / numSimulations) * 100).toFixed(2),
+);
 
-const expectedAvg = toClockFormat(resultsSorted[0].results.mean_no_dnf);
+const expectedAvg = computed(() =>
+  toClockFormat(topCompetitor.value.results.mean_no_dnf),
+);
 </script>
 
 <template>
@@ -40,8 +37,8 @@ const expectedAvg = toClockFormat(resultsSorted[0].results.mean_no_dnf);
         </h3>
         <div class="space-y-2">
           <p class="text-sm">
-            <span class="font-semibold">{{ resultsSorted[0].name }}</span> has
-            the highest odds of winning with:
+            <span class="font-semibold">{{ topCompetitor.name }}</span> has the
+            highest odds of winning with:
           </p>
           <ul class="list-disc list-inside text-sm ml-4">
             <li>{{ winChance }}% chance of winning</li>
@@ -53,7 +50,7 @@ const expectedAvg = toClockFormat(resultsSorted[0].results.mean_no_dnf);
       </div>
     </div>
     <div class="border rounded-md p-2">
-      <PieChart :data="simulationResults" :num-simulations :colors />
+      <PieChart :data :num-simulations :colors />
     </div>
   </div>
 </template>

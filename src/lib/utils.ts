@@ -1,7 +1,10 @@
 import type { Updater } from "@tanstack/vue-table";
-import { type Ref } from "vue";
+import { computed, h, type Ref } from "vue";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { times } from "lodash-es";
+import { ChartTooltipProps, SupportedWCAEvent } from "./types";
+import HistogramCustomTooltip from "@/components/charts/HistogramCustomTooltip.vue";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -82,3 +85,19 @@ export const toFMC = (result: number): string => {
 export const renderTime = (time: number, isFMC: boolean) => {
   return isFMC ? toFMC(time) : toClockFormat(time);
 };
+
+export const generateDefaultTimesArray = (
+  competitorsCount: number,
+  attempts: number,
+) => {
+  return times(competitorsCount, () => times(attempts, () => 0));
+};
+
+export const createFMCTooltip = (event: SupportedWCAEvent) =>
+  computed(() => {
+    return (props: ChartTooltipProps) =>
+      h(HistogramCustomTooltip, {
+        ...props,
+        isFmc: event === "333fm",
+      });
+  });

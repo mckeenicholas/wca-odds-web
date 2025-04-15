@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import { RouterLink } from "vue-router";
+import { onMounted, ref, watch } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,46 +14,39 @@ interface Competition {
   name: string;
 }
 
-const input = ref<string>("");
+const route = useRoute();
+const router = useRouter();
+const input = ref<string>((route.query.q as string) || "");
 
-const syncInputWithURL = () => {
-  const searchParam =
-    new URLSearchParams(window.location.search).get("q") || "";
-  input.value = searchParam;
-};
+watch(
+  input,
+  useDebounceFn((newInput) => {
+    router.push({ query: { q: newInput || undefined } });
+    refetch();
+  }, 250),
+);
 
-const updateURL = (value: string) => {
-  const url = new URL(window.location.href);
-  if (value) {
-    url.searchParams.set("q", value);
-  } else {
-    url.searchParams.delete("q");
-  }
-  window.history.replaceState({}, "", url);
-};
+onMounted(() => {
+  refetch();
+});
 
 const { isFetching, isError, data, error, refetch } = useQuery({
   queryKey: ["competitionSearch", input.value],
-  queryFn: () =>
-    fetchWCAInfo<Competition[]>(
+  queryFn: () => {
+    if (!input.value) return [];
+    return fetchWCAInfo<Competition[]>(
       `https://api.worldcubeassociation.org/competitions?q=${input.value}`,
-    ),
+    );
+  },
   enabled: false,
 });
 
-const debounceInput = useDebounceFn(() => {
-  refetch();
-  updateURL(input.value);
-}, 250);
-
-onMounted(() => {
-  syncInputWithURL();
-  window.addEventListener("popstate", syncInputWithURL);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("popstate", syncInputWithURL);
-});
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 </script>
 
 <template>
@@ -69,9 +62,8 @@ onBeforeUnmount(() => {
           @keyup.enter="refetch()"
           placeholder="Competition Name..."
           class="-me-2"
-          @input="debounceInput"
         />
-        <Button @click="refetch()">Search</Button>
+        <Button @click="refetch()" :disabled="isFetching">Search</Button>
       </div>
       <div v-if="isFetching && input" class="mt-2">
         <div class="border rounded-md px-3 pt-1 max-h-[75vh] overflow-y-scroll">
@@ -81,7 +73,9 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </div>
-      <div v-else-if="isError">Error fetching Data: {{ error }}</div>
+      <div v-else-if="isError">
+        Error fetching data: {{ error?.message || "Unknown error occurred" }}
+      </div>
       <div
         v-else-if="data?.length"
         class="mt-4 border rounded-md max-h-[75vh] overflow-y-scroll"
@@ -95,13 +89,7 @@ onBeforeUnmount(() => {
             <RouterLink :to="`/competition/${result.id}`">
               <p>{{ result.name }}</p>
               <p class="text-sm text-secondary-foreground">
-                {{
-                  new Date(result.start_date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                }}
+                {{ formatDate(result.start_date) }}
               </p>
             </RouterLink>
           </li>

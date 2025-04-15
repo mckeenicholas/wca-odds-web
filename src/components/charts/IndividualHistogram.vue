@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { AreaChart } from "@/components/ui/chart-area";
-import { totalSolves, renderTime } from "@/lib/utils";
-import { computed, h, ref } from "vue";
-import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
-import { ChartTooltipProps, SupportedWCAEvent } from "@/lib/types";
+import { totalSolves, renderTime, createFMCTooltip } from "@/lib/utils";
+import { computed, ref } from "vue";
+import { SupportedWCAEvent } from "@/lib/types";
 import MultiLabelSwitch from "./MultiLabelSwitch.vue";
 
 interface DataPoint {
@@ -19,13 +18,7 @@ const { histAverage, histSingle, color, event } = defineProps<{
   event: SupportedWCAEvent;
 }>();
 
-const histogramTooltip = computed(() => {
-  return (props: ChartTooltipProps) =>
-    h(HistogramCustomTooltip, {
-      ...props,
-      isFmc: event === "333fm",
-    });
-});
+const histogramTooltip = createFMCTooltip(event);
 
 const isCDF = ref<boolean>(false);
 

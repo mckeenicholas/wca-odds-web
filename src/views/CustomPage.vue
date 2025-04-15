@@ -56,13 +56,12 @@ watch(
   { deep: true },
 );
 
-const debouncedInput = useDebounceFn(refetch);
+const debouncedInput = useDebounceFn(refetch, 250);
 
 const addCompetitor = (competitor: Person) => {
   if (!competitors.value.some((c) => c.wca_id === competitor.wca_id)) {
     competitors.value.push(competitor);
     input.value = "";
-    refetch();
   }
 };
 
@@ -97,7 +96,9 @@ const runSimulation = () => {
           @keyup.enter="refetch()"
           @input="debouncedInput"
           placeholder="Competitor Name..."
-          :class="{ '-me-2': true, 'rounded-b-none': input }"
+          :class="{ 'rounded-b-none': input }"
+          class="-me-2"
+          aria-label="Search for competitors"
         />
         <span
           class="absolute end-0 inset-y-0 flex items-center justify-center px-2"
@@ -114,7 +115,8 @@ const runSimulation = () => {
             <Skeleton v-for="index in 3" class="h-6 my-4" :key="index" />
           </div>
           <div v-else-if="isError" class="text-center m-4">
-            Error fetching Data: {{ error }}
+            Error fetching data:
+            {{ error?.message || "Unknown error occurred" }}
           </div>
           <div v-else-if="!data?.length" class="text-center m-4">
             No Results found
@@ -125,7 +127,7 @@ const runSimulation = () => {
                 v-for="person in data"
                 :key="person.wca_id"
                 class="p-2 hover:bg-secondary hover:cursor-pointer rounded-md"
-                :onclick="() => addCompetitor(person)"
+                @click="() => addCompetitor(person)"
               >
                 <div class="flex justify-between items-center">
                   <div class="flex items-center gap-2">
@@ -170,7 +172,7 @@ const runSimulation = () => {
             </a>
             <a
               class="rounded-md hover:bg-secondary p-1 me-1 hover:cursor-pointer"
-              :onclick="() => removeCompetitor(competitor.wca_id)"
+              @click="() => removeCompetitor(competitor.wca_id)"
             >
               <X :size="24" />
             </a>

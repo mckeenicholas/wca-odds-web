@@ -14,7 +14,7 @@ const goBack = () => {
   <div class="flex flex-col items-center justify-center">
     <p>Error: {{ error }}</p>
     <div class="mt-2">
-      <Button :onclick="goBack"> Back </Button>
+      <Button @click="goBack"> Back </Button>
     </div>
   </div>
 </template>

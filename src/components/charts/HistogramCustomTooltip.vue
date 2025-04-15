@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { renderTime } from "@/lib/utils";
 import { ChartTooltipProps } from "@/lib/types";
+import ColoredCircle from "@/components/custom/ColoredCircle.vue";
 
 const { title, data, isFmc = false } = defineProps<ChartTooltipProps>();
 
 const timeRawValue = parseInt(title ?? "0") * 10;
-
 const timeDisplayValue = renderTime(timeRawValue, isFmc);
 </script>
 
@@ -15,14 +15,7 @@ const timeDisplayValue = renderTime(timeRawValue, isFmc);
     <div v-for="(item, key) in data" :key class="flex justify-between text-sm">
       <div class="flex items-center">
         <span class="w-2.5 h-2.5 mr-2">
-          <svg width="100%" height="100%" viewBox="0 0 30 30">
-            <path
-              d=" M 15 15 m -14, 0 a 14,14 0 1,1 28,0 a 14,14 0 1,1 -28,0"
-              :stroke="item.color"
-              :fill="item.color"
-              stroke-width="1"
-            />
-          </svg>
+          <ColoredCircle :color="item.color" />
         </span>
         <span>{{ item.name }}</span>
       </div>

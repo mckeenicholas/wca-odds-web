@@ -114,7 +114,23 @@ export interface ChartTooltipProps {
   isFmc?: boolean;
 }
 
-export interface SimulationWorkerMessage {
+export interface SimulationRouteQuery {
+  competitors?: string;
+  eventId?: string;
+  name?: string;
+  simCount?: string;
+  monthCutoff?: string;
+  includeDnf?: string;
+}
+
+export interface SimulationResultProps {
+  data: SimulationResult[];
+  colors: string[];
+  numSimulations: number;
+  event: SupportedWCAEvent;
+}
+
+export interface WorkerMessage {
   type: "RUN_SIMULATION";
   payload: {
     competitorList: string[];
@@ -126,10 +142,8 @@ export interface SimulationWorkerMessage {
   };
 }
 
-export interface SimulationCompleteMessage {
+export interface MainThreadMessage {
   type: "SIMULATION_COMPLETE";
   results: SimulationResult[];
+  error?: Error;
 }
-
-export type WorkerMessage = SimulationWorkerMessage;
-export type MainThreadMessage = SimulationCompleteMessage;

@@ -21,12 +21,13 @@ import { Switch } from "@/components/ui/switch";
 import { useWindowSize } from "@vueuse/core";
 import ExpandableBox from "./ExpandableBox.vue";
 
-const breakpoint = 1100;
+const breakpoint = 1100 as const;
 
 const selectedEventId = defineModel<string>("selectedEventId");
 const simCount = defineModel<number>("simCount");
 const monthCount = defineModel<number>("monthCount");
 const includeDnf = defineModel<boolean>("includeDnf");
+
 const { eventIds, disableRun = false } = defineProps<{
   eventIds: SupportedWCAEvent[];
   disableRun?: boolean;

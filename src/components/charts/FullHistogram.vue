@@ -3,51 +3,49 @@ import { AreaChart } from "@/components/ui/chart-area";
 import {
   SimulationResult,
   SupportedWCAEvent,
-  ChartTooltipProps,
+  SimulationResultProps,
 } from "@/lib/types";
-import { totalSolves, renderTime } from "@/lib/utils";
-import { ref, computed, h } from "vue";
-import HistogramCustomTooltip from "./HistogramCustomTooltip.vue";
+import { totalSolves, renderTime, createFMCTooltip } from "@/lib/utils";
+import { ref, computed } from "vue";
 import MultiLabelSwitch from "./MultiLabelSwitch.vue";
 import Checkbox from "../ui/checkbox/Checkbox.vue";
 import { Select, SelectTrigger, SelectContent } from "@/components/ui/select";
 import { Label } from "../ui/label";
 import ColoredCircle from "../custom/ColoredCircle.vue";
+import { useMemoize } from "@vueuse/core";
 
-const { data, event, colors } = defineProps<{
-  data: SimulationResult[];
-  event: SupportedWCAEvent;
-  colors: string[];
-}>();
+const { data, event, colors } =
+  defineProps<Omit<SimulationResultProps, "numSimulations">>();
+
+const histogramTooltip = createFMCTooltip(event);
 
 const enabled = ref<boolean[]>(Array(data.length).fill(true));
-
-const histogramTooltip = computed(() => {
-  return (props: ChartTooltipProps) =>
-    h(HistogramCustomTooltip, {
-      ...props,
-      isFmc: event === "333fm",
-    });
-});
-
 const isAverage = ref<boolean>(false);
 const isCDF = ref<boolean>(false);
 
 const getPrevFMCIndex = (idx: number, isAverage: boolean) => {
-  if (!isAverage) {
-    return idx - 10;
-  }
+  if (!isAverage) return idx - 10;
 
-  switch (idx % 10) {
-    case 0:
-      return idx - 4;
-    case 3:
-      return idx - 3;
-    case 6:
-      return idx - 3;
-    default:
-      return 0;
-  }
+  const mod = idx % 10;
+  if (mod == 0) return 4;
+  if (mod == 3 || mod == 6) return 3;
+
+  return 0;
+};
+
+const getNextIndex = (
+  currentIndex: number,
+  isFMC: boolean,
+  isAverage: boolean,
+): number => {
+  if (!isFMC) return currentIndex + 1;
+  if (!isAverage) return currentIndex + 10;
+
+  const mod = currentIndex % 10;
+  if (mod === 0) return currentIndex + 3;
+  if (mod === 3) return currentIndex + 3;
+  if (mod === 6) return currentIndex + 4;
+  return currentIndex + 1;
 };
 
 const reduceDataPoints = (
@@ -137,77 +135,57 @@ const calculateValue = (
     : currentValue;
 };
 
-const getNextIndex = (
-  currentIndex: number,
-  isFMC: boolean,
-  isAverage: boolean,
-): number => {
-  if (!isFMC) return currentIndex + 1;
+const generateHistogramData = useMemoize(
+  (
+    data: SimulationResult[],
+    minTime: number,
+    maxTime: number,
+    isAverage: boolean,
+    isCDF: boolean,
+    event: SupportedWCAEvent,
+    enabledPersons: boolean[],
+  ): Map<number, Map<string, number>> => {
+    const resultTimes = new Map<number, Map<string, number>>();
 
-  if (isAverage) {
-    return (
-      currentIndex +
-      (currentIndex % 10 === 0
-        ? 3
-        : currentIndex % 10 === 3
-          ? 3
-          : currentIndex % 10 === 6
-            ? 4
-            : 1)
-    );
-  }
-
-  return currentIndex + 10;
-};
-
-const generateHistogramData = (
-  data: SimulationResult[],
-  minTime: number,
-  maxTime: number,
-  isAverage: boolean,
-  isCDF: boolean,
-  event: SupportedWCAEvent,
-): Map<number, Map<string, number>> => {
-  const resultTimes = new Map<number, Map<string, number>>();
-
-  data.forEach((person, idx) => {
-    if (!enabled.value[idx]) {
-      return;
-    }
-
-    const results = isAverage
-      ? person.results.hist_values_average
-      : person.results.hist_values_single;
-
-    const solveCount = totalSolves(results);
-    let i = minTime;
-
-    while (i <= maxTime) {
-      if (!resultTimes.has(i)) {
-        resultTimes.set(i, new Map<string, number>());
+    data.forEach((person, idx) => {
+      if (!enabledPersons[idx]) {
+        return;
       }
 
-      const timesMap = resultTimes.get(i)!;
-      const numOccurrences = results.get(i) ?? 0;
-      const prevIndex =
-        event === "333fm" ? getPrevFMCIndex(i, isAverage) : i - 1;
-      const prevValue = resultTimes.get(prevIndex)?.get(person.name) ?? 0;
+      const results = isAverage
+        ? person.results.hist_values_average
+        : person.results.hist_values_single;
 
-      const value = calculateValue(
-        numOccurrences,
-        solveCount,
-        prevValue,
-        i === minTime,
-        isCDF,
-      );
+      const solveCount = totalSolves(results);
+      let i = minTime;
 
-      timesMap.set(person.name, value);
-      i = getNextIndex(i, event === "333fm", isAverage);
-    }
-  });
+      while (i <= maxTime) {
+        if (!resultTimes.has(i)) {
+          resultTimes.set(i, new Map<string, number>());
+        }
 
-  return resultTimes;
-};
+        const timesMap = resultTimes.get(i)!;
+        const numOccurrences = results.get(i) ?? 0;
+        const prevIndex =
+          event === "333fm" ? getPrevFMCIndex(i, isAverage) : i - 1;
+        const prevValue = resultTimes.get(prevIndex)?.get(person.name) ?? 0;
+
+        const value = calculateValue(
+          numOccurrences,
+          solveCount,
+          prevValue,
+          i === minTime,
+          isCDF,
+        );
+
+        timesMap.set(person.name, value);
+        i = getNextIndex(i, event === "333fm", isAverage);
+      }
+    });
+
+    return resultTimes;
+  },
+);
 
 const formatChartData = (
   resultTimes: Map<number, Map<string, number>>,
@@ -229,6 +207,7 @@ const chartData = computed(() => {
     isAverage.value,
     isCDF.value,
     event,
+    enabled.value,
   );
   const formattedData = formatChartData(histogramData);
   return reduceDataPoints(formattedData);
@@ -275,7 +254,7 @@ const names = data.map((person) => person.name) as unknown as "time"[];
                   :for="`checkbox-${idx}`"
                   class="flex items-center text-md font-normal"
                 >
-                  <ColoredCircle :color="colors[idx]" />
+                  <ColoredCircle class="mx-2" :color="colors[idx]" />
                   {{ result.name }}
                 </Label>
               </li>

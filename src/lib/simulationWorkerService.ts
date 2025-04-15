@@ -1,5 +1,5 @@
 import type { SimulationResult, SupportedWCAEvent } from "@/lib/types";
-import type { WorkerMessage, MainThreadMessage } from "./types";
+import { WorkerMessage, MainThreadMessage } from "./types";
 import { toRaw } from "vue";
 
 let worker: Worker | null = null;
@@ -32,25 +32,30 @@ export const runSimulationInWorker = (
     const workerInstance = getSimulationWorker();
 
     if (!workerInstance) {
-      reject(new Error("Web Workers are not supported in this environment"));
+      reject(new Error("Web Workers are not supported in this environment."));
       return;
     }
 
-    const messageHandler = (e: MessageEvent<MainThreadMessage>) => {
+    const handleMessage = (e: MessageEvent<MainThreadMessage>) => {
       if (e.data.type === "SIMULATION_COMPLETE") {
-        workerInstance.removeEventListener("message", messageHandler);
+        workerInstance.removeEventListener("message", handleMessage);
+        workerInstance.removeEventListener("error", handleError);
         resolve(e.data.results);
+      } else if (e.data.type === "SIMULATION_ERROR") {
+        workerInstance.removeEventListener("message", handleMessage);
+        workerInstance.removeEventListener("error", handleError);
+        reject(new Error(`Simulation worker error: ${e.data.error}`));
       }
     };
 
-    const errorHandler = (error: ErrorEvent) => {
-      workerInstance.removeEventListener("message", messageHandler);
-      workerInstance.removeEventListener("error", errorHandler);
-      reject(new Error(`Worker error: ${error.message}`));
+    const handleError = (error: ErrorEvent) => {
+      workerInstance.removeEventListener("message", handleMessage);
+      workerInstance.removeEventListener("error", handleError);
+      reject(new Error(`Web Worker error: ${error.message}`));
     };
 
-    workerInstance.addEventListener("message", messageHandler);
-    workerInstance.addEventListener("error", errorHandler);
+    workerInstance.addEventListener("message", handleMessage);
+    workerInstance.addEventListener("error", handleError);
 
     const message: WorkerMessage = {
       type: "RUN_SIMULATION",

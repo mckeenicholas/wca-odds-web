@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { DonutChart } from "@/components/ui/chart-donut";
-import { SimulationResult } from "@/lib/types";
+import { SimulationResultProps } from "@/lib/types";
 import { computed } from "vue";
 import PercentageTooltip from "./PercentageTooltip.vue";
 
-const { data, numSimulations, colors } = defineProps<{
-  data: SimulationResult[];
-  numSimulations: number;
-  colors: string[];
-}>();
+const { data, numSimulations, colors } =
+  defineProps<Omit<SimulationResultProps, "event">>();
 
 const chartData = computed(() =>
   data.map((item) => ({

@@ -1,14 +1,11 @@
 <script setup lang="ts">
 import { BarChart } from "@/components/ui/chart-bar";
-import { SimulationResult } from "@/lib/types";
+import { SimulationResultProps } from "@/lib/types";
 import { computed } from "vue";
 import PercentageTooltip from "./PercentageTooltip.vue";
 
-const { data, colors, count } = defineProps<{
-  data: SimulationResult[];
-  colors: string[];
-  count: number;
-}>();
+const { data, colors, numSimulations } =
+  defineProps<Omit<SimulationResultProps, "event">>();
 
 const chartData = computed(() =>
   Array.from({ length: data.length }, (_, idx) => ({
@@ -16,7 +13,9 @@ const chartData = computed(() =>
     ...Object.fromEntries(
       data.map((person) => [
         person.name,
-        parseFloat(((person.results.rank_dist[idx] / count) * 100).toFixed(2)),
+        parseFloat(
+          ((person.results.rank_dist[idx] / numSimulations) * 100).toFixed(2),
+        ),
       ]),
     ),
   })),
