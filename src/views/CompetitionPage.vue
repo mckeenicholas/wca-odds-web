@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchWCAInfo } from "@/lib/utils";
 import { wcif, SupportedWCAEvent, Person } from "@/lib/types";
@@ -25,6 +25,9 @@ const DEFAULT_SELECTED = 16 as const;
 const route = useRoute();
 const router = useRouter();
 
+const competitorsByEvent = ref<
+  Partial<Record<SupportedWCAEvent, Competitor[]>>
+>({});
 const selectedEventId = ref<SupportedWCAEvent>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
@@ -60,7 +63,7 @@ const processCompetitor = (
   };
 };
 
-const competitorsByEvent = computed(() => {
+const getCompetitorData = () => {
   if (isError.value || !data.value) return {};
 
   const competitorAcc: EventRegistration = {};
@@ -92,6 +95,10 @@ const competitorsByEvent = computed(() => {
   });
 
   return competitorAcc;
+};
+
+watchEffect(() => {
+  competitorsByEvent.value = getCompetitorData();
 });
 
 const currentSelectedCompetitors = computed(
