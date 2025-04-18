@@ -3,7 +3,7 @@ import { computed, h, type Ref } from "vue";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { times } from "lodash-es";
-import { ChartTooltipProps, SupportedWCAEvent } from "./types";
+import { ChartTooltipProps, SupportedWCAEvent, wcif } from "./types";
 import HistogramCustomTooltip from "@/components/charts/HistogramCustomTooltip.vue";
 
 export function cn(...inputs: ClassValue[]) {
@@ -19,6 +19,15 @@ export function valueUpdater<T extends Updater<unknown>>(
       ? updaterOrValue(ref.value)
       : updaterOrValue;
 }
+
+export const fetchWCIF = async (id: string): Promise<wcif> => {
+  const cachedComps = ["WC2025"];
+
+  const wcaURL = cachedComps.includes(id)
+    ? `/wcif/${id}.json`
+    : `https://api.worldcubeassociation.org/competitions/${id}/wcif/public`;
+  return fetchWCAInfo<wcif>(wcaURL);
+};
 
 export const fetchWCAInfo = async <T>(url: string | URL): Promise<T> => {
   const response = await fetch(url);

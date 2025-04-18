@@ -43,3 +43,6 @@ dist-ssr
 *.wasm
 *.wasm.map
 wasm
+
+# Cached WCIF files
+public/wcif/*

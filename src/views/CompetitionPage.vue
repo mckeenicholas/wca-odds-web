@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { fetchWCAInfo } from "@/lib/utils";
-import { wcif, SupportedWCAEvent, Person } from "@/lib/types";
+import { fetchWCIF } from "@/lib/utils";
+import { SupportedWCAEvent, Person } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
@@ -35,10 +35,7 @@ const includeDnf = ref<boolean>(true);
 
 const { isPending, isError, data, error } = useQuery({
   queryKey: ["competition", route.params.id],
-  queryFn: () =>
-    fetchWCAInfo<wcif>(
-      `https://api.worldcubeassociation.org/competitions/${route.params.id}/wcif/public`,
-    ),
+  queryFn: () => fetchWCIF(route.params.id as string),
 });
 
 const eventIds = computed(
