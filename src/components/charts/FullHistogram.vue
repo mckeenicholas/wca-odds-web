@@ -27,8 +27,8 @@ const getPrevFMCIndex = (idx: number, isAverage: boolean) => {
   if (!isAverage) return idx - 10;
 
   const mod = idx % 10;
-  if (mod == 0) return 4;
-  if (mod == 3 || mod == 6) return 3;
+  if (mod == 0) return idx - 4;
+  if (mod == 3 || mod == 6) return idx - 3;
 
   return 0;
 };
@@ -117,24 +117,6 @@ const findTimeRange = (
   );
 };
 
-const calculateValue = (
-  occurrences: number,
-  solveCount: number,
-  prevValue: number,
-  isFirst: boolean,
-  isCDF: boolean,
-): number => {
-  const currentValue = parseFloat(
-    (occurrences / (solveCount / 100)).toFixed(4),
-  );
-
-  return isCDF
-    ? isFirst
-      ? currentValue
-      : prevValue + currentValue
-    : currentValue;
-};
-
 const generateHistogramData = useMemoize(
   (
     data: SimulationResult[],
@@ -166,17 +148,20 @@ const generateHistogramData = useMemoize(
 
         const timesMap = resultTimes.get(i)!;
         const numOccurrences = results.get(i) ?? 0;
-        const prevIndex =
-          event === "333fm" ? getPrevFMCIndex(i, isAverage) : i - 1;
-        const prevValue = resultTimes.get(prevIndex)?.get(person.name) ?? 0;
 
-        const value = calculateValue(
-          numOccurrences,
-          solveCount,
-          prevValue,
-          i === minTime,
-          isCDF,
-        );
+        let value: number;
+        if (isCDF) {
+          const prevIndex =
+            event === "333fm" ? getPrevFMCIndex(i, isAverage) : i - 1;
+          const prevValue = resultTimes.get(prevIndex)?.get(person.name) ?? 0;
+          const currentValue = parseFloat(
+            (numOccurrences / (solveCount / 100)).toFixed(4),
+          );
+
+          value = i === minTime ? currentValue : prevValue + currentValue;
+        } else {
+          value = parseFloat((numOccurrences / (solveCount / 100)).toFixed(4));
+        }
 
         timesMap.set(person.name, value);
         i = getNextIndex(i, event === "333fm", isAverage);

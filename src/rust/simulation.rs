@@ -1,13 +1,12 @@
-use rand::{rngs::ThreadRng, thread_rng};
-use serde::Serialize;
-use std::{collections::HashMap, i32};
-
 use crate::calc::{
-    calc_mean_variance_stdev, find_lowest_indices, fit_skewnorm, transpose_solves,
-    trim_errant_results,
+    calc_weighted_mean_variance_stdev, find_lowest_indices, fit_weighted_skewnorm,
+    transpose_solves, trim_weighted_results,
 };
 use crate::event_simulation::{Ao5Simulation, Bo3Simulation, EventSimulation, Mo3Simulation};
 use crate::{Competitor, DatedCompetitionResult, EventType};
+use rand::{rngs::ThreadRng, thread_rng};
+use serde::Serialize;
+use std::{collections::HashMap, i32};
 
 pub struct SimulationConfig {
     pub include_dnf: bool,
@@ -124,28 +123,57 @@ fn prepare_competitor_stats(competitors: &[Competitor]) -> CompetitorStatsResult
         .map(|competitor| {
             let results = &competitor.results;
 
-            let all_results = collect_results(results);
+            // Apply exponential decay weighting to results based on recency
+            let weighted_results = apply_exponential_weights(results);
 
-            let num_dnf = all_results.iter().filter(|&&x| x < 0).count();
-            let dnf_rate: f32 = num_dnf as f32 / all_results.len() as f32;
-            let result_no_dnf = all_results
-                .into_iter()
-                .filter(|&x| x > 0)
-                .collect::<Vec<_>>();
-
-            if result_no_dnf.len() == 0 {
+            if weighted_results.is_empty() {
                 return (None, 0);
             }
 
+            // Extract all results (including DNFs) for DNF rate calculation
+            let all_weighted_results: Vec<(i32, f32)> = weighted_results.clone();
+
+            // Calculate weighted DNF rate
+            let (dnf_weighted_count, total_weight) = all_weighted_results.iter().fold(
+                (0.0, 0.0),
+                |(dnf_sum, weight_sum), &(val, weight)| {
+                    if val < 0 {
+                        (dnf_sum + weight, weight_sum + weight)
+                    } else {
+                        (dnf_sum, weight_sum + weight)
+                    }
+                },
+            );
+
+            let dnf_rate = if total_weight > 0.0 {
+                dnf_weighted_count / total_weight
+            } else {
+                0.0
+            };
+
+            // Filter out DNFs for time calculations
+            let non_dnf_weighted_results: Vec<(i32, f32)> = weighted_results
+                .into_iter()
+                .filter(|&(val, _)| val > 0)
+                .collect();
+
+            if non_dnf_weighted_results.is_empty() {
+                return (None, 0);
+            }
+
+            // Calculate weighted statistics
             let (sample_mean, _sample_variance, sample_dev) =
-                calc_mean_variance_stdev(&result_no_dnf.as_slice());
+                calc_weighted_mean_variance_stdev(&non_dnf_weighted_results);
 
             hist_max = hist_max.max(((sample_mean + sample_dev * 4.0) / 10.0) as i32);
             hist_min = hist_min.min(((sample_mean - sample_dev * 4.0) / 10.0) as i32);
 
-            let trimmed_results = trim_errant_results(result_no_dnf, sample_mean, sample_dev);
+            // Trim outliers
+            let trimmed_weighted_results =
+                trim_weighted_results(non_dnf_weighted_results, sample_mean, sample_dev);
 
-            let (skew, shape, location) = fit_skewnorm(&trimmed_results);
+            // Fit distribution
+            let (skew, shape, location) = fit_weighted_skewnorm(&trimmed_weighted_results);
 
             (
                 Some(CompetitorStats {
@@ -168,6 +196,24 @@ fn prepare_competitor_stats(competitors: &[Competitor]) -> CompetitorStatsResult
         },
         competitor_stats,
     }
+}
+
+// New function to apply exponential decay weights based on recency
+fn apply_exponential_weights(results: &Vec<DatedCompetitionResult>) -> Vec<(i32, f32)> {
+    const HALF_LIFE_DAYS: f32 = 180.0; // 6 months
+    const DECAY_CONSTANT: f32 = 0.69314718056 / HALF_LIFE_DAYS; // ln(2) / half_life
+
+    let mut weighted_results = Vec::new();
+
+    for result_set in results {
+        let weight = (-DECAY_CONSTANT * result_set.days_since as f32).exp();
+
+        for &time in &result_set.results {
+            weighted_results.push((time, weight));
+        }
+    }
+
+    weighted_results
 }
 
 fn init_simulation_results(
@@ -230,12 +276,4 @@ fn update_rankings(simulation_results: &mut [SimulationResult], solve_results: V
             simulation_results[competitor_index].total_rank += (position as u32) + 1;
         }
     }
-}
-
-fn collect_results(results: &Vec<DatedCompetitionResult>) -> Vec<i32> {
-    let mut collected = Vec::with_capacity(results.len() * 10);
-    for comp_data in results {
-        collected.extend(comp_data.results.clone());
-    }
-    collected
 }

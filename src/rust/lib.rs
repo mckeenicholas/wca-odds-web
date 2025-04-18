@@ -68,12 +68,12 @@ impl AppState {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DatedCompetitionResult {
-    pub date: i64,
+    pub days_since: i32,
     pub results: Vec<i32>,
 }
 
 #[derive(Serialize)]
-pub struct SimulationReturn {
+pub struct SimulationWASMOutput {
     name: String,
     results: SimulationResult,
     sample_size: u32,
@@ -143,7 +143,7 @@ pub fn run_simulation(
         let results: Vec<_> = competitors
             .iter()
             .zip(simulated_data)
-            .map(|(competitor, results)| SimulationReturn {
+            .map(|(competitor, results)| SimulationWASMOutput {
                 name: competitor.name.clone(),
                 results,
                 sample_size: competitor.results.len() as u32
@@ -155,7 +155,7 @@ pub fn run_simulation(
     })
 }
 
-fn join_data(competitions: HashMap<String, i64>, results: Vec<PersonResult>) -> Vec<Competitor> {
+fn join_data(competitions: HashMap<String, i32>, results: Vec<PersonResult>) -> Vec<Competitor> {
     results
         .into_iter()
         .map(|competitor| {
@@ -163,9 +163,10 @@ fn join_data(competitions: HashMap<String, i64>, results: Vec<PersonResult>) -> 
                 .results
                 .into_iter()
                 .filter_map(|competition| {
-                    let comp_date = competitions.get(&competition.id)?;
+                    let days_since = competitions.get(&competition.id)?;
+
                     Some(DatedCompetitionResult {
-                        date: *comp_date,
+                        days_since: *days_since,
                         results: competition.results,
                     })
                 })

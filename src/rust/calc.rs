@@ -1,37 +1,65 @@
 use std::f32::consts::PI;
 
-pub fn calc_mean_variance_stdev(data: &[i32]) -> (f32, f32, f32) {
-    let (sum, sum_sq) = data.iter().fold((0f64, 0f64), |(s, s_sq), &x| {
-        let xf = x as f64;
-        (s + xf, s_sq + xf * xf)
-    });
+pub fn calc_weighted_mean_variance_stdev(data: &[(i32, f32)]) -> (f32, f32, f32) {
+    if data.is_empty() {
+        return (0.0, 0.0, 0.0);
+    }
 
-    let n = data.len() as f64;
-    let mean = sum / n;
-    let variance = (sum_sq / n) - (mean * mean);
+    let total_weight: f32 = data.iter().map(|(_, w)| *w).sum();
+
+    if total_weight <= 0.0 {
+        return (0.0, 0.0, 0.0);
+    }
+
+    // Calculate weighted mean
+    let weighted_sum: f32 = data.iter().map(|&(val, weight)| val as f32 * weight).sum();
+    let mean = weighted_sum / total_weight;
+
+    // Calculate weighted variance (using reliability weights method)
+    let weighted_sq_diff_sum: f32 = data
+        .iter()
+        .map(|&(val, weight)| weight * (val as f32 - mean).powi(2))
+        .sum();
+
+    // Bessel's correction for weighted data
+    let variance = if data.len() > 1 {
+        let effective_n = total_weight.powi(2) / data.iter().map(|(_, w)| w.powi(2)).sum::<f32>();
+        weighted_sq_diff_sum / (total_weight * (effective_n - 1.0) / effective_n)
+    } else {
+        0.0
+    };
+
     let stdev = variance.sqrt();
 
-    (mean as f32, variance as f32, stdev as f32)
+    (mean, variance, stdev)
 }
 
-pub fn trim_errant_results(mut results: Vec<i32>, mean: f32, stdev: f32) -> Vec<i32> {
+pub fn trim_weighted_results(data: Vec<(i32, f32)>, mean: f32, stdev: f32) -> Vec<(i32, f32)> {
     let threshold = (mean + stdev * 2.0) as i32;
-    results.retain(|&x| x <= threshold);
-    results
+    data.into_iter()
+        .filter(|&(val, _)| val <= threshold)
+        .collect()
 }
 
-pub fn fit_skewnorm(times: &[i32]) -> (f32, f32, f32) {
-    let (mean, variance, stdev) = calc_mean_variance_stdev(times);
+pub fn fit_weighted_skewnorm(data: &[(i32, f32)]) -> (f32, f32, f32) {
+    let (mean, variance, stdev) = calc_weighted_mean_variance_stdev(data);
 
-    let skewness = times
+    if stdev == 0.0 {
+        // Fall back to default values if we can't calculate meaningful statistics
+        return (0.0, 1.0, mean);
+    }
+
+    let total_weight: f32 = data.iter().map(|(_, w)| *w).sum();
+
+    // Calculate weighted skewness
+    let weighted_skewness = data
         .iter()
-        .map(|&x| ((x as f32 - mean) / stdev).powi(3))
+        .map(|&(val, weight)| weight * ((val as f32 - mean) / stdev).powi(3))
         .sum::<f32>()
-        / times.len() as f32;
+        / total_weight;
 
     let max_skew = 0.995 * ((4.0 - PI).sqrt() * (2.0 / PI).sqrt() * (1.0 - 2.0 / PI).powf(-1.5));
-
-    let bounded_skew = skewness.clamp(-max_skew, max_skew);
+    let bounded_skew = weighted_skewness.clamp(-max_skew, max_skew);
 
     let delta = bounded_skew.signum()
         * ((PI / 2.0) * bounded_skew.abs().powf(2.0 / 3.0)
