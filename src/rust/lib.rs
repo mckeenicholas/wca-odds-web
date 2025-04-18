@@ -1,83 +1,19 @@
-use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::js_sys::Promise;
 
+use data::CompetitionDataManager;
+use event::EventType;
+use simulation::{CompetitionSimulator, RuntimeConfig};
+
 mod calc;
+mod competitor;
 mod data;
 mod event;
-mod event_simulation;
+mod event_simulator;
+mod histogram;
 mod simd;
 mod simulation;
-
-use data::{get_competition_data, get_solve_data, PersonResult};
-use event::{Ao5Event, EventType};
-use simulation::{run_simulations, SimulationResult};
-
-thread_local! {
-    static APP_STATE: AppState = AppState::new();
-}
-
-#[derive(Debug)]
-pub struct Competitor {
-    pub name: String,
-    pub results: Vec<DatedCompetitionResult>,
-    pub entered_results: Vec<i32>,
-}
-
-#[derive(Debug)]
-pub struct AppState {
-    competitors: RefCell<Vec<Competitor>>,
-    event: RefCell<EventType>,
-}
-
-impl AppState {
-    pub fn new() -> Self {
-        Self {
-            competitors: RefCell::new(vec![]),
-            event: RefCell::new(EventType::Ao5(Ao5Event::S333)),
-        }
-    }
-
-    pub fn set_event(&self, event: EventType) {
-        *self.event.borrow_mut() = event;
-    }
-
-    pub fn set_competitors(&self, competitors: Vec<Competitor>) {
-        *self.competitors.borrow_mut() = competitors;
-    }
-
-    pub fn get_event(&self) -> EventType {
-        *self.event.borrow()
-    }
-
-    pub fn get_competitors(&self) -> &RefCell<Vec<Competitor>> {
-        &self.competitors
-    }
-
-    pub fn with<F, R>(&self, f: F) -> R
-    where
-        F: FnOnce(&Vec<Competitor>, &EventType) -> R,
-    {
-        let competitors = self.competitors.borrow();
-        let event = self.event.borrow();
-        f(&competitors, &event)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DatedCompetitionResult {
-    pub days_since: i32,
-    pub results: Vec<i32>,
-}
-
-#[derive(Serialize)]
-pub struct SimulationWASMOutput {
-    name: String,
-    results: SimulationResult,
-    sample_size: u32,
-}
 
 #[macro_export]
 #[allow(unused_macros)]
@@ -87,30 +23,61 @@ macro_rules! console_log {
     }
 }
 
+thread_local! {
+    static APP_STATE: AppState = AppState::new();
+}
+
+pub struct AppState {
+    simulation_manager: RefCell<Option<CompetitionSimulator>>,
+}
+
+impl AppState {
+    pub fn new() -> Self {
+        Self {
+            simulation_manager: RefCell::new(None),
+        }
+    }
+
+    pub fn set_simulation_manager(&self, simulator: CompetitionSimulator) {
+        *self.simulation_manager.borrow_mut() = Some(simulator);
+    }
+
+    pub fn get_simulation_manager(&self) -> &RefCell<Option<CompetitionSimulator>> {
+        &self.simulation_manager
+    }
+
+    pub fn with<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&Option<CompetitionSimulator>) -> R,
+    {
+        let simulation_manager = self.get_simulation_manager().borrow();
+        f(&simulation_manager)
+    }
+}
+
 #[wasm_bindgen]
 pub fn load_data(competitors: Vec<String>, event_str: String, month_cutoff: i32) -> Promise {
     let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
 
-    APP_STATE.with(|state| {
-        state.set_event(event_type);
-    });
+    let data_manager = CompetitionDataManager::create(competitors, event_type, month_cutoff);
 
     let future = async move {
-        let parsed_data = fetch_and_join(competitors, event_type, month_cutoff)
-            .await
-            .map_err(|e| {
-                console_log!("Error fetching and joining data: {:?}", e);
-                serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()
-            })?;
+        let competitors_result = data_manager.fetch_all().await;
 
-        APP_STATE.with(|state| {
-            state.set_competitors(parsed_data);
+        let competitors = match competitors_result {
+            Ok(fetch_data) => fetch_data,
+            Err(e) => return Ok(serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()),
+        };
+
+        let simulator = CompetitionSimulator::new(event_type, competitors);
+
+        APP_STATE.with(|simulaiton_manager| {
+            simulaiton_manager.set_simulation_manager(simulator);
         });
 
         Ok(serde_wasm_bindgen::to_value(&true)
             .map_err(|_| serde_wasm_bindgen::to_value("Error serializing return value").unwrap())?)
     };
-
     wasm_bindgen_futures::future_to_promise(future)
 }
 
@@ -124,69 +91,19 @@ pub fn run_simulation(
         serde_wasm_bindgen::from_value(entered_times_jsval).expect("Invalid input");
 
     APP_STATE.with(|state| {
-        let mut competitors = state.get_competitors().borrow_mut();
+        let mut sim_manager_ref = state.get_simulation_manager().borrow_mut();
+        let sim_manager = sim_manager_ref
+            .as_mut()
+            .expect("Simulation manager is not set. (Data likely not loaded yet).");
 
-        competitors
-            .iter_mut()
-            .zip(entered_times)
-            .for_each(|(ref mut competitor, times)| {
-                competitor.entered_results = times;
-            });
-
-        let simulated_data = run_simulations(
-            num_simulations,
-            &competitors,
-            state.get_event(),
+        let mut config = RuntimeConfig {
             include_dnf,
-        );
+            num_simulations,
+            decay_halflife_days: 180.0
+        };
 
-        let results: Vec<_> = competitors
-            .iter()
-            .zip(simulated_data)
-            .map(|(competitor, results)| SimulationWASMOutput {
-                name: competitor.name.clone(),
-                results,
-                sample_size: competitor.results.len() as u32
-                    * state.event.borrow().num_attempts() as u32,
-            })
-            .collect();
+        let simulated_data = sim_manager.run_simulations(&mut config);
 
-        serde_wasm_bindgen::to_value(&results).unwrap()
+        serde_wasm_bindgen::to_value(&simulated_data).unwrap()
     })
-}
-
-fn join_data(competitions: HashMap<String, i32>, results: Vec<PersonResult>) -> Vec<Competitor> {
-    results
-        .into_iter()
-        .map(|competitor| {
-            let results = competitor
-                .results
-                .into_iter()
-                .filter_map(|competition| {
-                    let days_since = competitions.get(&competition.id)?;
-
-                    Some(DatedCompetitionResult {
-                        days_since: *days_since,
-                        results: competition.results,
-                    })
-                })
-                .collect::<Vec<_>>();
-
-            Competitor {
-                name: competitor.name,
-                results,
-                entered_results: vec![],
-            }
-        })
-        .collect()
-}
-
-pub async fn fetch_and_join(
-    competitors: Vec<String>,
-    event: EventType,
-    month_cutoff: i32,
-) -> Result<Vec<Competitor>, &'static str> {
-    let competitions = get_competition_data(month_cutoff).await?;
-    let results = get_solve_data(competitors, event).await?;
-    Ok(join_data(competitions, results))
 }

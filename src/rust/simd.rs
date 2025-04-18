@@ -6,7 +6,7 @@ use core::arch::wasm32::{
 use rand::{rngs::ThreadRng, Rng};
 use rand_distr::{Distribution, Normal};
 
-use crate::simulation::CompetitorStats;
+use crate::{competitor::CompetitorStats, simulation::RuntimeConfig};
 
 pub const DNF_TEMP_VALUE: i32 = 59000;
 
@@ -30,13 +30,13 @@ macro_rules! f32x4_min_n {
     };
 }
 
-macro_rules! f32x4_add_n {
+macro_rules! f32x4_sum_n {
     ($vec:expr) => {
         $vec
     };
 
     ($vec:expr, $($rest:expr),+) => {
-        ::core::arch::wasm32::f32x4_add($vec, f32x4_add_n!($($rest),+))
+        ::core::arch::wasm32::f32x4_add($vec, f32x4_sum_n!($($rest),+))
     };
 }
 
@@ -44,10 +44,12 @@ pub fn generate_skewnorm_vec(
     count: usize,
     stats: &CompetitorStats,
     rng: &mut ThreadRng,
-    include_dnf: bool,
+    config: &RuntimeConfig,
     entered_times: &[i32],
 ) -> Vec<v128> {
     let mut values = Vec::with_capacity(count);
+
+    let include_dnf = config.include_dnf;
 
     for i in 0..count {
         values.push(if i < entered_times.len() && entered_times[i] != 0 {
@@ -120,12 +122,12 @@ pub fn simd_gen_skewnorm(
     let u0 = gen_random_f32x4(&normal_dist, rand_source);
     let v = gen_random_f32x4(&normal_dist, rand_source);
 
-    let sigma = stats.skew / (1.0 + stats.skew.powi(2)).sqrt();
+    let sigma = stats.skew / (1.0f32 + stats.skew.powi(2)).sqrt();
 
     let u1 = f32x4_mul(
         f32x4_add(
             f32x4_mul(f32x4_splat(sigma), u0),
-            f32x4_mul(f32x4_splat((1.0 - sigma.powi(2)).sqrt()), v),
+            f32x4_mul(f32x4_splat((1.0f32 - sigma.powi(2)).sqrt()), v),
         ),
         f32x4_splat(stats.shape),
     );
@@ -154,7 +156,7 @@ pub fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
 }
 
 pub fn calc_wca_mean_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
-    let sum_v128 = f32x4_add_n!(v1, v2, v3);
+    let sum_v128 = f32x4_sum_n!(v1, v2, v3);
     let mean_v128 = f32x4_div(sum_v128, f32x4_splat(3.0));
 
     i32x4_to_slice(mean_v128)
@@ -164,7 +166,7 @@ pub fn calc_wca_average_5(v1: v128, v2: v128, v3: v128, v4: v128, v5: v128) -> [
     let max_all = f32x4_max_n!(v1, v2, v3, v4, v5);
     let min_all = f32x4_min_n!(v1, v2, v3, v4, v5);
 
-    let sum = f32x4_add_n!(v1, v2, v3, v4, v5);
+    let sum = f32x4_sum_n!(v1, v2, v3, v4, v5);
     let adjusted_sum = f32x4_sub(f32x4_sub(sum, max_all), min_all);
 
     i32x4_to_slice(f32x4_div(adjusted_sum, f32x4_splat(3.0)))
