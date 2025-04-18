@@ -101,6 +101,7 @@ const runSimulation = async () => {
 const handleSimulation = async () => {
   try {
     const results = await runSimulation();
+
     if (results) {
       simulation_results.value = results;
       inputtedTimesPrev.value = cloneDeep(inputtedTimes.value);

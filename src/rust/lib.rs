@@ -96,13 +96,17 @@ pub fn run_simulation(
             .as_mut()
             .expect("Simulation manager is not set. (Data likely not loaded yet).");
 
+        sim_manager.add_entered_results(entered_times);
+
         let mut config = RuntimeConfig {
             include_dnf,
             num_simulations,
-            decay_halflife_days: 180.0
+            decay_halflife_days: 180.0,
         };
 
-        let simulated_data = sim_manager.run_simulations(&mut config);
+        sim_manager.run_simulations(&mut config);
+
+        let simulated_data = sim_manager.to_wasm_output();
 
         serde_wasm_bindgen::to_value(&simulated_data).unwrap()
     })

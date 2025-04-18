@@ -10,7 +10,7 @@ const { data, numSimulations, colors } =
 const chartData = computed(() =>
   data.map((item) => ({
     name: item.name,
-    wins: (item.results.win_count / numSimulations) * 100,
+    wins: (item.win_count / numSimulations) * 100,
   })),
 );
 </script>

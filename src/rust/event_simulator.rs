@@ -55,7 +55,7 @@ pub trait EventSimulation {
                 continue;
             }
 
-            histogram.add_value(value);
+            histogram.add_value(value / 10);
         }
     }
 }

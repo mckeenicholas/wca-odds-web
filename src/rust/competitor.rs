@@ -1,11 +1,9 @@
 use std::u32;
 
 use serde::{Deserialize, Serialize};
-use web_sys::EventTarget;
 
 use crate::{
     calc::{calc_weighted_mean_variance_stdev, fit_weighted_skewnorm, trim_weighted_results},
-    event,
     simd::DNF_TEMP_VALUE,
 };
 
@@ -28,6 +26,7 @@ pub struct CompetitorStats {
     pub skew: f32,
     pub dnf_rate: f32,
     pub mean: f32,
+    pub stdev: f32,
     pub num_non_dnf_results: u32,
 }
 
@@ -97,6 +96,7 @@ impl Competitor {
             skew,
             dnf_rate,
             mean: sample_mean,
+            stdev: sample_dev,
             num_non_dnf_results,
         })
     }
@@ -133,5 +133,16 @@ impl Competitor {
         self.stats
             .as_ref()
             .map_or(DNF_TEMP_VALUE as u32, |stats| stats.mean as u32)
+    }
+
+    pub fn get_person_hist_bounds(&self) -> (i32, i32) {
+        if let Some(stats) = &self.stats {
+            let hist_min = ((stats.mean - stats.stdev * 4.0) / 10.0) as i32;
+            let hist_max = ((stats.mean + stats.stdev * 4.0) / 10.0) as i32;
+
+            (hist_min, hist_max)
+        } else {
+            (i32::MAX, 0)
+        }
     }
 }

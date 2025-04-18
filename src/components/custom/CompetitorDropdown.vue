@@ -71,13 +71,13 @@ const isOpen = ref<boolean>(false);
           </div>
         </div>
         <div class="flex-1 text-center">
-          {{ (result.results.win_count * 100) / numSimulations }}%
+          {{ (result.win_count * 100) / numSimulations }}%
         </div>
         <div class="flex-1 text-center">
-          {{ (result.results.pod_count * 100) / numSimulations }}%
+          {{ (result.pod_count * 100) / numSimulations }}%
         </div>
         <div class="flex-1 text-center">
-          {{ result.results.total_rank / numSimulations }}
+          {{ result.total_rank / numSimulations }}
         </div>
         <ChevronUp
           class="scale-75 transition-transform duration-450"
@@ -88,8 +88,8 @@ const isOpen = ref<boolean>(false);
     <CollapsibleContent class="space-y-2">
       <IndividualHistogram
         :color="color"
-        :histSingle="result.results.hist_values_single"
-        :histAverage="result.results.hist_values_average"
+        :histSingle="result.hist_values_single"
+        :histAverage="result.hist_values_average"
         :simulations="numSimulations * eventAttempts[event]"
         :event
       />

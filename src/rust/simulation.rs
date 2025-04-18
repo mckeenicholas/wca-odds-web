@@ -1,20 +1,16 @@
 use rand::rngs::ThreadRng;
 use rand::thread_rng;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
+use std::collections::HashMap;
+use std::iter::zip;
 
-use crate::calc::{
-    calc_weighted_mean_variance_stdev, find_lowest_indices, fit_weighted_skewnorm,
-    transpose_solves, trim_weighted_results,
-};
+use crate::calc::{find_lowest_indices, transpose_solves};
 use crate::competitor::Competitor;
 use crate::event::EventType;
 use crate::event_simulator::{Ao5Simulation, Bo3Simulation, EventSimulation, Mo3Simulation};
 use crate::histogram::Histogram;
 
-use core::arch::wasm32::v128;
-use std::default;
-
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct SimulationWASMOutput {
     name: String,
     sample_size: u32,
@@ -23,12 +19,11 @@ pub struct SimulationWASMOutput {
     total_rank: u32,
     mean_no_dnf: u32,
     rank_dist: Vec<u32>,
-    hist_values_single: Vec<(i32, i32)>,
-    hist_values_average: Vec<(i32, i32)>,
+    hist_values_single: HashMap<i32, i32>,
+    hist_values_average: HashMap<i32, i32>,
 }
 
 pub struct CompetitionSimulator {
-    event: EventType,
     event_simulator: Box<dyn EventSimulation>,
     competitors_data: Vec<Competitor>,
     simulation_results: Option<Vec<SimulationResult>>,
@@ -41,7 +36,7 @@ pub struct RuntimeConfig {
     pub decay_halflife_days: f32,
 }
 
-#[derive(Default)]
+#[derive(Debug)]
 pub struct ResultHistograms {
     pub hist_single: Histogram,
     pub hist_average: Histogram,
@@ -56,13 +51,18 @@ pub struct SimulationResult {
 }
 
 impl SimulationResult {
-    pub fn new(num_competitors: usize) -> Self {
+    pub fn new(num_competitors: usize, hist_min: i32, hist_max: i32) -> Self {
+        let histograms = ResultHistograms {
+            hist_single: Histogram::new_with_bounds(hist_min, hist_max),
+            hist_average: Histogram::new_with_bounds(hist_min, hist_max),
+        };
+
         Self {
             win_count: 0,
             pod_count: 0,
             total_rank: 0,
             rank_dist: vec![0; num_competitors],
-            histograms: ResultHistograms::default(),
+            histograms,
         }
     }
 }
@@ -77,12 +77,16 @@ impl CompetitionSimulator {
             EventType::Bo3(_) => Box::new(Bo3Simulation),
         };
 
+        let (hist_min, hist_max) = competitors.iter().fold((i32::MAX, 0), |acc, comp| {
+            let (min, max) = comp.get_person_hist_bounds();
+            (min.min(acc.0), max.max(acc.1))
+        });
+
         let default_simulation_results = (0..num_competitors)
-            .map(|_| SimulationResult::new(num_competitors))
+            .map(|_| SimulationResult::new(num_competitors, hist_min, hist_max))
             .collect();
 
         Self {
-            event,
             event_simulator,
             competitors_data: competitors,
             simulation_results: Some(default_simulation_results),
@@ -91,7 +95,7 @@ impl CompetitionSimulator {
     }
 
     pub fn run_simulations(&mut self, config: &mut RuntimeConfig) {
-        for _ in 0..config.num_simulations {
+        for _ in 0..config.num_simulations / 4 {
             let sim_results = self.run_simulation_batch(config);
             self.update_rankings(sim_results);
         }
@@ -110,8 +114,8 @@ impl CompetitionSimulator {
                 total_rank: results.total_rank,
                 mean_no_dnf: competitor.get_mean(),
                 rank_dist: results.rank_dist,
-                hist_values_single: results.histograms.hist_single.into(),
-                hist_values_average: results.histograms.hist_average.into(),
+                hist_values_single: results.histograms.hist_single.data(),
+                hist_values_average: results.histograms.hist_average.data(),
             })
             .collect();
 
@@ -157,6 +161,12 @@ impl CompetitionSimulator {
                 sim_results[competitor_index].rank_dist[position] += 1;
                 sim_results[competitor_index].total_rank += (position as u32) + 1;
             }
+        }
+    }
+
+    pub fn add_entered_results(&mut self, entered_times: Vec<Vec<i32>>) {
+        for (competitor, average) in zip(&mut self.competitors_data, entered_times) {
+            competitor.add_entered_results(average);
         }
     }
 }

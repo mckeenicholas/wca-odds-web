@@ -8,23 +8,23 @@ const { data, colors, numSimulations, event } =
   defineProps<SimulationResultProps>();
 
 const topCompetitor = computed(
-  () => [...data].sort((a, b) => b.results.win_count - a.results.win_count)[0],
+  () => [...data].sort((a, b) => b.win_count - a.win_count)[0],
 );
 
 const avgRank = computed(() =>
-  (topCompetitor.value.results.total_rank / numSimulations).toFixed(2),
+  (topCompetitor.value.total_rank / numSimulations).toFixed(2),
 );
 
 const winChance = computed(() =>
-  ((topCompetitor.value.results.win_count / numSimulations) * 100).toFixed(2),
+  ((topCompetitor.value.win_count / numSimulations) * 100).toFixed(2),
 );
 
 const podiumChance = computed(() =>
-  ((topCompetitor.value.results.pod_count / numSimulations) * 100).toFixed(2),
+  ((topCompetitor.value.pod_count / numSimulations) * 100).toFixed(2),
 );
 
 const expectedAvg = computed(() =>
-  toClockFormat(topCompetitor.value.results.mean_no_dnf),
+  toClockFormat(topCompetitor.value.mean_no_dnf),
 );
 </script>
 

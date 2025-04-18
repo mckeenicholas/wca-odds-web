@@ -97,8 +97,8 @@ const findTimeRange = (
   return data.reduce(
     ([minAccPerson, maxAccPerson], person) => {
       const results = isAverage
-        ? person.results.hist_values_average
-        : person.results.hist_values_single;
+        ? person.hist_values_average
+        : person.hist_values_single;
 
       const [minPerson, maxPerson] = [...results].reduce(
         ([minAcc, maxAcc], [time]) => [
@@ -135,8 +135,8 @@ const generateHistogramData = useMemoize(
       }
 
       const results = isAverage
-        ? person.results.hist_values_average
-        : person.results.hist_values_single;
+        ? person.hist_values_average
+        : person.hist_values_single;
 
       const solveCount = totalSolves(results);
       let i = minTime;

@@ -13,9 +13,7 @@ const chartData = computed(() =>
     ...Object.fromEntries(
       data.map((person) => [
         person.name,
-        parseFloat(
-          ((person.results.rank_dist[idx] / numSimulations) * 100).toFixed(2),
-        ),
+        parseFloat(((person.rank_dist[idx] / numSimulations) * 100).toFixed(2)),
       ]),
     ),
   })),

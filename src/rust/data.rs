@@ -1,10 +1,12 @@
-use crate::{competitor::{Competitor, DatedCompetitionResult}, event::{EventType, Mo3Event}};
+use crate::{
+    competitor::{Competitor, DatedCompetitionResult},
+    event::{EventType, Mo3Event},
+};
 use chrono::{Datelike, Duration, NaiveDateTime, TimeZone, Utc};
 use futures::future::join_all;
 use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize};
 use std::collections::HashMap;
-
 
 #[derive(Deserialize, Debug)]
 struct APIRequestCompetitions {
