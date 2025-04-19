@@ -69,32 +69,41 @@ impl SimulationResult {
 
 impl CompetitionSimulator {
     pub fn new(event: EventType, competitors: Vec<Competitor>) -> Self {
-        let num_competitors = competitors.len();
-
         let event_simulator: Box<dyn EventSimulation> = match event {
             EventType::Ao5(_) => Box::new(Ao5Simulation),
             EventType::Mo3(mo3_event) => Box::new(Mo3Simulation { event: mo3_event }),
             EventType::Bo3(_) => Box::new(Bo3Simulation),
         };
 
-        let (hist_min, hist_max) = competitors.iter().fold((i32::MAX, 0), |acc, comp| {
-            let (min, max) = comp.get_person_hist_bounds();
-            (min.min(acc.0), max.max(acc.1))
-        });
+        Self {
+            event_simulator,
+            competitors_data: competitors,
+            simulation_results: None,
+            rng: thread_rng(),
+        }
+    }
+
+    fn get_default_results(&self) -> Vec<SimulationResult> {
+        let (hist_min, hist_max) = self
+            .competitors_data
+            .iter()
+            .fold((i32::MAX, 0), |acc, comp| {
+                let (min, max) = comp.get_person_hist_bounds();
+                (min.min(acc.0), max.max(acc.1))
+            });
+
+        let num_competitors = self.competitors_data.len();
 
         let default_simulation_results = (0..num_competitors)
             .map(|_| SimulationResult::new(num_competitors, hist_min, hist_max))
             .collect();
 
-        Self {
-            event_simulator,
-            competitors_data: competitors,
-            simulation_results: Some(default_simulation_results),
-            rng: thread_rng(),
-        }
+        default_simulation_results
     }
 
     pub fn run_simulations(&mut self, config: &mut RuntimeConfig) {
+        self.simulation_results = Some(self.get_default_results());
+
         for _ in 0..config.num_simulations / 4 {
             let sim_results = self.run_simulation_batch(config);
             self.update_rankings(sim_results);

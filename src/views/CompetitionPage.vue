@@ -91,7 +91,9 @@ const getCompetitorData = () => {
     competitors.splice(MAX_COMPETITORS);
   });
 
-  selectedEventId.value = Object.keys(competitorAcc)[0] as SupportedWCAEvent;
+  if (!("333" in competitorAcc)) {
+    selectedEventId.value = Object.keys(competitorAcc)[0] as SupportedWCAEvent;
+  }
 
   return competitorAcc;
 };

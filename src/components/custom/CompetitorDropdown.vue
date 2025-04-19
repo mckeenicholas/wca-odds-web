@@ -4,7 +4,7 @@ import {
   SimulationResult,
   SupportedWCAEvent,
 } from "@/lib/types";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -20,6 +20,7 @@ import {
 import { CircleAlert, ChevronUp } from "lucide-vue-next";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
 import ResultEntryField from "./ResultEntryField.vue";
+import { formatPercentage } from "@/lib/utils";
 
 const lowDataWarningThreshold = 12 as const;
 
@@ -34,6 +35,14 @@ const { result, color, numSimulations, event, wcaId } = defineProps<{
 const model = defineModel<number[]>({ required: true });
 
 const isOpen = ref<boolean>(false);
+
+const winPercentage = computed(() =>
+  formatPercentage((result.win_count * 100) / numSimulations),
+);
+const podiumPercentage = computed(() =>
+  formatPercentage((result.pod_count * 100) / numSimulations),
+);
+const expectedRank = computed(() => result.total_rank / numSimulations);
 </script>
 
 <template>
@@ -71,13 +80,13 @@ const isOpen = ref<boolean>(false);
           </div>
         </div>
         <div class="flex-1 text-center">
-          {{ (result.win_count * 100) / numSimulations }}%
+          {{ winPercentage }}
         </div>
         <div class="flex-1 text-center">
-          {{ (result.pod_count * 100) / numSimulations }}%
+          {{ podiumPercentage }}
         </div>
         <div class="flex-1 text-center">
-          {{ result.total_rank / numSimulations }}
+          {{ expectedRank }}
         </div>
         <ChevronUp
           class="scale-75 transition-transform duration-450"

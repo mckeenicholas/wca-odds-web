@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ColoredCircle from "../custom/ColoredCircle.vue";
+import { formatPercentage } from "@/lib/utils";
 
 const { title, data } = defineProps<{
   title?: string;
@@ -20,18 +21,6 @@ const toPlaceString = (place: number): string => {
 
   const suffix = suffixes[place % 10] || suffixes[0];
   return `${place}${suffix}`;
-};
-
-const getNumericValue = (val: string | number): number => {
-  if (typeof val === "string") {
-    return parseFloat(val);
-  }
-  return val;
-};
-
-const formatPercentage = (val: string | number): string => {
-  const numVal = getNumericValue(val);
-  return numVal >= 0.01 ? numVal.toFixed(2) + "%" : "<0.01%";
 };
 </script>
 

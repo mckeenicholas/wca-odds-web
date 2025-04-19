@@ -31,15 +31,30 @@ const padChartData = (data: DataPoint[]): DataPoint[] => {
   const startTime = data[0].time;
   const endTime = data[data.length - 1].time;
 
-  const padPoint = (time: number) => ({ time, single: 0, average: 0 });
-
-  return [
-    padPoint(startTime - 20),
-    padPoint(startTime - 10),
-    ...data,
-    padPoint(endTime + 10),
-    padPoint(endTime + 20),
+  const beforePadding = [
+    { time: startTime - 20, single: 0, average: 0 },
+    { time: startTime - 10, single: 0, average: 0 },
   ];
+
+  const afterPadding = isCDF.value
+    ? [
+        {
+          time: endTime + 10,
+          single: data[data.length - 1].single,
+          average: data[data.length - 1].average,
+        },
+        {
+          time: endTime + 20,
+          single: data[data.length - 1].single,
+          average: data[data.length - 1].average,
+        },
+      ]
+    : [
+        { time: endTime + 10, single: 0, average: 0 },
+        { time: endTime + 20, single: 0, average: 0 },
+      ];
+
+  return [...beforePadding, ...data, ...afterPadding];
 };
 
 const data = computed(() => {
