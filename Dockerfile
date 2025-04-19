@@ -27,10 +27,12 @@ RUN npm install
 COPY --from=wasm-builder /app/wasm ./wasm
 COPY . .
 
+RUN node setup/cache_comp.js WC2025
+
 RUN npm run build
 
 # Final nginx deploy stage
-FROM nginx:1.27.4-alpine
+FROM nginx:1.27-alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 

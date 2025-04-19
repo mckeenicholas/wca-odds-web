@@ -1,12 +1,12 @@
-import { type wcif } from "../src/lib/types";
 import fs from "fs";
 import path from "path";
+import process from "process";
 
 const compId = process.argv[2];
 
 if (!compId) {
   console.error("Please provide a competition ID as a command line argument");
-  console.error("Usage: ts-node cache_comp.ts COMPETITION_ID");
+  console.error("Usage: node cache_comp.js COMPETITION_ID");
   process.exit(1);
 }
 
@@ -30,7 +30,7 @@ async function main() {
   }
 }
 
-const fetchCompetition = async (id: string) => {
+async function fetchCompetition(id) {
   const wcaURL = `https://api.worldcubeassociation.org/competitions/${id}/wcif/public`;
 
   console.log(`Fetching from: ${wcaURL}`);
@@ -45,7 +45,7 @@ const fetchCompetition = async (id: string) => {
   const fullData = await result.json();
 
   // Only keep required attributes
-  const filteredData: wcif = {
+  const filteredData = {
     name: fullData.name,
     events: fullData.events.map((event) => ({
       id: event.id,
@@ -69,6 +69,6 @@ const fetchCompetition = async (id: string) => {
   };
 
   return filteredData;
-};
+}
 
 main();
