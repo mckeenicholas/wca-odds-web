@@ -47,6 +47,7 @@ async function fetchCompetition(id) {
   // Only keep required attributes
   const filteredData = {
     name: fullData.name,
+    id: fullData.id,
     events: fullData.events.map((event) => ({
       id: event.id,
     })),

@@ -73,7 +73,7 @@ const removeCompetitor = (competitorId: string) => {
 
 const runSimulation = () => {
   router.push({
-    path: "/simulation",
+    path: "/custom/results",
     query: {
       name: "Custom Simulation",
       eventId: selectedEventId.value,

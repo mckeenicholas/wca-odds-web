@@ -115,7 +115,7 @@ const runSimulation = () => {
   const selectedIds = currentSelectedCompetitors.value.map((item) => item.id);
 
   router.push({
-    path: "/simulation",
+    path: `./${data.value.id}/results`,
     query: {
       name: data.value.name,
       eventId: selectedEventId.value,

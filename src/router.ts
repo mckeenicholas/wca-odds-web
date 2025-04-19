@@ -8,8 +8,9 @@ const CustomPage = () => import("./views/CustomPage.vue");
 const routes = [
   { path: "/", component: HomePage },
   { path: "/competition/:id", component: CompetitionPage },
-  { path: "/simulation/", component: SimulationPage },
+  { path: "/competition/:id/results/", component: SimulationPage },
   { path: "/custom/", component: CustomPage },
+  { path: "/custom/results/", component: SimulationPage },
 ];
 
 const router = createRouter({

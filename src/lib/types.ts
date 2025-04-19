@@ -84,6 +84,7 @@ export interface wcifEvent {
 
 export interface wcif {
   name: string;
+  id: string;
   events: wcifEvent[];
   persons: Person[];
 }

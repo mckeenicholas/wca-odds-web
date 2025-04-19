@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import "./assets/index.css";
 import { Github } from "lucide-vue-next";
-import BackButton from "@/components/custom/BackButton.vue";
-import { useRoute } from "vue-router";
 import ColorModeSwitcher from "@/components/custom/ColorModeSwitcher.vue";
-
-const versionNum = "0.3.3";
+import BackButton from "./components/custom/BackButton.vue";
+import { useRoute } from "vue-router";
 
 const route = useRoute();
+
+const versionNum = "0.4.1";
 </script>
 
 <template>
