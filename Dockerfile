@@ -1,5 +1,5 @@
 # Build stage for Rust/WASM
-FROM rust:1.85-slim AS wasm-builder
+FROM rust:1.86-slim AS wasm-builder
 
 # Install wasm-pack and build dependencies
 RUN apt-get update && \
@@ -32,7 +32,7 @@ RUN node setup/cache_comp.js WC2025
 RUN npm run build
 
 # Final nginx deploy stage
-FROM nginx:1.27-alpine
+FROM nginx:1.27-alpine-slim
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
