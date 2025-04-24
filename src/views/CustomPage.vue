@@ -31,6 +31,7 @@ const selectedEventId = ref<string>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
 const includeDnf = ref<boolean>(true);
+const decayHalfLife = ref<number>(180);
 
 const searchPersons = async (): Promise<Person[]> => {
   if (!input.value.trim()) return [];
@@ -80,6 +81,7 @@ const runSimulation = () => {
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
       includeDnf: includeDnf.value.toString(),
+      decayRate: decayHalfLife.value.toString(),
       competitors: competitors.value.map((c: Person) => c.wca_id).join(","),
     },
   });
@@ -149,6 +151,7 @@ const runSimulation = () => {
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
           v-model="includeDnf"
+          v-bind:decay-rate="decayHalfLife"
           :disableRun="competitors.length < 2"
           @run-simulation="runSimulation"
         />

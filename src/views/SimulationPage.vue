@@ -27,10 +27,24 @@ import { LoaderCircle } from "lucide-vue-next";
 const route = useRouter().currentRoute.value as {
   query: SimulationRouteQuery & RouteParams;
 };
-const { competitors, eventId, name, simCount, monthCutoff, includeDnf } =
-  route.query;
+const {
+  competitors,
+  eventId,
+  name,
+  simCount,
+  monthCutoff,
+  includeDnf,
+  decayRate,
+} = route.query;
 
-if (!competitors || !eventId || !name || !simCount || !monthCutoff) {
+if (
+  !competitors ||
+  !eventId ||
+  !name ||
+  !simCount ||
+  !monthCutoff ||
+  !decayRate
+) {
   throw new Error("One or more required parameters are null or undefined.");
 }
 
@@ -38,10 +52,11 @@ if (!(eventId in eventNames)) {
   throw new Error("Invalid event ID");
 }
 
-const includeDNF = includeDnf === "true";
-const competitorsList = competitors.toString().split(",");
-const numSimulations = parseInt(simCount as string);
+const numSimulations = parseInt(simCount.toString());
 const monthCutoffNum = parseInt(monthCutoff.toString());
+const decayHalfLife = parseInt(decayRate.toString());
+const competitorsList = competitors.toString().split(",");
+const includeDNF = includeDnf === "true";
 const event = eventId as SupportedWCAEvent;
 const colors = generateColors(competitorsList.length);
 
@@ -82,6 +97,7 @@ const runSimulation = async () => {
       monthCutoffNum,
       numSimulations,
       includeDNF,
+      decayHalfLife,
       inputtedTimes.value,
     );
 

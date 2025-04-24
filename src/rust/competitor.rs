@@ -31,8 +31,8 @@ pub struct CompetitorStats {
 }
 
 impl Competitor {
-    pub fn new(name: String, results: Vec<DatedCompetitionResult>) -> Self {
-        let stats = Competitor::calculate_stats(&results);
+    pub fn new(name: String, results: Vec<DatedCompetitionResult>, halflife: f32) -> Self {
+        let stats = Competitor::calculate_stats(&results, halflife);
 
         Self {
             name,
@@ -42,8 +42,11 @@ impl Competitor {
         }
     }
 
-    fn calculate_stats(results: &Vec<DatedCompetitionResult>) -> Option<CompetitorStats> {
-        let weighted_results = Self::apply_exponential_weights(results);
+    fn calculate_stats(
+        results: &Vec<DatedCompetitionResult>,
+        halflife: f32,
+    ) -> Option<CompetitorStats> {
+        let weighted_results = Self::apply_exponential_weights(results, halflife);
 
         if weighted_results.is_empty() {
             return None;
@@ -101,15 +104,17 @@ impl Competitor {
         })
     }
 
-    fn apply_exponential_weights(results: &Vec<DatedCompetitionResult>) -> Vec<(i32, f32)> {
+    fn apply_exponential_weights(
+        results: &Vec<DatedCompetitionResult>,
+        halflife: f32,
+    ) -> Vec<(i32, f32)> {
         const LN2: f32 = 0.69314718056;
-        const HALF_LIFE_DAYS: f32 = 180.0; // 6 months
-        const DECAY_CONSTANT: f32 = LN2 / HALF_LIFE_DAYS; // ln(2) / half_life
+        let decay_rate: f32 = LN2 / halflife;
 
         let mut weighted_results = Vec::new();
 
         for result_set in results {
-            let weight = (-DECAY_CONSTANT * result_set.days_since as f32).exp();
+            let weight = (-decay_rate * result_set.days_since as f32).exp();
 
             for &time in &result_set.results {
                 weighted_results.push((time, weight));

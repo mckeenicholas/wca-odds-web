@@ -33,7 +33,6 @@ pub struct CompetitionSimulator {
 pub struct RuntimeConfig {
     pub num_simulations: u32,
     pub include_dnf: bool,
-    pub decay_halflife_days: f32,
 }
 
 #[derive(Debug)]
@@ -173,7 +172,7 @@ impl CompetitionSimulator {
         }
     }
 
-    pub fn add_entered_results(&mut self, entered_times: Vec<Vec<i32>>) {
+    pub fn set_entered_results(&mut self, entered_times: Vec<Vec<i32>>) {
         for (competitor, average) in zip(&mut self.competitors_data, entered_times) {
             competitor.add_entered_results(average);
         }

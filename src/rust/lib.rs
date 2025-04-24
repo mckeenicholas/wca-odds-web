@@ -56,10 +56,16 @@ impl AppState {
 }
 
 #[wasm_bindgen]
-pub fn load_data(competitors: Vec<String>, event_str: String, month_cutoff: i32) -> Promise {
+pub fn load_data(
+    competitors: Vec<String>,
+    event_str: String,
+    month_cutoff: i32,
+    halflife: f32,
+) -> Promise {
     let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
 
-    let data_manager = CompetitionDataManager::create(competitors, event_type, month_cutoff);
+    let data_manager =
+        CompetitionDataManager::create(competitors, event_type, month_cutoff, halflife);
 
     let future = async move {
         let competitors_result = data_manager.fetch_all().await;
@@ -96,12 +102,11 @@ pub fn run_simulation(
             .as_mut()
             .expect("Simulation manager is not set. (Data likely not loaded yet).");
 
-        sim_manager.add_entered_results(entered_times);
+        sim_manager.set_entered_results(entered_times);
 
         let mut config = RuntimeConfig {
             include_dnf,
             num_simulations,
-            decay_halflife_days: 180.0,
         };
 
         sim_manager.run_simulations(&mut config);

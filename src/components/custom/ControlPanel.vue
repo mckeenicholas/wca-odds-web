@@ -1,3 +1,4 @@
+// filepath: /home/nicholas/wca-odds-web/src/components/custom/ControlPanel.vue
 <script setup lang="ts">
 import { eventNames, SupportedWCAEvent } from "@/lib/types";
 import {
@@ -7,26 +8,18 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-  NumberField,
-  NumberFieldContent,
-  NumberFieldDecrement,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "@/components/ui/number-field";
-import { Switch } from "@/components/ui/switch";
 import { useWindowSize } from "@vueuse/core";
 import ExpandableBox from "./ExpandableBox.vue";
+import SimulationOptions from "./SimulationOptions.vue";
 
-const breakpoint = 1100 as const;
+const breakpoint = 1200 as const;
 
 const selectedEventId = defineModel<string>("selectedEventId");
 const simCount = defineModel<number>("simCount");
 const monthCount = defineModel<number>("monthCount");
 const includeDnf = defineModel<boolean>("includeDnf");
+const decayHalfLife = defineModel<number>("decayRate");
 
 const { eventIds, disableRun = false } = defineProps<{
   eventIds: SupportedWCAEvent[];
@@ -55,36 +48,12 @@ const { width } = useWindowSize();
     v-if="width >= breakpoint"
     class="border rounded-md my-2 p-2 flex items-center space-x-4"
   >
-    <Label for="simCount">Number of simulations:</Label>
-    <Input
-      placeholder="100000"
-      class="min-w-16 max-w-36"
-      id="simCount"
-      v-model.number="simCount"
+    <SimulationOptions
+      v-model:simCount="simCount"
+      v-model:monthCount="monthCount"
+      v-model:includeDnf="includeDnf"
+      v-model:decay-rate="decayHalfLife"
     />
-    <div class="flex items-center space-x-2">
-      <Label for="resultCutoff">Using results from the past</Label>
-      <NumberField
-        :default-value="18"
-        :min="1"
-        id="resultCutoff"
-        class="w-24"
-        v-model="monthCount"
-      >
-        <NumberFieldContent>
-          <NumberFieldDecrement />
-          <NumberFieldInput />
-          <NumberFieldIncrement />
-        </NumberFieldContent>
-      </NumberField>
-      <Label for="resultCutoff">{{
-        monthCount === 1 ? "month" : "months"
-      }}</Label>
-    </div>
-
-    <Label for="includeDNF">Include DNFs in Calculation</Label>
-    <Switch id="includeDNF" v-model:checked="includeDnf" />
-
     <div class="flex flex-grow justify-end">
       <Button @click="() => emit('runSimulation')" :disabled="disableRun"
         >Run Simulation</Button
@@ -93,41 +62,14 @@ const { width } = useWindowSize();
   </div>
   <div v-else>
     <ExpandableBox title="Options" class="my-2">
-      <hr class="mx-2 mb-2" />
-      <div class="flex flex-col items-center p-2">
-        <div class="flex items-center space-x-2 mb-4">
-          <Label for="simCount">Number of simulations:</Label>
-          <Input
-            placeholder="100000"
-            class="min-w-16 max-w-36"
-            id="simCount"
-            v-model.number="simCount"
-          />
-        </div>
-        <div class="flex items-center space-x-2 mb-4">
-          <Label for="resultCutoff">Using results from the past</Label>
-          <NumberField
-            :default-value="18"
-            :min="1"
-            id="resultCutoff"
-            class="w-24"
-            v-model="monthCount"
-          >
-            <NumberFieldContent>
-              <NumberFieldDecrement />
-              <NumberFieldInput />
-              <NumberFieldIncrement />
-            </NumberFieldContent>
-          </NumberField>
-          <Label for="resultCutoff">{{
-            monthCount === 1 ? "month" : "months"
-          }}</Label>
-        </div>
-
-        <div class="flex items-center space-x-2 mb-4">
-          <Label for="includeDNF">Include DNFs in Calculation</Label>
-          <Switch id="includeDNF" v-model:checked="includeDnf" />
-        </div>
+      <hr class="mx-2" />
+      <div class="flex flex-col items-stretch p-4 space-y-4">
+        <SimulationOptions
+          v-model:simCount="simCount"
+          v-model:monthCount="monthCount"
+          v-model:includeDnf="includeDnf"
+          v-model:decay-rate="decayHalfLife"
+        />
       </div>
     </ExpandableBox>
     <div class="flex flex-col mb-2">

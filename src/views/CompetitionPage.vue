@@ -32,6 +32,7 @@ const selectedEventId = ref<SupportedWCAEvent>("333");
 const simCount = ref<number>(10000);
 const monthCount = ref<number>(12);
 const includeDnf = ref<boolean>(true);
+const decayHalfLife = ref<number>(180);
 
 const { isPending, isError, data, error } = useQuery({
   queryKey: ["competition", route.params.id],
@@ -122,6 +123,7 @@ const runSimulation = () => {
       simCount: simCount.value.toString(),
       monthCutoff: monthCount.value.toString(),
       includeDnf: includeDnf.value.toString(),
+      decayRate: decayHalfLife.value.toString(),
       competitors: selectedIds.join(","),
     },
   });
@@ -152,6 +154,7 @@ const toggleSelection = (person: Competitor) => {
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
           v-model:include-dnf="includeDnf"
+          v-model:decay-rate="decayHalfLife"
           :disable-run="currentSelectedCompetitors.length < 2"
           @run-simulation="runSimulation"
         />

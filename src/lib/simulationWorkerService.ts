@@ -26,6 +26,7 @@ export const runSimulationInWorker = (
   monthCutoff: number,
   numSimulations: number,
   includeDNF: boolean,
+  decayHalfLife: number,
   inputtedTimes: number[][],
 ): Promise<SimulationResult[]> => {
   return new Promise((resolve, reject) => {
@@ -65,6 +66,7 @@ export const runSimulationInWorker = (
         monthCutoff,
         numSimulations,
         includeDNF,
+        decayHalfLife,
         inputtedTimes: toRaw(inputtedTimes),
       },
     };

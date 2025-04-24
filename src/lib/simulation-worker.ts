@@ -7,16 +7,19 @@ let loadArgs: {
   competitorList: string[];
   event: SupportedWCAEvent;
   monthCutoff: number;
+  decayHalfLife: number;
 } = {
   competitorList: [],
   event: "333" as SupportedWCAEvent,
   monthCutoff: 0,
+  decayHalfLife: 180,
 };
 
 const argsHaveChanged = (
   competitorList: string[],
   event: SupportedWCAEvent,
   monthCutoff: number,
+  decayHalfLife: number,
 ): boolean => {
   const sameCompetitors =
     competitorList.length === loadArgs.competitorList.length &&
@@ -25,7 +28,8 @@ const argsHaveChanged = (
   return (
     !sameCompetitors ||
     event !== loadArgs.event ||
-    monthCutoff !== loadArgs.monthCutoff
+    monthCutoff !== loadArgs.monthCutoff ||
+    decayHalfLife !== loadArgs.decayHalfLife
   );
 };
 
@@ -33,11 +37,13 @@ const updateLoadArgs = (
   competitorList: string[],
   event: SupportedWCAEvent,
   monthCutoff: number,
+  decayHalfLife: number,
 ): void => {
   loadArgs = {
     competitorList: [...competitorList],
     event,
     monthCutoff,
+    decayHalfLife,
   };
 };
 
@@ -52,6 +58,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         monthCutoff,
         numSimulations,
         includeDNF,
+        decayHalfLife,
         inputtedTimes,
       } = payload;
 
@@ -69,8 +76,15 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         }
       }
 
-      if (argsHaveChanged(competitorList, eventType, monthCutoff)) {
-        const result = await load_data(competitorList, eventType, monthCutoff);
+      if (
+        argsHaveChanged(competitorList, eventType, monthCutoff, decayHalfLife)
+      ) {
+        const result = await load_data(
+          competitorList,
+          eventType,
+          monthCutoff,
+          decayHalfLife,
+        );
 
         if (!result) {
           const errorMessage = "Failed to load competition data in worker.";
@@ -82,7 +96,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
           return;
         }
 
-        updateLoadArgs(competitorList, eventType, monthCutoff);
+        updateLoadArgs(competitorList, eventType, monthCutoff, decayHalfLife);
       }
 
       const results = run_simulation(numSimulations, includeDNF, inputtedTimes);

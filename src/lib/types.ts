@@ -135,6 +135,7 @@ export interface WorkerMessage {
     monthCutoff: number;
     numSimulations: number;
     includeDNF: boolean;
+    decayHalfLife: number;
     inputtedTimes: number[][];
   };
 }

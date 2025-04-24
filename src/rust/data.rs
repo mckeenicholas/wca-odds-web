@@ -49,6 +49,7 @@ pub struct CompetitionDataManager {
     competitors: Vec<String>,
     event: EventType,
     month_cutoff: i32,
+    halflife: f32,
     request_client: Client,
 }
 
@@ -83,11 +84,17 @@ impl TimeRange {
 }
 
 impl CompetitionDataManager {
-    pub fn create(competitors: Vec<String>, event: EventType, month_cutoff: i32) -> Self {
+    pub fn create(
+        competitors: Vec<String>,
+        event: EventType,
+        month_cutoff: i32,
+        halflife: f32,
+    ) -> Self {
         Self {
             competitors,
             event,
             month_cutoff,
+            halflife,
             request_client: Client::new(),
         }
     }
@@ -271,7 +278,7 @@ impl CompetitionDataManager {
                     })
                     .collect::<Vec<_>>();
 
-                Competitor::new(competitor.name, results)
+                Competitor::new(competitor.name, results, self.halflife)
             })
             .collect()
     }
