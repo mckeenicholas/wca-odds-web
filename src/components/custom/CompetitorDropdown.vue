@@ -57,7 +57,7 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
               <ColoredCircle :color />
             </div>
             <a
-              :href="`https://worldcubeassociation.org/persons/${wcaId}`"
+              :href="`https://worldcubeassociation.org/persons/${wcaId}?event=${event}`"
               @click.stop
               class="hover:underline"
             >

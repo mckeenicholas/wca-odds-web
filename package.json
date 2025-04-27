@@ -8,9 +8,9 @@
     "wasm:release": "wasm-pack build --target web --release --out-dir wasm",
     "wasm:check": "cargo check --lib --target wasm32-unknown-unknown",
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
+    "build": "bun run wasm:release && vue-tsc -b && vite build",
     "preview": "vite preview",
-    "format": "bunx prettier . --write && cargo fmt",
+    "format": "bunx biome format . --write && cargo fmt",
     "lint": "eslint"
   },
   "dependencies": {

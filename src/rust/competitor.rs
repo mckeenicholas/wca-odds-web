@@ -20,6 +20,7 @@ pub struct Competitor {
     pub stats: Option<CompetitorStats>,
 }
 
+#[derive(Debug)]
 pub struct CompetitorStats {
     pub location: f32,
     pub shape: f32,

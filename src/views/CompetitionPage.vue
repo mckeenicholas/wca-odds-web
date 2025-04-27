@@ -179,7 +179,7 @@ const toggleSelection = (person: Competitor) => {
             <span :class="{ 'text-muted-foreground': !person.selected }">
               <FlagIcon :code="person.country" :muted="!person.selected" />
               <a
-                :href="`https://worldcubeassociation.org/persons/${person.id}`"
+                :href="`https://worldcubeassociation.org/persons/${person.id}?event=${selectedEventId}`"
                 class="hover:underline ms-2"
                 @click.stop
               >

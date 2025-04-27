@@ -8,7 +8,9 @@ use rand_distr::{Distribution, Normal};
 
 use crate::{competitor::CompetitorStats, simulation::RuntimeConfig};
 
-pub const DNF_TEMP_VALUE: i32 = 59000;
+// Using i32::MAX seems to cause underflow errors in some cases, this is a temporary workaround
+// until I can figure out why.
+pub const DNF_TEMP_VALUE: i32 = 360000;
 
 macro_rules! f32x4_max_n {
     ($vec:expr) => {
@@ -42,7 +44,7 @@ macro_rules! f32x4_sum_n {
 
 pub fn generate_skewnorm_vec(
     count: usize,
-    stats: &CompetitorStats,
+    stats: Option<&CompetitorStats>, // TODO: switch to Option<&CompetitorStats>, (possibly return vec of DNF?)
     rng: &mut ThreadRng,
     config: &RuntimeConfig,
     entered_times: &[i32],
@@ -54,15 +56,14 @@ pub fn generate_skewnorm_vec(
     for i in 0..count {
         values.push(if i < entered_times.len() && entered_times[i] != 0 {
             if entered_times[i] < 0 {
-                // For some reason using i32::max doesn't work here, which is the reason
-                // for the number below, which is generally the highest allowed time for
-                // speedsolving events
                 i32x4_splat(DNF_TEMP_VALUE)
             } else {
                 i32x4_splat(entered_times[i])
             }
-        } else {
+        } else if let Some(stats) = stats {
             simd_gen_skewnorm(stats, rng, include_dnf)
+        } else {
+            i32x4_splat(DNF_TEMP_VALUE)
         });
     }
 
@@ -146,7 +147,7 @@ pub fn simd_gen_skewnorm(
 
     let mask = f32x4_gt(r, f32x4_splat(stats.dnf_rate));
 
-    v128_bitselect(results_i32, i32x4_splat(i32::MAX), mask)
+    v128_bitselect(results_i32, i32x4_splat(DNF_TEMP_VALUE), mask)
 }
 
 pub fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {

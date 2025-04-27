@@ -2,7 +2,6 @@ use rand::rngs::ThreadRng;
 
 use crate::competitor::Competitor;
 use crate::event::Mo3Event;
-
 use crate::histogram::Histogram;
 use crate::simd::{
     calc_wca_average_5, calc_wca_best_3, calc_wca_mean_3, generate_skewnorm_vec, i32x4_to_slice,
@@ -11,6 +10,10 @@ use crate::simd::{
 use crate::simulation::{ResultHistograms, RuntimeConfig};
 use core::arch::wasm32::v128;
 use std::{i32, iter};
+
+const AO5_SOLVE_COUNT: usize = 5;
+const MO3_SOLVE_COUNT: usize = 3;
+const BO3_SOLVE_COUNT: usize = 3;
 
 pub trait EventSimulation {
     fn generate_solves(
@@ -71,8 +74,8 @@ impl EventSimulation for Ao5Simulation {
         rng: &mut ThreadRng,
     ) -> Vec<v128> {
         generate_skewnorm_vec(
-            5,
-            &competitor.stats.as_ref().unwrap(),
+            AO5_SOLVE_COUNT,
+            competitor.stats.as_ref(),
             rng,
             &config,
             &competitor.entered_results.as_slice(),
@@ -97,8 +100,8 @@ impl EventSimulation for Mo3Simulation {
         rng: &mut ThreadRng,
     ) -> Vec<v128> {
         let results = generate_skewnorm_vec(
-            3,
-            &competitor.stats.as_ref().unwrap(),
+            MO3_SOLVE_COUNT,
+            competitor.stats.as_ref(),
             rng,
             &config,
             &competitor.entered_results.as_slice(),
@@ -130,8 +133,8 @@ impl EventSimulation for Bo3Simulation {
         rng: &mut ThreadRng,
     ) -> Vec<v128> {
         generate_skewnorm_vec(
-            3,
-            &competitor.stats.as_ref().unwrap(),
+            BO3_SOLVE_COUNT,
+            competitor.stats.as_ref(),
             rng,
             &config,
             &competitor.entered_results.as_slice(),
