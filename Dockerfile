@@ -32,7 +32,7 @@ RUN node setup/cache_comp.js WC2025
 RUN npm run build
 
 # Final nginx deploy stage
-FROM nginx:1.27-alpine-slim
+FROM nginx:1.28-alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
