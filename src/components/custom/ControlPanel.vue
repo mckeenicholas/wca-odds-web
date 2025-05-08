@@ -1,4 +1,3 @@
-// filepath: /home/nicholas/wca-odds-web/src/components/custom/ControlPanel.vue
 <script setup lang="ts">
 import { eventNames, SupportedWCAEvent } from "@/lib/types";
 import {

@@ -17,10 +17,11 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-import { CircleAlert, ChevronUp } from "lucide-vue-next";
+import { CircleAlert } from "lucide-vue-next";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
 import ResultEntryField from "./ResultEntryField.vue";
 import { formatPercentage } from "@/lib/utils";
+import Chevron from "./RotatableChevron.vue";
 
 const lowDataWarningThreshold = 12 as const;
 
@@ -88,10 +89,7 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
         <div class="flex-1 text-center">
           {{ expectedRank }}
         </div>
-        <ChevronUp
-          class="scale-75 transition-transform duration-450"
-          :class="{ '-rotate-180': isOpen }"
-        />
+        <Chevron :up="isOpen" />
       </div>
     </CollapsibleTrigger>
     <CollapsibleContent class="space-y-2">

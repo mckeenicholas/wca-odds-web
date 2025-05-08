@@ -5,7 +5,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ref } from "vue";
-import { ChevronUp } from "lucide-vue-next";
+import Chevron from "./RotatableChevron.vue";
 
 const { title = "" } = defineProps<{ title?: string }>();
 
@@ -23,10 +23,7 @@ const open = ref<boolean>(false);
             {{ title }}
           </div>
           <div class="flex flex-col place-content-center">
-            <ChevronUp
-              class="scale-75 transition-transform duration-450"
-              :class="{ '-rotate-180': open }"
-            />
+            <Chevron :up="open" />
           </div>
         </div>
       </CollapsibleTrigger>
