@@ -90,9 +90,9 @@ pub fn transpose_solves(solves: Vec<[i32; 4]>) -> [Vec<i32>; 4] {
         vec![0; comp_length],
     ];
 
-    for i in 0..comp_length {
-        for j in 0..4 {
-            out[j][i] = solves[i][j];
+    for (i, solve_set) in solves.iter().enumerate() {
+        for (j, solve_value) in solve_set.iter().enumerate() {
+            out[j][i] = *solve_value;
         }
     }
 

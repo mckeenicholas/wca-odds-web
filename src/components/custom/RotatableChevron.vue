@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ChevronUp } from "lucide-vue-next";
 
-const { up, animate = true } = defineProps<{ up: boolean; animate?: boolean }>();
+const { up, animate = true } = defineProps<{
+  up: boolean;
+  animate?: boolean;
+}>();
 </script>
 
 <template>

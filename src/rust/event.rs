@@ -62,7 +62,7 @@ impl EventType {
         }
     }
 
-    pub fn to_event_id(&self) -> &'static str {
+    pub fn id(&self) -> &'static str {
         match self {
             // Average of 5 events
             Self::Ao5(Ao5Event::S222) => "222",

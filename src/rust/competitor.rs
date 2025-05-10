@@ -1,6 +1,5 @@
-use std::u32;
-
 use serde::{Deserialize, Serialize};
+use std::f32::consts::LN_2;
 
 use crate::{
     calc::{calc_weighted_mean_variance_stdev, fit_weighted_skewnorm, trim_weighted_results},
@@ -44,7 +43,7 @@ impl Competitor {
     }
 
     fn calculate_stats(
-        results: &Vec<DatedCompetitionResult>,
+        results: &[DatedCompetitionResult],
         halflife: f32,
     ) -> Option<CompetitorStats> {
         let weighted_results = Self::apply_exponential_weights(results, halflife);
@@ -106,11 +105,10 @@ impl Competitor {
     }
 
     fn apply_exponential_weights(
-        results: &Vec<DatedCompetitionResult>,
+        results: &[DatedCompetitionResult],
         halflife: f32,
     ) -> Vec<(i32, f32)> {
-        const LN2: f32 = 0.69314718056;
-        let decay_rate: f32 = LN2 / halflife;
+        let decay_rate: f32 = LN_2 / halflife;
 
         let mut weighted_results = Vec::new();
 

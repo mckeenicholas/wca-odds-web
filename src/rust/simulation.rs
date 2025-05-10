@@ -93,11 +93,9 @@ impl CompetitionSimulator {
 
         let num_competitors = self.competitors_data.len();
 
-        let default_simulation_results = (0..num_competitors)
+        (0..num_competitors)
             .map(|_| SimulationResult::new(num_competitors, hist_min, hist_max))
-            .collect();
-
-        default_simulation_results
+            .collect()
     }
 
     pub fn run_simulations(&mut self, config: &mut RuntimeConfig) {
@@ -109,7 +107,7 @@ impl CompetitionSimulator {
         }
     }
 
-    pub fn to_wasm_output(&mut self) -> Vec<SimulationWASMOutput> {
+    pub fn generate_wasm_output(&mut self) -> Vec<SimulationWASMOutput> {
         let results: Vec<_> = self
             .competitors_data
             .iter()
@@ -152,8 +150,7 @@ impl CompetitionSimulator {
 
         let solves_by_sim = transpose_solves(solve_results);
 
-        for i in 0..4 {
-            let avg_by_competitor = &solves_by_sim[i];
+        for avg_by_competitor in solves_by_sim {
             let indices = find_lowest_indices(avg_by_competitor.as_slice());
 
             // Update win count

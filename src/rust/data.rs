@@ -210,7 +210,7 @@ impl CompetitionDataManager {
             .iter()
             .filter_map(|(comp_id, rounds)| {
                 rounds
-                    .get(self.event.to_event_id())
+                    .get(self.event.id())
                     .map(|event_data| ParsedCompetitionResult {
                         id: comp_id.to_string(),
                         results: self.process_event_data(event_data),
@@ -219,7 +219,7 @@ impl CompetitionDataManager {
             .collect()
     }
 
-    fn process_event_data(&self, event_data: &Vec<APIRequestCompetitionResult>) -> Vec<i32> {
+    fn process_event_data(&self, event_data: &[APIRequestCompetitionResult]) -> Vec<i32> {
         event_data
             .iter()
             .flat_map(|round| &round.solves)

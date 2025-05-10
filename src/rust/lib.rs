@@ -55,6 +55,12 @@ impl AppState {
     }
 }
 
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[wasm_bindgen]
 pub fn load_data(
     competitors: Vec<String>,
@@ -81,8 +87,8 @@ pub fn load_data(
             simulaiton_manager.set_simulation_manager(simulator);
         });
 
-        Ok(serde_wasm_bindgen::to_value(&true)
-            .map_err(|_| serde_wasm_bindgen::to_value("Error serializing return value").unwrap())?)
+        serde_wasm_bindgen::to_value(&true)
+            .map_err(|_| serde_wasm_bindgen::to_value("Error serializing return value").unwrap())
     };
     wasm_bindgen_futures::future_to_promise(future)
 }
@@ -111,7 +117,7 @@ pub fn run_simulation(
 
         sim_manager.run_simulations(&mut config);
 
-        let simulated_data = sim_manager.to_wasm_output();
+        let simulated_data = sim_manager.generate_wasm_output();
 
         serde_wasm_bindgen::to_value(&simulated_data).unwrap()
     })

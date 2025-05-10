@@ -9,7 +9,7 @@ use crate::simd::{
 };
 use crate::simulation::{ResultHistograms, RuntimeConfig};
 use core::arch::wasm32::v128;
-use std::{i32, iter};
+use std::iter;
 
 const AO5_SOLVE_COUNT: usize = 5;
 const MO3_SOLVE_COUNT: usize = 3;
@@ -45,7 +45,7 @@ pub trait EventSimulation {
             self.add_to_histogram(&solve_values, &mut histograms.hist_single);
         }
 
-        let averages = self.calculate_result(&solves.as_slice());
+        let averages = self.calculate_result(solves.as_slice());
 
         self.add_to_histogram(&averages, &mut histograms.hist_average);
 
@@ -77,8 +77,8 @@ impl EventSimulation for Ao5Simulation {
             AO5_SOLVE_COUNT,
             competitor.stats.as_ref(),
             rng,
-            &config,
-            &competitor.entered_results.as_slice(),
+            config,
+            competitor.entered_results.as_slice(),
         )
     }
 
@@ -103,15 +103,12 @@ impl EventSimulation for Mo3Simulation {
             MO3_SOLVE_COUNT,
             competitor.stats.as_ref(),
             rng,
-            &config,
-            &competitor.entered_results.as_slice(),
+            config,
+            competitor.entered_results.as_slice(),
         );
 
         if self.event == Mo3Event::F333 {
-            results
-                .into_iter()
-                .map(|solve_set| i32x4_truncate_down_100(solve_set))
-                .collect()
+            results.into_iter().map(i32x4_truncate_down_100).collect()
         } else {
             results
         }
@@ -136,8 +133,8 @@ impl EventSimulation for Bo3Simulation {
             BO3_SOLVE_COUNT,
             competitor.stats.as_ref(),
             rng,
-            &config,
-            &competitor.entered_results.as_slice(),
+            config,
+            competitor.entered_results.as_slice(),
         )
     }
 
