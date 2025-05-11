@@ -118,6 +118,7 @@ export interface SimulationRouteQuery {
   simCount?: string;
   monthCutoff?: string;
   includeDnf?: string;
+  decayRate?: string;
 }
 
 export interface SimulationResultProps {

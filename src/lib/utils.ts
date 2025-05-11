@@ -127,3 +127,19 @@ export const formatPercentage = (val: string | number): string => {
 
   return `${numVal.toFixed(2)}%`;
 };
+
+export const getParentPath = (path: string) => {
+  const normalizedPath = path.endsWith("/") ? path : path + "/";
+
+  if (normalizedPath.includes("/results/")) {
+    return normalizedPath
+      .substring(0, normalizedPath.lastIndexOf("/results/"))
+      .replace(/\/$/, "");
+  } else if (normalizedPath.startsWith("/competition/")) {
+    return "/";
+  } else if (normalizedPath === "/custom/" || normalizedPath === "/custom") {
+    return "/";
+  }
+
+  return "/";
+};

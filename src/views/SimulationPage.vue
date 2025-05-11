@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter, RouteParams } from "vue-router";
+import { useRouter, RouteParams, useRoute } from "vue-router";
 import { onMounted, ref, onUnmounted, computed } from "vue";
 import { cloneDeep, isEqual } from "lodash-es";
 import {
@@ -9,7 +9,11 @@ import {
   SimulationRouteQuery,
   SupportedWCAEvent,
 } from "@/lib/types";
-import { generateColors, generateDefaultTimesArray } from "@/lib/utils";
+import {
+  generateColors,
+  generateDefaultTimesArray,
+  getParentPath,
+} from "@/lib/utils";
 import {
   runSimulationInWorker,
   terminateSimulationWorker,
@@ -24,40 +28,43 @@ import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-vue-next";
 
-const route = useRouter().currentRoute.value as {
-  query: SimulationRouteQuery & RouteParams;
-};
+const router = useRouter();
+const currentVueRoute = useRoute();
+const path = currentVueRoute.path;
+
+const queryParams = currentVueRoute.query as SimulationRouteQuery & RouteParams;
+
 const {
-  competitors,
-  eventId,
-  name,
-  simCount,
-  monthCutoff,
-  includeDnf,
-  decayRate,
-} = route.query;
+  competitors: competitorsParam,
+  eventId: eventIdParam,
+  name: nameParam,
+  simCount: simCountParam,
+  monthCutoff: monthCutoffParam,
+  includeDnf: includeDnfParam,
+  decayRate: decayRateParam,
+} = queryParams;
 
 if (
-  !competitors ||
-  !eventId ||
-  !name ||
-  !simCount ||
-  !monthCutoff ||
-  !decayRate
+  !competitorsParam ||
+  !eventIdParam ||
+  !nameParam ||
+  !simCountParam ||
+  !monthCutoffParam ||
+  !includeDnfParam ||
+  !decayRateParam ||
+  !(eventIdParam in eventNames)
 ) {
-  throw new Error("One or more required parameters are null or undefined.");
+  router.push(getParentPath(path));
 }
 
-if (!(eventId in eventNames)) {
-  throw new Error("Invalid event ID");
-}
+const name = nameParam!;
+const numSimulations = parseInt(simCountParam!);
+const monthCutoffNum = parseInt(monthCutoffParam!);
+const decayHalfLife = parseInt(decayRateParam!);
+const competitorsList = competitorsParam!.split(",");
+const includeDNF = includeDnfParam === "true";
+const event = eventIdParam! as SupportedWCAEvent;
 
-const numSimulations = parseInt(simCount.toString());
-const monthCutoffNum = parseInt(monthCutoff.toString());
-const decayHalfLife = parseInt(decayRate.toString());
-const competitorsList = competitors.toString().split(",");
-const includeDNF = includeDnf === "true";
-const event = eventId as SupportedWCAEvent;
 const colors = generateColors(competitorsList.length);
 
 const attemptsCount = eventAttempts[event];
