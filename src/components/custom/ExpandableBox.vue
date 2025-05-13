@@ -17,7 +17,7 @@ const open = ref<boolean>(false);
     <Collapsible v-model:open="open">
       <CollapsibleTrigger as-child>
         <div
-          class="py-2 ps-4 pe-3 hover:bg-secondary cursor-pointer flex flex-row"
+          class="py-2 ps-4 pe-3 hover:bg-secondary cursor-pointer flex flex-row rounded-sm"
         >
           <div class="flex-grow">
             {{ title }}
