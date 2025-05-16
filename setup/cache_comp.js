@@ -51,6 +51,9 @@ async function fetchCompetition(id) {
     events: fullData.events.map((event) => ({
       id: event.id,
     })),
+    schedule: {
+      startDate: fullData.schedule.startDate,
+    },
     persons: fullData.persons.map((person) => ({
       name: person.name,
       wcaId: person.wcaId,

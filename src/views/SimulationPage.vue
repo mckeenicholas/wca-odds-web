@@ -16,6 +16,7 @@ import {
 } from "@/lib/utils";
 import {
   runSimulationInWorker,
+  recalculateSimulationInWorker,
   terminateSimulationWorker,
 } from "@/lib/simulationWorkerService";
 import ExpandableBox from "@/components/custom/ExpandableBox.vue";
@@ -27,6 +28,7 @@ import CompetitorList from "@/components/custom/CompetitorList.vue";
 import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import { Button } from "@/components/ui/button";
 import { LoaderCircle } from "lucide-vue-next";
+import fetchWCALiveResults from "@/lib/wcaLive";
 
 const router = useRouter();
 const currentVueRoute = useRoute();
@@ -42,6 +44,8 @@ const {
   monthCutoff: monthCutoffParam,
   includeDnf: includeDnfParam,
   decayRate: decayRateParam,
+  competitionId: competitionIdParam,
+  date: dateParam,
 } = queryParams;
 
 if (
@@ -77,6 +81,7 @@ const error = ref<string>("");
 const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const recalculateLoading = ref<boolean>(false);
+const wcaLiveLoading = ref<boolean>(false);
 const inputtedTimes = ref<number[][]>(cloneDeep(defaultTimesArray));
 const inputtedTimesPrev = ref<number[][]>(cloneDeep(defaultTimesArray));
 
@@ -96,7 +101,7 @@ const sharedProps = computed(() => ({
   event,
 }));
 
-const runSimulation = async () => {
+const runInitialSimulation = async () => {
   try {
     const results = await runSimulationInWorker(
       competitorsList,
@@ -109,34 +114,43 @@ const runSimulation = async () => {
     );
 
     if (results) {
+      simulation_results.value = results;
       inputtedTimesPrev.value = cloneDeep(inputtedTimes.value);
     }
-
-    return results;
   } catch (err) {
     terminateSimulationWorker();
-    console.error("Error in simulation:", err);
-    error.value = err instanceof Error ? err.message : "Unknown error occurred";
-    return null;
+    console.error("Error in initial simulation:", err);
+    error.value =
+      err instanceof Error
+        ? err.message
+        : "Unknown error occurred during initial simulation";
   }
 };
 
-const handleSimulation = async () => {
+const handleRecalculation = async () => {
   try {
-    const results = await runSimulation();
+    const results = await recalculateSimulationInWorker(
+      numSimulations,
+      includeDNF,
+      inputtedTimes.value,
+    );
 
     if (results) {
       simulation_results.value = results;
       inputtedTimesPrev.value = cloneDeep(inputtedTimes.value);
     }
   } catch (err) {
-    error.value = err instanceof Error ? err.message : "Unknown error occurred";
+    console.error("Error in recalculation:", err);
+    error.value =
+      err instanceof Error
+        ? err.message
+        : "Unknown error occurred during recalculation";
   }
 };
 
 onMounted(async () => {
   loading.value = true;
-  await handleSimulation();
+  await runInitialSimulation();
   loading.value = false;
 });
 
@@ -147,13 +161,42 @@ onUnmounted(() => {
 const recalculate = async () => {
   recalculateLoading.value = true;
   error.value = "";
-  await handleSimulation();
+  await handleRecalculation();
   recalculateLoading.value = false;
 };
 
-const reset = () => {
+const reset = async () => {
   inputtedTimes.value = cloneDeep(defaultTimesArray);
-  recalculate();
+  await recalculate();
+};
+
+const syncResultsWithWCALive = async () => {
+  if (!showWCALiveImport()) {
+    return;
+  }
+
+  wcaLiveLoading.value = true;
+  try {
+    const results = await fetchWCALiveResults(
+      competitionIdParam!,
+      event,
+      competitorsList,
+    );
+    inputtedTimes.value = results;
+    await recalculate();
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : String(err);
+  } finally {
+    wcaLiveLoading.value = false;
+  }
+};
+
+const showWCALiveImport = () => {
+  if (!competitionIdParam || !dateParam) {
+    return false;
+  }
+
+  return new Date(dateParam) < new Date();
 };
 </script>
 
@@ -194,24 +237,36 @@ const reset = () => {
         v-model="inputtedTimes"
       />
 
-      <div class="fixed bottom-4 right-4 z-50 flex">
+      <div class="fixed bottom-4 right-2 z-50 flex">
         <Transition name="fade">
           <Button
-            @click="reset"
+            @click="syncResultsWithWCALive"
             class="me-2"
-            v-if="inputtedTimesState.hasNonZero"
+            v-if="showWCALiveImport()"
+            :disabled="wcaLiveLoading || recalculateLoading"
           >
-            Reset
+            Import Current Results From WCA Live
+            <LoaderCircle v-show="wcaLiveLoading" class="animate-spin" />
           </Button>
         </Transition>
         <Transition name="fade">
           <Button
             @click="recalculate"
-            :disabled="recalculateLoading"
+            class="me-2"
+            :disabled="recalculateLoading || !inputtedTimesState.isModified"
             v-if="inputtedTimesState.isModified"
           >
             {{ recalculateLoading ? "Recalculating..." : "Recalculate" }}
             <LoaderCircle v-show="recalculateLoading" class="animate-spin" />
+          </Button>
+        </Transition>
+        <Transition name="fade">
+          <Button
+            @click="reset"
+            v-if="inputtedTimesState.hasNonZero"
+            :disabled="recalculateLoading"
+          >
+            Reset
           </Button>
         </Transition>
       </div>

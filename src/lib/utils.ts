@@ -121,10 +121,6 @@ export const getNumericValue = (val: string | number): number => {
 export const formatPercentage = (val: string | number): string => {
   const numVal = getNumericValue(val);
 
-  if (numVal < 0.01) {
-    return "<0.01%";
-  }
-
   return `${numVal.toFixed(2)}%`;
 };
 

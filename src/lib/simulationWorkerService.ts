@@ -1,5 +1,11 @@
-import type { SimulationResult, SupportedWCAEvent } from "@/lib/types";
-import { WorkerMessage, MainThreadMessage } from "./types";
+import type {
+  SimulationResult,
+  SupportedWCAEvent,
+  WorkerMessage,
+  MainThreadMessage,
+  RunSimulationPayload,
+  RecalculateSimulationPayload,
+} from "./types"; // Ensure RecalculateSimulationPayload is imported
 import { toRaw } from "vue";
 
 let worker: Worker | null = null;
@@ -20,14 +26,8 @@ export const terminateSimulationWorker = (): void => {
   }
 };
 
-export const runSimulationInWorker = (
-  competitorList: string[],
-  event: SupportedWCAEvent,
-  monthCutoff: number,
-  numSimulations: number,
-  includeDNF: boolean,
-  decayHalfLife: number,
-  inputtedTimes: number[][],
+const createWorkerPromise = (
+  message: WorkerMessage,
 ): Promise<SimulationResult[]> => {
   return new Promise((resolve, reject) => {
     const workerInstance = getSimulationWorker();
@@ -58,19 +58,48 @@ export const runSimulationInWorker = (
     workerInstance.addEventListener("message", handleMessage);
     workerInstance.addEventListener("error", handleError);
 
-    const message: WorkerMessage = {
-      type: "RUN_SIMULATION",
-      payload: {
-        competitorList,
-        event,
-        monthCutoff,
-        numSimulations,
-        includeDNF,
-        decayHalfLife,
-        inputtedTimes: toRaw(inputtedTimes),
-      },
-    };
-
     workerInstance.postMessage(message);
   });
+};
+
+export const runSimulationInWorker = (
+  competitorList: string[],
+  event: SupportedWCAEvent,
+  monthCutoff: number,
+  numSimulations: number,
+  includeDNF: boolean,
+  decayHalfLife: number,
+  inputtedTimes: number[][],
+): Promise<SimulationResult[]> => {
+  const payload: RunSimulationPayload = {
+    competitorList,
+    event,
+    monthCutoff,
+    numSimulations,
+    includeDNF,
+    decayHalfLife,
+    inputtedTimes: toRaw(inputtedTimes),
+  };
+  const message: WorkerMessage = {
+    type: "RUN_SIMULATION",
+    payload,
+  };
+  return createWorkerPromise(message);
+};
+
+export const recalculateSimulationInWorker = (
+  numSimulations: number,
+  includeDNF: boolean,
+  inputtedTimes: number[][],
+): Promise<SimulationResult[]> => {
+  const payload: RecalculateSimulationPayload = {
+    numSimulations,
+    includeDNF,
+    inputtedTimes: toRaw(inputtedTimes),
+  };
+  const message: WorkerMessage = {
+    type: "RECALCULATE_SIMULATION",
+    payload,
+  };
+  return createWorkerPromise(message);
 };

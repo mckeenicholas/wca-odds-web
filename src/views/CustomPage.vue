@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X } from "lucide-vue-next";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
-import { supportedWCAEvents } from "@/lib/types";
+import { SimulationRouteQuery, supportedWCAEvents } from "@/lib/types";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
 import { useRouter } from "vue-router";
 import { useDebounceFn } from "@vueuse/core";
@@ -73,17 +73,19 @@ const removeCompetitor = (competitorId: string) => {
 };
 
 const runSimulation = () => {
+  const query: SimulationRouteQuery = {
+    name: "Custom Simulation",
+    eventId: selectedEventId.value,
+    simCount: simCount.value.toString(),
+    monthCutoff: monthCount.value.toString(),
+    includeDnf: includeDnf.value.toString(),
+    decayRate: decayHalfLife.value.toString(),
+    competitors: competitors.value.map((c: Person) => c.wca_id).join(","),
+  };
+
   router.push({
     path: "/custom/results",
-    query: {
-      name: "Custom Simulation",
-      eventId: selectedEventId.value,
-      simCount: simCount.value.toString(),
-      monthCutoff: monthCount.value.toString(),
-      includeDnf: includeDnf.value.toString(),
-      decayRate: decayHalfLife.value.toString(),
-      competitors: competitors.value.map((c: Person) => c.wca_id).join(","),
-    },
+    query: query as Record<string, string>,
   });
 };
 </script>

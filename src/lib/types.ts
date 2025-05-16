@@ -36,7 +36,7 @@ export const eventAttempts: Record<SupportedWCAEvent, number> = {
   "555bf": 3,
 };
 
-export type SupportedWCAEvent = (typeof supportedWCAEvents)[number];
+export type SupportedWCAEvent = string; // Placeholder, use your actual type
 
 export const supportedWCAEvents = [
   "222",
@@ -87,6 +87,9 @@ export interface wcif {
   id: string;
   events: wcifEvent[];
   persons: Person[];
+  schedule: {
+    startDate: string;
+  };
 }
 
 export interface SimulationResult {
@@ -100,6 +103,33 @@ export interface SimulationResult {
   hist_values_single: Map<number, number>;
   hist_values_average: Map<number, number>;
 }
+
+// Payloads for worker messages
+export interface RunSimulationPayload {
+  competitorList: string[];
+  event: SupportedWCAEvent;
+  monthCutoff: number;
+  numSimulations: number;
+  includeDNF: boolean;
+  decayHalfLife: number;
+  inputtedTimes: number[][];
+}
+
+export interface RecalculateSimulationPayload {
+  numSimulations: number;
+  includeDNF: boolean;
+  inputtedTimes: number[][];
+}
+
+// Messages from Main Thread to Worker
+export type WorkerMessage =
+  | { type: "RUN_SIMULATION"; payload: RunSimulationPayload }
+  | { type: "RECALCULATE_SIMULATION"; payload: RecalculateSimulationPayload };
+
+// Messages from Worker to Main Thread
+export type MainThreadMessage =
+  | { type: "SIMULATION_COMPLETE"; results: SimulationResult[] }
+  | { type: "SIMULATION_ERROR"; error: string };
 
 export interface ChartTooltipProps {
   title?: string;
@@ -119,6 +149,8 @@ export interface SimulationRouteQuery {
   monthCutoff?: string;
   includeDnf?: string;
   decayRate?: string;
+  competitionId?: string;
+  date?: string;
 }
 
 export interface SimulationResultProps {
@@ -128,21 +160,63 @@ export interface SimulationResultProps {
   event: SupportedWCAEvent;
 }
 
-export interface WorkerMessage {
-  type: "RUN_SIMULATION";
-  payload: {
-    competitorList: string[];
-    event: SupportedWCAEvent;
-    monthCutoff: number;
-    numSimulations: number;
-    includeDNF: boolean;
-    decayHalfLife: number;
-    inputtedTimes: number[][];
+export interface WCALiveCompetitionSuccess {
+  data: {
+    competition: {
+      competitionEvents: WCALiveCompetitionEvent[];
+    };
   };
 }
 
-export interface MainThreadMessage {
-  type: "SIMULATION_COMPLETE";
-  results: SimulationResult[];
-  error?: Error;
+export interface WCALiveCompetitionError {
+  errors: {
+    detail: string;
+  };
+}
+
+export type WCALiveCompetitionData =
+  | WCALiveCompetitionSuccess
+  | WCALiveCompetitionError;
+
+export interface WCALiveEventRound {
+  id: string;
+  number: number;
+}
+
+export interface WCALiveCompetitionEvent {
+  event: {
+    id: string;
+  };
+  rounds: WCALiveEventRound[];
+}
+
+export interface WCALiveAttempt {
+  result: number;
+}
+
+export interface WCALivePerson {
+  wcaId: string | null;
+}
+
+export interface WCALiveRoundResultItem {
+  attempts: WCALiveAttempt[];
+  person: WCALivePerson;
+}
+
+export interface WCALiveRoundFormat {
+  numberOfAttempts: number;
+}
+
+export interface WCALiveRoundDetails {
+  format: WCALiveRoundFormat;
+  results: WCALiveRoundResultItem[];
+}
+
+export interface WCALiveRoundDataWrapper {
+  round: WCALiveRoundDetails;
+}
+
+export interface FetchRoundResultsGraphQLResponse {
+  data?: WCALiveRoundDataWrapper;
+  errors?: Array<{ message: string; [key: string]: string }>;
 }

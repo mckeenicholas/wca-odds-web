@@ -54,7 +54,7 @@ pub fn generate_skewnorm_vec(
     let include_dnf = config.include_dnf;
 
     for i in 0..count {
-        values.push(if i < entered_times.len() && entered_times[i] != 0 {
+        let solves = if i < entered_times.len() && entered_times[i] != 0 {
             if entered_times[i] < 0 {
                 i32x4_splat(DNF_TEMP_VALUE)
             } else {
@@ -64,7 +64,9 @@ pub fn generate_skewnorm_vec(
             simd_gen_skewnorm(stats, rng, include_dnf)
         } else {
             i32x4_splat(DNF_TEMP_VALUE)
-        });
+        };
+
+        values.push(solves);
     }
 
     values

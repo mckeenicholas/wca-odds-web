@@ -2,7 +2,7 @@
 import { ref, computed, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchWCIF } from "@/lib/utils";
-import { SupportedWCAEvent, Person } from "@/lib/types";
+import { SupportedWCAEvent, Person, SimulationRouteQuery } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
@@ -115,17 +115,21 @@ const runSimulation = () => {
 
   const selectedIds = currentSelectedCompetitors.value.map((item) => item.id);
 
+  const query: SimulationRouteQuery = {
+    name: data.value.name,
+    competitionId: data.value.id,
+    date: data.value.schedule.startDate,
+    eventId: selectedEventId.value,
+    simCount: simCount.value.toString(),
+    monthCutoff: monthCount.value.toString(),
+    includeDnf: includeDnf.value.toString(),
+    decayRate: decayHalfLife.value.toString(),
+    competitors: selectedIds.join(","),
+  };
+
   router.push({
     path: `./${data.value.id}/results`,
-    query: {
-      name: data.value.name,
-      eventId: selectedEventId.value,
-      simCount: simCount.value.toString(),
-      monthCutoff: monthCount.value.toString(),
-      includeDnf: includeDnf.value.toString(),
-      decayRate: decayHalfLife.value.toString(),
-      competitors: selectedIds.join(","),
-    },
+    query: query as Record<string, string>,
   });
 };
 
