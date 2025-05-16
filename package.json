@@ -14,7 +14,7 @@
     "lint": "eslint && cargo clippy --target wasm32-unknown-unknown"
   },
   "dependencies": {
-    "@tanstack/vue-query": "^5.74.9",
+    "@tanstack/vue-query": "^5.76.0",
     "@tanstack/vue-table": "^8.21.3",
     "@types/lodash-es": "^4.17.12",
     "@unovis/ts": "^1.5.1",
@@ -22,7 +22,7 @@
     "@vueuse/core": "^10.11.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "eslint": "^9.25.1",
+    "eslint": "^9.26.0",
     "eslint-plugin-vue": "^9.33.0",
     "flag-icons": "^7.3.2",
     "lodash-es": "^4.17.21",
@@ -31,20 +31,20 @@
     "radix-vue": "^1.9.17",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
-    "vue": "^3.5.13",
+    "vue": "^3.5.14",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.25.1",
-    "@types/node": "^22.15.3",
-    "@vitejs/plugin-vue": "^5.2.3",
+    "@eslint/js": "^9.26.0",
+    "@types/node": "^22.15.18",
+    "@vitejs/plugin-vue": "^5.2.4",
     "autoprefixer": "^10.4.21",
     "globals": "^15.15.0",
     "prettier": "3.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.31.1",
-    "vite": "^6.3.3",
+    "typescript-eslint": "^8.32.1",
+    "vite": "^6.3.5",
     "vue-tsc": "^2.2.10"
   }
 }
