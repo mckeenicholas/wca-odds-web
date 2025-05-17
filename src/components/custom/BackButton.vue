@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Button } from "@/components/ui/button";
 import { getParentPath } from "@/lib/utils";
+import { computed } from "vue";
 import { RouterLink, useRoute } from "vue-router";
 
 const route = useRoute();
-const parentPath = getParentPath(route.path);
+const parentPath = computed(() => getParentPath(route.path));
 </script>
 
 <template>
