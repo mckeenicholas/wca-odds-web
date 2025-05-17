@@ -81,15 +81,24 @@ const getCompetitorData = () => {
 
         const competitor = processCompetitor(person, event);
         if (competitor) {
-          competitorAcc[event].push(competitor);
+          competitorAcc[event]!.push(competitor);
         }
       });
     });
 
-  Object.values(competitorAcc).forEach((competitors) => {
-    competitors.sort((a, b) => a.rank - b.rank);
-    competitors.forEach((c, i) => (c.selected = i < DEFAULT_SELECTED));
-    competitors.splice(MAX_COMPETITORS);
+  Object.keys(competitorAcc).forEach((eventId) => {
+    const competitors = competitorAcc[eventId as SupportedWCAEvent];
+    if (competitors && competitors.length > 0) {
+      competitors.sort((a, b) => a.rank - b.rank);
+      competitors.forEach((c, i) => (c.selected = i < DEFAULT_SELECTED));
+
+      if (competitors.length > MAX_COMPETITORS) {
+        competitorAcc[eventId as SupportedWCAEvent] = competitors.slice(
+          0,
+          MAX_COMPETITORS,
+        );
+      }
+    }
   });
 
   if (!("333" in competitorAcc)) {

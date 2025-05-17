@@ -1,5 +1,5 @@
 # Build stage for Rust/WASM
-FROM rust:1.86-slim AS wasm-builder
+FROM rust:1.87-slim AS wasm-builder
 
 # Install wasm-pack and build dependencies
 RUN apt-get update && \
@@ -15,7 +15,7 @@ COPY Cargo.lock ./
 RUN wasm-pack build --target web --release --out-dir wasm
 
 # Bun build stage
-FROM node:23-slim AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
 
@@ -27,12 +27,12 @@ RUN npm install
 COPY --from=wasm-builder /app/wasm ./wasm
 COPY . .
 
-RUN node setup/cache_comp.js WC2025
+RUN node setup/cache_comp.js setup/cache_list.json
 
 RUN npm run build
 
 # Final nginx deploy stage
-FROM nginx:1.28-alpine
+FROM nginx:1.28.0-alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 
