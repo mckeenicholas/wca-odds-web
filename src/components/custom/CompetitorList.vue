@@ -133,7 +133,7 @@ const model = defineModel<number[][]>({ required: true });
           :event
           :num-simulations
           :color="person.color"
-          :wca-id="person.color"
+          :wca-id="person.id"
           v-model="model[person.idx]"
         />
       </li>

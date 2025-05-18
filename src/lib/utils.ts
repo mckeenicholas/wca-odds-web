@@ -21,7 +21,11 @@ export function valueUpdater<T extends Updater<unknown>>(
 }
 
 export const fetchWCIF = async (id: string): Promise<wcif> => {
-  const cachedComps = ["WC2025"];
+  const cachedComps = [
+    "WC2025",
+    "RubiksUKChampionship2025",
+    "NorthCarolinaChampionship2025",
+  ];
 
   const wcaURL = cachedComps.includes(id)
     ? `/wcif/${id}.json`

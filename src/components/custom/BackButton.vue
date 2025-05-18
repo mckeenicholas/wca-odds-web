@@ -6,6 +6,10 @@ import { RouterLink, useRoute } from "vue-router";
 
 const route = useRoute();
 const parentPath = computed(() => getParentPath(route.path));
+
+console.log(route.path);
+
+// const parentPath = new URL("..", window.location.href);
 </script>
 
 <template>
