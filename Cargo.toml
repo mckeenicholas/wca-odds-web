@@ -7,6 +7,12 @@ license = "MIT"
 repository = "https://github.com/mckeenicholas/wca-odds-web"
 edition = "2021"
 
+[profile.release]
+# Reduces binary size by ~3% and gives a ~5% speed increase
+lto = true
+# Reduces binary size by another ~4%
+codegen-units = 1
+
 [lib]
 path = "src/rust/lib.rs"
 crate-type = ["cdylib"]

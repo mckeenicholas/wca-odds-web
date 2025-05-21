@@ -44,7 +44,7 @@ macro_rules! f32x4_sum_n {
 
 pub fn generate_skewnorm_vec(
     count: usize,
-    stats: Option<&CompetitorStats>, // TODO: switch to Option<&CompetitorStats>, (possibly return vec of DNF?)
+    stats: Option<&CompetitorStats>,
     rng: &mut ThreadRng,
     config: &RuntimeConfig,
     entered_times: &[i32],
