@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import PieChart from "@/components/charts/PieChart.vue";
 import { SimulationResultProps, eventNames } from "@/lib/types";
-import { toClockFormat } from "@/lib/utils";
+import { formatPercentage, toClockFormat } from "@/lib/utils";
 import { computed } from "vue";
 
 const { data, colors, numSimulations, event } =
   defineProps<SimulationResultProps>();
 
-const topCompetitor = computed(
-  () => [...data].sort((a, b) => b.win_count - a.win_count)[0],
+const topCompetitor = computed(() =>
+  data.reduce(
+    (max, competitor) =>
+      competitor.win_count > max.win_count ? competitor : max,
+    data[0],
+  ),
 );
 
 const avgRank = computed(() =>
@@ -16,11 +20,11 @@ const avgRank = computed(() =>
 );
 
 const winChance = computed(() =>
-  ((topCompetitor.value.win_count / numSimulations) * 100).toFixed(2),
+  formatPercentage(topCompetitor.value.win_count / numSimulations, true),
 );
 
 const podiumChance = computed(() =>
-  ((topCompetitor.value.pod_count / numSimulations) * 100).toFixed(2),
+  formatPercentage(topCompetitor.value.pod_count / numSimulations, true),
 );
 
 const expectedAvg = computed(() =>
@@ -41,8 +45,8 @@ const expectedAvg = computed(() =>
             highest odds of winning with:
           </p>
           <ul class="list-disc list-inside text-sm ml-4">
-            <li>{{ winChance }}% chance of winning</li>
-            <li>{{ podiumChance }}% chance of podium finish</li>
+            <li>{{ winChance }} chance of winning</li>
+            <li>{{ podiumChance }} chance of podium finish</li>
             <li>Average rank of {{ avgRank }}</li>
             <li>Expected average of {{ expectedAvg }}</li>
           </ul>

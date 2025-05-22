@@ -12,6 +12,8 @@ edition = "2021"
 lto = true
 # Reduces binary size by another ~4%
 codegen-units = 1
+panic = "abort"
+strip = "debuginfo"
 
 [lib]
 path = "src/rust/lib.rs"

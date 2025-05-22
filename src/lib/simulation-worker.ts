@@ -54,6 +54,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         dataLoaded = false;
         return;
       }
+
       if (loadResult !== true) {
         const errorMessage = `Failed to load competition data in worker. Unexpected result: ${loadResult}`;
         console.error(errorMessage);
@@ -61,14 +62,17 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         dataLoaded = false;
         return;
       }
-      dataLoaded = true;
 
+      console.time("a");
+      dataLoaded = true;
       const results = run_simulation(numSimulations, includeDNF, inputtedTimes);
+      console.timeEnd("a");
 
       const message: MainThreadMessage = {
         type: "SIMULATION_COMPLETE",
         results,
       };
+
       self.postMessage(message);
     } else if (type === "RECALCULATE_SIMULATION") {
       if (!wasmInitialized) {
@@ -77,6 +81,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         self.postMessage({ type: "SIMULATION_ERROR", error: errorMessage });
         return;
       }
+
       if (!dataLoaded) {
         const errorMessage =
           "Data not loaded. Cannot recalculate. Run initial simulation first.";
@@ -93,6 +98,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         type: "SIMULATION_COMPLETE",
         results,
       };
+
       self.postMessage(message);
     }
   } catch (error) {

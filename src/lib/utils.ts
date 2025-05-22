@@ -1,23 +1,11 @@
-import type { Updater } from "@tanstack/vue-table";
-import { computed, h, type Ref } from "vue";
+import { computed, h } from "vue";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { times } from "lodash-es";
 import { ChartTooltipProps, SupportedWCAEvent, wcif } from "./types";
 import HistogramCustomTooltip from "@/components/charts/HistogramCustomTooltip.vue";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-export function valueUpdater<T extends Updater<unknown>>(
-  updaterOrValue: T,
-  ref: Ref,
-) {
-  ref.value =
-    typeof updaterOrValue === "function"
-      ? updaterOrValue(ref.value)
-      : updaterOrValue;
 }
 
 export const fetchWCIF = async (id: string): Promise<wcif> => {
@@ -99,11 +87,17 @@ export const renderTime = (time: number, isFMC: boolean) => {
   return isFMC ? toFMC(time) : toClockFormat(time);
 };
 
+export function times<T>(n: number, iteratee: (index: number) => T): T[] {
+  return Array.from({ length: n }, (_, index) => iteratee(index));
+}
+
 export const generateDefaultTimesArray = (
   competitorsCount: number,
   attempts: number,
 ) => {
-  return times(competitorsCount, () => times(attempts, () => 0));
+  return Array.from({ length: competitorsCount }, () =>
+    Array.from({ length: attempts }, () => 0),
+  );
 };
 
 export const createFMCTooltip = (event: SupportedWCAEvent) =>
@@ -122,10 +116,14 @@ export const getNumericValue = (val: string | number): number => {
   return val;
 };
 
-export const formatPercentage = (val: string | number): string => {
+export const formatPercentage = (
+  val: string | number,
+  normalize: boolean = false,
+): string => {
   const numVal = getNumericValue(val);
+  const pctVal = normalize ? numVal * 100 : numVal;
 
-  return `${numVal.toFixed(2)}%`;
+  return `${pctVal.toFixed(2)}%`;
 };
 
 export const getParentPath = (path: string) => {
@@ -143,3 +141,26 @@ export const getParentPath = (path: string) => {
 
   return "/";
 };
+
+export function ArrEq2D(arr1: number[][], arr2: number[][]): boolean {
+  if (arr1 === arr2) return true;
+  if (!arr1 || !arr2) return false;
+  if (arr1.length !== arr2.length) return false;
+
+  for (let i = 0; i < arr1.length; i++) {
+    const row1 = arr1[i];
+    const row2 = arr2[i];
+
+    if (row1.length !== row2.length) return false;
+
+    for (let j = 0; j < row1.length; j++) {
+      if (row1[j] !== row2[j]) return false;
+    }
+  }
+
+  return true;
+}
+
+export function clone2DArr(arr: number[][]): number[][] {
+  return arr.map((row) => [...row]);
+}

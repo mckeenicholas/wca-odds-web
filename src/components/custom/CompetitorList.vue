@@ -25,6 +25,28 @@ const { simulationResults, colors, competitorsList, numSimulations, event } =
 const sortBy = ref<sortCol>("win");
 const sortAsc = ref<boolean>(false);
 
+const headerOptions = [
+  { id: "name", label: "Name", justify: "justify-start", padding: "ps-3" },
+  {
+    id: "win",
+    label: "Chance of winning",
+    justify: "justify-center",
+    padding: "",
+  },
+  {
+    id: "pod",
+    label: "Chance of podiuming",
+    justify: "justify-center",
+    padding: "",
+  },
+  {
+    id: "rank",
+    label: "Expected rank",
+    justify: "justify-center",
+    padding: "",
+  },
+] as const;
+
 const setSortBy = (col: sortCol) => {
   if (sortBy.value === col) {
     sortAsc.value = !sortAsc.value;
@@ -65,56 +87,17 @@ const model = defineModel<number[][]>({ required: true });
   <div class="border rounded-md mt-2">
     <div class="flex justify-between p-1 me-8">
       <button
-        @click="setSortBy('name')"
-        class="flex-1 hover:bg-secondary rounded-md py-1 px-2 ps-3"
-      >
-        <div class="flex items-center justify-start">
-          <span>Name</span>
-          <Chevron
-            v-show="sortBy === 'name'"
-            class="ms-2"
-            :up="!sortAsc"
-            :animate="false"
-          />
-        </div>
-      </button>
-      <button
-        @click="setSortBy('win')"
+        v-for="option in headerOptions"
+        :key="option.id"
+        @click="setSortBy(option.id)"
         class="flex-1 hover:bg-secondary rounded-md py-1 px-2"
+        :class="option.padding"
       >
-        <div class="flex items-center justify-center">
-          <span>Chance of winning</span>
+        <div class="flex items-center" :class="option.justify">
+          <span>{{ option.label }}</span>
           <Chevron
-            v-show="sortBy === 'win'"
-            class="ms-2"
-            :up="!sortAsc"
-            :animate="false"
-          />
-        </div>
-      </button>
-      <button
-        @click="setSortBy('pod')"
-        class="flex-1 hover:bg-secondary rounded-md py-1 px-2"
-      >
-        <div class="flex items-center justify-center">
-          <span>Chance of podiuming</span>
-          <Chevron
-            v-show="sortBy === 'pod'"
-            class="ms-2"
-            :up="!sortAsc"
-            :animate="false"
-          />
-        </div>
-      </button>
-      <button
-        @click="setSortBy('rank')"
-        class="flex-1 hover:bg-secondary rounded-md py-1 px-2"
-      >
-        <div class="flex items-center justify-center">
-          <span>Expected rank</span>
-          <Chevron
-            v-show="sortBy === 'rank'"
-            class="ms-2"
+            v-show="sortBy === option.id"
+            class="ms-1"
             :up="!sortAsc"
             :animate="false"
           />

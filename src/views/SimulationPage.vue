@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useRouter, RouteParams, useRoute } from "vue-router";
 import { onMounted, ref, onUnmounted, computed } from "vue";
-import { cloneDeep, isEqual } from "lodash-es";
 import {
   eventAttempts,
   eventNames,
@@ -13,6 +12,8 @@ import {
   generateColors,
   generateDefaultTimesArray,
   getParentPath,
+  ArrEq2D,
+  clone2DArr,
 } from "@/lib/utils";
 import {
   runSimulationInWorker,
@@ -23,7 +24,7 @@ import ExpandableBox from "@/components/custom/ExpandableBox.vue";
 import FullHistogram from "@/components/charts/FullHistogram.vue";
 import RankHistogram from "@/components/charts/RankHistogram.vue";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
-import ErrorDisplay from "@/components/custom/CompetitionError.vue";
+import ErrorDisplay from "@/components/custom/ErrorPanel.vue";
 import CompetitorList from "@/components/custom/CompetitorList.vue";
 import ResultsSummary from "@/components/custom/ResultsSummary.vue";
 import { Button } from "@/components/ui/button";
@@ -82,14 +83,14 @@ const simulation_results = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const recalculateLoading = ref<boolean>(false);
 const wcaLiveLoading = ref<boolean>(false);
-const inputtedTimes = ref<number[][]>(cloneDeep(defaultTimesArray));
-const inputtedTimesPrev = ref<number[][]>(cloneDeep(defaultTimesArray));
+const inputtedTimes = ref<number[][]>(clone2DArr(defaultTimesArray));
+const inputtedTimesPrev = ref<number[][]>(clone2DArr(defaultTimesArray));
 
 const inputtedTimesState = computed(() => {
   const hasNonZero = inputtedTimes.value.some((competitor) =>
     competitor.some((time) => time !== 0),
   );
-  const isModified = !isEqual(inputtedTimes.value, inputtedTimesPrev.value);
+  const isModified = !ArrEq2D(inputtedTimes.value, inputtedTimesPrev.value);
 
   return { hasNonZero, isModified };
 });
@@ -114,8 +115,9 @@ const runInitialSimulation = async () => {
     );
 
     if (results) {
-      simulation_results.value = results;
-      inputtedTimesPrev.value = cloneDeep(inputtedTimes.value);
+      const sortedResults = results.sort((a, b) => b.win_count - a.win_count);
+      simulation_results.value = sortedResults;
+      inputtedTimesPrev.value = clone2DArr(inputtedTimes.value);
     }
   } catch (err) {
     terminateSimulationWorker();
@@ -137,7 +139,7 @@ const handleRecalculation = async () => {
 
     if (results) {
       simulation_results.value = results;
-      inputtedTimesPrev.value = cloneDeep(inputtedTimes.value);
+      inputtedTimesPrev.value = clone2DArr(inputtedTimes.value);
     }
   } catch (err) {
     console.error("Error in recalculation:", err);
@@ -166,7 +168,7 @@ const recalculate = async () => {
 };
 
 const reset = async () => {
-  inputtedTimes.value = cloneDeep(defaultTimesArray);
+  inputtedTimes.value = clone2DArr(defaultTimesArray);
   await recalculate();
 };
 
