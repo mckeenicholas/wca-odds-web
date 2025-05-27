@@ -11,6 +11,8 @@ COPY src/rust ./src/rust
 COPY Cargo.toml ./
 COPY Cargo.lock ./
 
+ENV RUSTFLAGS="-C target-feature=+simd128 --cfg getrandom_backend=\"wasm_js\""
+
 # Build WASM package
 RUN wasm-pack build --target web --release --out-dir wasm
 
@@ -32,7 +34,7 @@ RUN node setup/cache_comp.js setup/cache_list.json
 RUN npm run build
 
 # Final nginx deploy stage
-FROM nginx:1.28.0-alpine
+FROM nginx:1.28.0-alpine-slim
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 

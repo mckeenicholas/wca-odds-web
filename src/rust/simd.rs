@@ -3,8 +3,8 @@ use core::arch::wasm32::{
     f32x4_sub, i32x4_extract_lane, i32x4_mul, i32x4_splat, i32x4_trunc_sat_f32x4, v128,
     v128_bitselect,
 };
-use rand::{rngs::ThreadRng, Rng};
-use rand_distr::{Distribution, Normal};
+use rand::Rng;
+use rand_distr::{Distribution, Normal, Uniform};
 
 use crate::{competitor::CompetitorStats, simulation::RuntimeConfig};
 
@@ -45,7 +45,7 @@ macro_rules! f32x4_sum_n {
 pub fn generate_skewnorm_vec(
     count: usize,
     stats: Option<&CompetitorStats>,
-    rng: &mut ThreadRng,
+    rng: &mut impl Rng,
     config: &RuntimeConfig,
     entered_times: &[i32],
 ) -> Vec<v128> {
@@ -72,7 +72,7 @@ pub fn generate_skewnorm_vec(
     values
 }
 
-fn gen_random_f32x4<T>(dist: &T, rng: &mut ThreadRng) -> v128
+fn gen_random_f32x4<T>(dist: &T, rng: &mut impl Rng) -> v128
 where
     T: Distribution<f32>,
 {
@@ -113,7 +113,7 @@ pub fn f32x4_conditional_negate(input: v128, cond: v128) -> v128 {
 
 pub fn simd_gen_skewnorm(
     stats: &CompetitorStats,
-    rand_source: &mut ThreadRng,
+    rand_source: &mut impl Rng,
     include_dnf: bool,
 ) -> v128 {
     let normal_dist = Normal::new(0.0, 1.0).expect("Failed to initialize normal distribution");
@@ -144,7 +144,7 @@ pub fn simd_gen_skewnorm(
         return results_i32;
     }
 
-    let uniform_dist = rand::distributions::Uniform::new(0.0, 1.0);
+    let uniform_dist = Uniform::new(0.0, 1.0).expect("Failed to initialize uniform distribution");
     let r = gen_random_f32x4(&uniform_dist, rand_source);
 
     let mask = f32x4_gt(r, f32x4_splat(stats.dnf_rate));

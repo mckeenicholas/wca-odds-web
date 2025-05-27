@@ -1,5 +1,5 @@
+use rand::rng;
 use rand::rngs::ThreadRng;
-use rand::thread_rng;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::iter::zip;
@@ -78,7 +78,7 @@ impl CompetitionSimulator {
             event_simulator,
             competitors_data: competitors,
             simulation_results: None,
-            rng: thread_rng(),
+            rng: rng(),
         }
     }
 
