@@ -198,7 +198,19 @@ const showWCALiveImport = () => {
     return false;
   }
 
-  return new Date(dateParam) < new Date();
+  const today = new Date();
+
+  const competitionDate = new Date(dateParam);
+
+  if (competitionDate <= today) {
+    return false;
+  }
+
+  // WCA Live competitions are archived after 90 days.
+  const removalCutoff = new Date(today);
+  removalCutoff.setDate(today.getDate() + 90);
+
+  return competitionDate < removalCutoff;
 };
 </script>
 

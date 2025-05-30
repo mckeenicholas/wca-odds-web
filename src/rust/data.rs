@@ -2,7 +2,7 @@ use crate::{
     competitor::{Competitor, DatedCompetitionResult},
     event::{EventType, Mo3Event},
 };
-use chrono::{Datelike, Duration, NaiveDateTime, TimeZone, Utc};
+use chrono::{Datelike, Duration, TimeZone, Utc};
 use futures::future::join_all;
 use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -154,9 +154,18 @@ impl CompetitionDataManager {
     }
 
     fn parse_competition_date(&self, date_str: &str) -> Option<i64> {
-        NaiveDateTime::parse_from_str(&format!("{} 00:00:00", date_str), "%Y-%m-%d %H:%M:%S")
-            .ok()
-            .map(|naive_date| Utc.from_utc_datetime(&naive_date).timestamp())
+        let parts: Vec<&str> = date_str.split('-').collect();
+        if parts.len() != 3 {
+            return None;
+        }
+
+        let year: i32 = parts[0].parse().ok()?;
+        let month: u32 = parts[1].parse().ok()?;
+        let day: u32 = parts[2].parse().ok()?;
+
+        Utc.with_ymd_and_hms(year, month, day, 0, 0, 0)
+            .single()
+            .map(|dt| dt.timestamp())
     }
 
     fn merge_competition_results(

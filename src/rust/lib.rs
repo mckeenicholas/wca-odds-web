@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 use web_sys::js_sys::Promise;
 
 use data::CompetitionDataManager;
@@ -61,6 +61,12 @@ impl Default for AppState {
     }
 }
 
+fn str_to_jsval(msg: &str) -> JsValue {
+    // Since we are only taking a string value, its safe to
+    // unwrap here, as it cant fail
+    serde_wasm_bindgen::to_value(msg).unwrap()
+}
+
 #[wasm_bindgen]
 pub fn load_data(
     competitors: Vec<String>,
@@ -68,7 +74,10 @@ pub fn load_data(
     month_cutoff: i32,
     halflife: f32,
 ) -> Promise {
-    let event_type = EventType::from_event_id(&event_str).expect("Invalid event");
+    let event_type = match EventType::from_event_id(&event_str) {
+        Some(event) => event,
+        None => return str_to_jsval("Invalid event type.").into(),
+    };
 
     let data_manager =
         CompetitionDataManager::create(competitors, event_type, month_cutoff, halflife);
@@ -88,7 +97,7 @@ pub fn load_data(
         });
 
         serde_wasm_bindgen::to_value(&true)
-            .map_err(|_| serde_wasm_bindgen::to_value("Error serializing return value").unwrap())
+            .map_err(|_| str_to_jsval("Error serializing return value"))
     };
     wasm_bindgen_futures::future_to_promise(future)
 }
@@ -104,9 +113,10 @@ pub fn run_simulation(
 
     APP_STATE.with(|state| {
         let mut sim_manager_ref = state.get_simulation_manager().borrow_mut();
-        let sim_manager = sim_manager_ref
-            .as_mut()
-            .expect("Simulation manager is not set. (Data likely not loaded yet).");
+        let sim_manager = match sim_manager_ref.as_mut() {
+            Some(data) => data,
+            None => return str_to_jsval("Simulation data not loaded"),
+        };
 
         sim_manager.set_entered_results(entered_times);
 
