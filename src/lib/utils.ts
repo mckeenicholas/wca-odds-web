@@ -164,3 +164,10 @@ export function ArrEq2D(arr1: number[][], arr2: number[][]): boolean {
 export function clone2DArr(arr: number[][]): number[][] {
   return arr.map((row) => [...row]);
 }
+
+export const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
