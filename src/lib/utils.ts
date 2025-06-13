@@ -3,6 +3,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { ChartTooltipProps, SupportedWCAEvent, wcif } from "./types";
 import HistogramCustomTooltip from "@/components/charts/HistogramCustomTooltip.vue";
+import { SimulationRouteQuery } from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -171,3 +172,29 @@ export const formatDate = (date: string) =>
     day: "numeric",
     year: "numeric",
   });
+
+export function buildSimulationQuery(params: {
+  name: string;
+  eventId: string;
+  simCount: number;
+  startDate: Date;
+  endDate: Date;
+  includeDnf: boolean;
+  decayRate: number;
+  competitors: string[];
+  competitionId?: string;
+  date?: string;
+}): SimulationRouteQuery {
+  return {
+    name: params.name,
+    ...(params.competitionId && { competitionId: params.competitionId }),
+    ...(params.date && { date: params.date }),
+    eventId: params.eventId,
+    simCount: params.simCount.toString(),
+    startDate: params.startDate.toISOString(),
+    endDate: params.endDate.toISOString(),
+    includeDnf: params.includeDnf.toString(),
+    decayRate: params.decayRate.toString(),
+    competitors: params.competitors.join(","),
+  };
+}

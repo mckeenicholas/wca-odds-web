@@ -108,7 +108,8 @@ export interface SimulationResult {
 export interface RunSimulationPayload {
   competitorList: string[];
   event: SupportedWCAEvent;
-  monthCutoff: number;
+  startDate: Date;
+  endDate: Date;
   numSimulations: number;
   includeDNF: boolean;
   decayHalfLife: number;
@@ -146,7 +147,8 @@ export interface SimulationRouteQuery {
   eventId?: string;
   name?: string;
   simCount?: string;
-  monthCutoff?: string;
+  startDate?: string;
+  endDate?: string;
   includeDnf?: string;
   decayRate?: string;
   competitionId?: string;

@@ -31,7 +31,8 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       const {
         competitorList,
         event: eventType,
-        monthCutoff,
+        startDate,
+        endDate,
         numSimulations,
         includeDNF,
         decayHalfLife,
@@ -43,7 +44,8 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
       const loadResult = await load_data(
         competitorList,
         eventType,
-        monthCutoff,
+        BigInt(startDate.getTime()),
+        BigInt(endDate.getTime()),
         decayHalfLife,
       );
 
@@ -63,10 +65,10 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
         return;
       }
 
-      console.time("a");
+      console.time("Simulation Runtime");
       dataLoaded = true;
       const results = run_simulation(numSimulations, includeDNF, inputtedTimes);
-      console.timeEnd("a");
+      console.timeEnd("Simulation Runtime");
 
       const message: MainThreadMessage = {
         type: "SIMULATION_COMPLETE",

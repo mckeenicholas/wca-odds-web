@@ -42,11 +42,12 @@ const {
   eventId: eventIdParam,
   name: nameParam,
   simCount: simCountParam,
-  monthCutoff: monthCutoffParam,
+  startDate: startDateParam,
+  endDate: endDateParam,
   includeDnf: includeDnfParam,
   decayRate: decayRateParam,
   competitionId: competitionIdParam,
-  date: dateParam,
+  date: competitionDateParam,
 } = queryParams;
 
 if (
@@ -54,7 +55,7 @@ if (
   !eventIdParam ||
   !nameParam ||
   !simCountParam ||
-  !monthCutoffParam ||
+  !startDateParam ||
   !includeDnfParam ||
   !decayRateParam ||
   !(eventIdParam in eventNames)
@@ -64,7 +65,8 @@ if (
 
 const name = nameParam!;
 const numSimulations = parseInt(simCountParam!);
-const monthCutoffNum = parseInt(monthCutoffParam!);
+const startDate = new Date(startDateParam!);
+const endDate = endDateParam ? new Date(endDateParam) : new Date();
 const decayHalfLife = parseInt(decayRateParam!);
 const competitorsList = competitorsParam!.split(",");
 const includeDNF = includeDnfParam === "true";
@@ -87,7 +89,7 @@ const inputtedTimes = ref<number[][]>(clone2DArr(defaultTimesArray));
 const inputtedTimesPrev = ref<number[][]>(clone2DArr(defaultTimesArray));
 
 const inputtedTimesState = computed(() => {
-  const hasNonZero = inputtedTimes.value.some((competitor) =>
+  const hasNonZero = inputtedTimes.value.some((competitor: number[]) =>
     competitor.some((time) => time !== 0),
   );
   const isModified = !ArrEq2D(inputtedTimes.value, inputtedTimesPrev.value);
@@ -107,7 +109,8 @@ const runInitialSimulation = async () => {
     const results = await runSimulationInWorker(
       competitorsList,
       event,
-      monthCutoffNum,
+      startDate,
+      endDate,
       numSimulations,
       includeDNF,
       decayHalfLife,
@@ -187,30 +190,31 @@ const syncResultsWithWCALive = async () => {
     inputtedTimes.value = results;
     await recalculate();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
+    console.error(err);
+    // For now we dont set the error ref as it doesnt prevent the simulation from running
+    // TODO: add a Toast component for this
   } finally {
     wcaLiveLoading.value = false;
   }
 };
 
 const showWCALiveImport = () => {
-  if (!competitionIdParam || !dateParam) {
+  if (!competitionIdParam || !competitionDateParam) {
     return false;
   }
 
   const today = new Date();
+  const competitionDate = new Date(competitionDateParam);
 
-  const competitionDate = new Date(dateParam);
-
-  if (competitionDate <= today) {
+  if (competitionDate > today) {
     return false;
   }
 
   // WCA Live competitions are archived after 90 days.
-  const removalCutoff = new Date(today);
-  removalCutoff.setDate(today.getDate() + 90);
+  const removalCutoff = new Date();
+  removalCutoff.setDate(today.getDate() - 90);
 
-  return competitionDate < removalCutoff;
+  return competitionDate > removalCutoff;
 };
 </script>
 

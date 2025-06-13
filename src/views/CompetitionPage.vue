@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watchEffect } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { fetchWCIF } from "@/lib/utils";
-import { SupportedWCAEvent, Person, SimulationRouteQuery } from "@/lib/types";
+import { fetchWCIF, buildSimulationQuery } from "@/lib/utils";
+import { SupportedWCAEvent, Person } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
@@ -30,9 +30,12 @@ const competitorsByEvent = ref<
 >({});
 const selectedEventId = ref<SupportedWCAEvent>("333");
 const simCount = ref<number>(10000);
-const monthCount = ref<number>(12);
 const includeDnf = ref<boolean>(true);
 const decayHalfLife = ref<number>(180);
+const startDate = ref<Date>(
+  new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+);
+const endDate = ref<Date>(new Date());
 
 const { isPending, isError, data, error } = useQuery({
   queryKey: ["competition", route.params.id],
@@ -124,17 +127,18 @@ const runSimulation = () => {
 
   const selectedIds = currentSelectedCompetitors.value.map((item) => item.id);
 
-  const query: SimulationRouteQuery = {
+  const query = buildSimulationQuery({
     name: data.value.name,
+    eventId: selectedEventId.value,
+    simCount: simCount.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+    includeDnf: includeDnf.value,
+    decayRate: decayHalfLife.value,
+    competitors: selectedIds,
     competitionId: data.value.id,
     date: data.value.schedule.startDate,
-    eventId: selectedEventId.value,
-    simCount: simCount.value.toString(),
-    monthCutoff: monthCount.value.toString(),
-    includeDnf: includeDnf.value.toString(),
-    decayRate: decayHalfLife.value.toString(),
-    competitors: selectedIds.join(","),
-  };
+  });
 
   router.push({
     path: `./${data.value.id}/results`,
@@ -163,11 +167,12 @@ const toggleSelection = (person: Competitor) => {
       <div>
         <ControlPanel
           :event-ids="eventIds"
-          v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
           v-model:include-dnf="includeDnf"
           v-model:decay-rate="decayHalfLife"
+          v-model:start-date="startDate"
+          v-model:end-date="endDate"
           :disable-run="currentSelectedCompetitors.length < 2"
           @run-simulation="runSimulation"
         />
