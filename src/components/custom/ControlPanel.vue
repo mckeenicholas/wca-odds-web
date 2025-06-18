@@ -11,14 +11,14 @@ import { Button } from "@/components/ui/button";
 import { useWindowSize } from "@vueuse/core";
 import ExpandableBox from "./ExpandableBox.vue";
 import SimulationOptions from "./SimulationOptions.vue";
-
-const breakpoint = 1200 as const;
+import { BREAKPOINT } from "@/lib/utils";
 
 const selectedEventId = defineModel<string>("selectedEventId");
 const simCount = defineModel<number>("simCount");
-const monthCount = defineModel<number>("monthCount");
 const includeDnf = defineModel<boolean>("includeDnf");
 const decayHalfLife = defineModel<number>("decayRate");
+const startDate = defineModel<Date>("startDate");
+const endDate = defineModel<Date>("endDate");
 
 const { eventIds, disableRun = false } = defineProps<{
   eventIds: SupportedWCAEvent[];
@@ -44,14 +44,15 @@ const { width } = useWindowSize();
     </SelectContent>
   </Select>
   <div
-    v-if="width >= breakpoint"
+    v-if="width >= BREAKPOINT"
     class="border rounded-md my-2 p-2 flex items-center space-x-4"
   >
     <SimulationOptions
       v-model:simCount="simCount"
-      v-model:monthCount="monthCount"
       v-model:includeDnf="includeDnf"
       v-model:decay-rate="decayHalfLife"
+      v-model:start-date="startDate"
+      v-model:end-date="endDate"
     />
     <div class="flex flex-grow justify-end">
       <Button @click="() => emit('runSimulation')" :disabled="disableRun"
@@ -65,9 +66,10 @@ const { width } = useWindowSize();
       <div class="flex flex-col items-stretch p-4 space-y-4">
         <SimulationOptions
           v-model:simCount="simCount"
-          v-model:monthCount="monthCount"
           v-model:includeDnf="includeDnf"
           v-model:decay-rate="decayHalfLife"
+          v-model:start-date="startDate"
+          v-model:end-date="endDate"
         />
       </div>
     </ExpandableBox>

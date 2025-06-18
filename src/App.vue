@@ -15,10 +15,10 @@ const versionNum = "0.5.1";
   <div class="flex flex-col min-h-screen">
     <main class="flex-grow">
       <ColorModeSwitcher />
-      <RouterView class="md:-mt-14 lg:-mt-14 -mt-4" />
+      <RouterView class="-mt-4" />
     </main>
     <footer
-      class="h-12 py-2 px-4 text-sm text-muted-foreground flex items-center justify-end font-semibold"
+      class="h-10 px-4 text-sm text-muted-foreground flex items-center justify-end font-semibold"
     >
       <span class="mr-3"
         >Made by

@@ -1,49 +1,31 @@
-// filepath:
-/home/nicholas/wca-odds-web/src/components/custom/SimulationOptions.vue
 <script setup lang="ts">
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  NumberField,
-  NumberFieldContent,
-  NumberFieldDecrement,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "@/components/ui/number-field";
 import { Switch } from "@/components/ui/switch";
+import DateRangePicker from "./DateRangePicker.vue";
 
 const simCount = defineModel<number>("simCount");
-const monthCount = defineModel<number>("monthCount");
 const includeDnf = defineModel<boolean>("includeDnf");
 const decayHalfLife = defineModel<number>("decayRate");
+const startDate = defineModel<Date>("startDate");
+const endDate = defineModel<Date>("endDate");
 </script>
 
 <template>
-  <div class="flex items-center min-[1200px]:pe-4 min-[1200px]:border-r">
+  <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
     <Label for="simCount">Simulation Count:</Label>
     <Input class="max-w-24 ms-2" id="simCount" v-model.number="simCount" />
   </div>
 
-  <div class="flex items-center min-[1200px]:pe-4 min-[1200px]:border-r">
-    <Label for="resultCutoff">Using results from the past</Label>
-    <NumberField
-      :default-value="18"
-      :min="1"
+  <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
+    <Label for="resultCutoff" class="me-2">Use results from:</Label>
+    <DateRangePicker
       id="resultCutoff"
-      class="w-24 mx-2"
-      v-model="monthCount"
-    >
-      <NumberFieldContent>
-        <NumberFieldDecrement />
-        <NumberFieldInput />
-        <NumberFieldIncrement />
-      </NumberFieldContent>
-    </NumberField>
-    <Label for="resultCutoff">{{
-      monthCount === 1 ? "month" : "months"
-    }}</Label>
+      v-model:start-date="startDate"
+      v-model:end-date="endDate"
+    />
   </div>
-  <div class="flex items-center min-[1200px]:pe-4 min-[1200px]:border-r">
+  <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
     <Label for="decayRate"> Result decay half-life </Label>
     <Input
       class="max-w-16 mx-2"

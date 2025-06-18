@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import { fetchWCAInfo } from "@/lib/utils";
+import { fetchWCAInfo, buildSimulationQuery } from "@/lib/utils";
 import { useQuery } from "@tanstack/vue-query";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, X } from "lucide-vue-next";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
-import { SimulationRouteQuery, supportedWCAEvents } from "@/lib/types";
+import { supportedWCAEvents } from "@/lib/types";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
 import { useRouter } from "vue-router";
 import { useDebounceFn } from "@vueuse/core";
@@ -29,9 +29,12 @@ const competitors = ref<Person[]>(
 
 const selectedEventId = ref<string>("333");
 const simCount = ref<number>(10000);
-const monthCount = ref<number>(12);
 const includeDnf = ref<boolean>(true);
 const decayHalfLife = ref<number>(180);
+const startDate = ref<Date>(
+  new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
+);
+const endDate = ref<Date>(new Date());
 
 const searchPersons = async (): Promise<Person[]> => {
   if (!input.value.trim()) return [];
@@ -73,15 +76,16 @@ const removeCompetitor = (competitorId: string) => {
 };
 
 const runSimulation = () => {
-  const query: SimulationRouteQuery = {
+  const query = buildSimulationQuery({
     name: "Custom Simulation",
     eventId: selectedEventId.value,
-    simCount: simCount.value.toString(),
-    monthCutoff: monthCount.value.toString(),
-    includeDnf: includeDnf.value.toString(),
-    decayRate: decayHalfLife.value.toString(),
-    competitors: competitors.value.map((c: Person) => c.wca_id).join(","),
-  };
+    simCount: simCount.value,
+    startDate: startDate.value,
+    endDate: endDate.value,
+    includeDnf: includeDnf.value,
+    decayRate: decayHalfLife.value,
+    competitors: competitors.value.map((c: Person) => c.wca_id),
+  });
 
   router.push({
     path: "/custom/results",
@@ -149,11 +153,12 @@ const runSimulation = () => {
       <div class="mt-4">
         <ControlPanel
           v-bind:event-ids="[...supportedWCAEvents]"
-          v-model:month-count="monthCount"
           v-model:selected-event-id="selectedEventId"
           v-model:sim-count="simCount"
-          v-model="includeDnf"
-          v-bind:decay-rate="decayHalfLife"
+          v-model:include-dnf="includeDnf"
+          v-model:decay-rate="decayHalfLife"
+          v-model:start-date="startDate"
+          v-model:end-date="endDate"
           :disableRun="competitors.length < 2"
           @run-simulation="runSimulation"
         />

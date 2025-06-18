@@ -2,7 +2,7 @@ use crate::{
     competitor::{Competitor, DatedCompetitionResult},
     event::{EventType, Mo3Event},
 };
-use chrono::{Datelike, Duration, TimeZone, Utc};
+use chrono::{Datelike, TimeZone, Utc};
 use futures::future::join_all;
 use reqwest::Client;
 use serde::{de::DeserializeOwned, Deserialize};
@@ -48,7 +48,8 @@ pub struct ParsedPersonResult {
 pub struct CompetitionDataManager {
     competitors: Vec<String>,
     event: EventType,
-    month_cutoff: i32,
+    start_date: i64,
+    end_date: i64,
     halflife: f32,
     request_client: Client,
 }
@@ -60,15 +61,27 @@ struct TimeRange {
 }
 
 impl TimeRange {
-    fn from_month_cutoff(month_cutoff: i32) -> Self {
-        let now = Utc::now();
-        let months_duration = Duration::days((month_cutoff * 31) as i64);
-        let start_date = now - months_duration;
+    fn new(start_date_js: i64, end_date_js: i64) -> Self {
+        // Convert from milliseconds to seconds since JavaScript uses milliseconds
+        let start_timestamp = start_date_js / 1000;
+        let end_timestamp = end_date_js / 1000;
+
+        let start_datetime = Utc
+            .timestamp_opt(start_timestamp, 0)
+            .single()
+            .unwrap_or_else(Utc::now);
+        let end_datetime = Utc
+            .timestamp_opt(end_timestamp, 0)
+            .single()
+            .unwrap_or_else(Utc::now);
+
+        // Generate range of years from start to end
+        let years: Vec<i32> = (start_datetime.year()..=end_datetime.year()).collect();
 
         Self {
-            cutoff_timestamp: start_date.timestamp(),
-            today_timestamp: now.timestamp(),
-            years: (start_date.year()..=now.year()).collect(),
+            cutoff_timestamp: start_timestamp,
+            today_timestamp: end_timestamp,
+            years,
         }
     }
 
@@ -87,13 +100,15 @@ impl CompetitionDataManager {
     pub fn create(
         competitors: Vec<String>,
         event: EventType,
-        month_cutoff: i32,
+        start_date: i64,
+        end_date: i64,
         halflife: f32,
     ) -> Self {
         Self {
             competitors,
             event,
-            month_cutoff,
+            start_date,
+            end_date,
             halflife,
             request_client: Client::new(),
         }
@@ -107,7 +122,7 @@ impl CompetitionDataManager {
     }
 
     async fn get_competition_data(&self) -> Result<HashMap<String, i32>, &'static str> {
-        let time_range = TimeRange::from_month_cutoff(self.month_cutoff);
+        let time_range = TimeRange::new(self.start_date, self.end_date);
 
         let futures: Vec<_> = time_range
             .years

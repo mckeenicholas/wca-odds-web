@@ -62,8 +62,6 @@ impl Default for AppState {
 }
 
 fn str_to_jsval(msg: &str) -> JsValue {
-    // Since we are only taking a string value, its safe to
-    // unwrap here, as it cant fail
     serde_wasm_bindgen::to_value(msg).unwrap()
 }
 
@@ -71,7 +69,8 @@ fn str_to_jsval(msg: &str) -> JsValue {
 pub fn load_data(
     competitors: Vec<String>,
     event_str: String,
-    month_cutoff: i32,
+    start_date: i64,
+    end_date: i64,
     halflife: f32,
 ) -> Promise {
     let event_type = match EventType::from_event_id(&event_str) {
@@ -80,7 +79,7 @@ pub fn load_data(
     };
 
     let data_manager =
-        CompetitionDataManager::create(competitors, event_type, month_cutoff, halflife);
+        CompetitionDataManager::create(competitors, event_type, start_date, end_date, halflife);
 
     let future = async move {
         let competitors_result = data_manager.fetch_all().await;
@@ -92,8 +91,8 @@ pub fn load_data(
 
         let simulator = CompetitionSimulator::new(event_type, competitors);
 
-        APP_STATE.with(|simulaiton_manager| {
-            simulaiton_manager.set_simulation_manager(simulator);
+        APP_STATE.with(|simulation_manager| {
+            simulation_manager.set_simulation_manager(simulator);
         });
 
         serde_wasm_bindgen::to_value(&true)

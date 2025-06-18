@@ -65,7 +65,8 @@ const createWorkerPromise = (
 export const runSimulationInWorker = (
   competitorList: string[],
   event: SupportedWCAEvent,
-  monthCutoff: number,
+  startDate: Date,
+  endDate: Date,
   numSimulations: number,
   includeDNF: boolean,
   decayHalfLife: number,
@@ -74,7 +75,8 @@ export const runSimulationInWorker = (
   const payload: RunSimulationPayload = {
     competitorList,
     event,
-    monthCutoff,
+    startDate,
+    endDate,
     numSimulations,
     includeDNF,
     decayHalfLife,

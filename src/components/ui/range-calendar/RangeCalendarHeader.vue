@@ -1,15 +1,15 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { HTMLAttributes } from "vue";
 import { reactiveOmit } from "@vueuse/core";
 import {
-  DropdownMenuLabel,
-  type DropdownMenuLabelProps,
+  RangeCalendarHeader,
+  type RangeCalendarHeaderProps,
   useForwardProps,
 } from "reka-ui";
 import { cn } from "@/lib/utils";
 
 const props = defineProps<
-  DropdownMenuLabelProps & { class?: HTMLAttributes["class"]; inset?: boolean }
+  RangeCalendarHeaderProps & { class?: HTMLAttributes["class"] }
 >();
 
 const delegatedProps = reactiveOmit(props, "class");
@@ -18,12 +18,12 @@ const forwardedProps = useForwardProps(delegatedProps);
 </script>
 
 <template>
-  <DropdownMenuLabel
-    v-bind="forwardedProps"
+  <RangeCalendarHeader
     :class="
-      cn('px-2 py-1.5 text-sm font-semibold', inset && 'pl-8', props.class)
+      cn('relative flex w-full items-center justify-between pt-1', props.class)
     "
+    v-bind="forwardedProps"
   >
     <slot />
-  </DropdownMenuLabel>
+  </RangeCalendarHeader>
 </template>
