@@ -141,6 +141,7 @@ const handleKeydown = (event: KeyboardEvent) => {
         />
         <Button
           @click="refetch()"
+          class="h-[40px]"
           :disabled="isFetching || !input.trim()"
           aria-label="Search for competitions"
         >
