@@ -3,7 +3,7 @@ use std::f32::consts::LN_2;
 
 use crate::{
     calc::{calc_weighted_mean_variance_stdev, fit_weighted_skewnorm, trim_weighted_results},
-    simd::DNF_TEMP_VALUE,
+    simd::DNF_VALUE,
 };
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -136,7 +136,7 @@ impl Competitor {
     pub fn get_mean(&self) -> u32 {
         self.stats
             .as_ref()
-            .map_or(DNF_TEMP_VALUE as u32, |stats| stats.mean as u32)
+            .map_or(DNF_VALUE as u32, |stats| stats.mean as u32)
     }
 
     pub fn get_person_hist_bounds(&self) -> (i32, i32) {

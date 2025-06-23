@@ -5,7 +5,7 @@ use crate::event::Mo3Event;
 use crate::histogram::Histogram;
 use crate::simd::{
     calc_wca_average_5, calc_wca_best_3, calc_wca_mean_3, generate_skewnorm_vec, i32x4_to_slice,
-    i32x4_truncate_down_100, DNF_TEMP_VALUE,
+    i32x4_truncate_down_100, DNF_VALUE,
 };
 use crate::simulation::{ResultHistograms, RuntimeConfig};
 use core::arch::wasm32::v128;
@@ -54,7 +54,7 @@ pub trait EventSimulation {
 
     fn add_to_histogram(&mut self, values: &[i32], histogram: &mut Histogram) {
         for &value in values {
-            if value == i32::MAX || value == DNF_TEMP_VALUE {
+            if value == i32::MAX || value == DNF_VALUE {
                 continue;
             }
 

@@ -8,9 +8,10 @@ use rand_distr::{Distribution, Normal, Uniform};
 
 use crate::{competitor::CompetitorStats, simulation::RuntimeConfig};
 
-// Using i32::MAX seems to cause underflow errors in some cases, this is a temporary workaround
-// until I can figure out why.
-pub const DNF_TEMP_VALUE: i32 = 360000;
+// Represents one centisecond (1/100th of a second) worse than the highest allowable result.
+// We use this rather than i32::MAX because SIMD instructions have slightly different definitions
+// for inverting max values compared to Rust's default behavior.
+pub const DNF_VALUE: i32 = 60 * 60 * 100 + 1;
 
 macro_rules! f32x4_max_n {
     ($vec:expr) => {
@@ -56,14 +57,14 @@ pub fn generate_skewnorm_vec(
     for i in 0..count {
         let solves = if i < entered_times.len() && entered_times[i] != 0 {
             if entered_times[i] < 0 {
-                i32x4_splat(DNF_TEMP_VALUE)
+                i32x4_splat(DNF_VALUE)
             } else {
                 i32x4_splat(entered_times[i])
             }
         } else if let Some(stats) = stats {
             simd_gen_skewnorm(stats, rng, include_dnf)
         } else {
-            i32x4_splat(DNF_TEMP_VALUE)
+            i32x4_splat(DNF_VALUE)
         };
 
         values.push(solves);
@@ -119,7 +120,7 @@ pub fn simd_gen_skewnorm(
     let normal_dist = Normal::new(0.0, 1.0).expect("Failed to initialize normal distribution");
 
     if stats.location.is_nan() || stats.shape.is_nan() || stats.dnf_rate.is_nan() {
-        return i32x4_splat(DNF_TEMP_VALUE);
+        return i32x4_splat(DNF_VALUE);
     }
 
     let u0 = gen_random_f32x4(&normal_dist, rand_source);
@@ -149,7 +150,7 @@ pub fn simd_gen_skewnorm(
 
     let mask = f32x4_gt(r, f32x4_splat(stats.dnf_rate));
 
-    v128_bitselect(results_i32, i32x4_splat(DNF_TEMP_VALUE), mask)
+    v128_bitselect(results_i32, i32x4_splat(DNF_VALUE), mask)
 }
 
 pub fn calc_wca_best_3(v1: v128, v2: v128, v3: v128) -> [i32; 4] {
