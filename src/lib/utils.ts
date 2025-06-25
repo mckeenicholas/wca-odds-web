@@ -206,7 +206,7 @@ export const buildSimulationQuery = (params: {
 };
 
 export const createJSONExport = ({
-  eventName,
+  competitionName,
   results,
   ids,
   currentTimes,
@@ -217,7 +217,7 @@ export const createJSONExport = ({
   includeDnf,
   event,
 }: {
-  eventName: string;
+  competitionName: string;
   results: SimulationResult[];
   ids: string[];
   currentTimes: number[][];
@@ -231,6 +231,7 @@ export const createJSONExport = ({
   const config = {
     startDate,
     endDate,
+    competitionName,
     simCount,
     decayRate,
     includeDnf,
@@ -239,7 +240,6 @@ export const createJSONExport = ({
   };
 
   const personResults = results.map((result, index) => ({
-    eventName,
     id: ids[index],
     name: result.name,
     winCount: result.win_count,

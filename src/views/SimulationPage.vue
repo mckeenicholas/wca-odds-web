@@ -218,7 +218,7 @@ const showWCALiveImport = () => {
 
 const exportJson = () => {
   const jsonText = createJSONExport({
-    eventName: name,
+    competitionName: name,
     results: simulationResults.value!,
     ids: competitorsList,
     currentTimes: inputtedTimes.value,
