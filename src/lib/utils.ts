@@ -3,6 +3,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
   ChartTooltipProps,
+  SimulationResult,
   SimulationRouteQuery,
   SupportedWCAEvent,
   wcif,
@@ -148,7 +149,7 @@ export const getParentPath = (path: string) => {
   return "/";
 };
 
-export function ArrEq2D(arr1: number[][], arr2: number[][]): boolean {
+export const ArrEq2D = (arr1: number[][], arr2: number[][]): boolean => {
   if (arr1 === arr2) return true;
   if (!arr1 || !arr2) return false;
   if (arr1.length !== arr2.length) return false;
@@ -165,20 +166,20 @@ export function ArrEq2D(arr1: number[][], arr2: number[][]): boolean {
   }
 
   return true;
-}
+};
 
-export function clone2DArr(arr: number[][]): number[][] {
+export const clone2DArr = (arr: number[][]): number[][] => {
   return arr.map((row) => [...row]);
-}
+};
 
-export const formatDate = (date: string) =>
+export const formatDate = (date: string | Date | number) =>
   new Date(date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 
-export function buildSimulationQuery(params: {
+export const buildSimulationQuery = (params: {
   name: string;
   eventId: string;
   simCount: number;
@@ -189,7 +190,7 @@ export function buildSimulationQuery(params: {
   competitors: string[];
   competitionId?: string;
   date?: string;
-}): SimulationRouteQuery {
+}): SimulationRouteQuery => {
   return {
     name: params.name,
     ...(params.competitionId && { competitionId: params.competitionId }),
@@ -202,4 +203,59 @@ export function buildSimulationQuery(params: {
     decayRate: params.decayRate.toString(),
     competitors: params.competitors.join(","),
   };
-}
+};
+
+export const createJSONExport = ({
+  eventName,
+  results,
+  ids,
+  currentTimes,
+  startDate,
+  endDate,
+  simCount,
+  decayRate,
+  includeDnf,
+  event,
+}: {
+  eventName: string;
+  results: SimulationResult[];
+  ids: string[];
+  currentTimes: number[][];
+  startDate: Date;
+  endDate: Date;
+  simCount: number;
+  decayRate: number;
+  includeDnf: boolean;
+  event: SupportedWCAEvent;
+}) => {
+  const config = {
+    startDate,
+    endDate,
+    simCount,
+    decayRate,
+    includeDnf,
+    event,
+    generatedOn: new Date(),
+  };
+
+  const personResults = results.map((result, index) => ({
+    eventName,
+    id: ids[index],
+    name: result.name,
+    winCount: result.win_count,
+    podiumCount: result.pod_count,
+    globalMean: result.mean_no_dnf,
+    expectedRank: result.total_rank / simCount,
+    rankCount: Object.fromEntries(
+      result.rank_dist.map((count, rank) => [rank + 1, count]),
+    ),
+    histSingle: Object.fromEntries(result.hist_values_single),
+    histAverage: Object.fromEntries(result.hist_values_average),
+    enteredTimes: currentTimes[index].filter((time) => time !== 0),
+  }));
+
+  return JSON.stringify({
+    config,
+    results: personResults,
+  });
+};

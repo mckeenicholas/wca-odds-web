@@ -22,7 +22,7 @@ const versionNum = "0.5.1";
     >
       <span class="mr-3"
         >Made by
-        <a class="underline hover:text-gray-400" href="https://nmckee.org"
+        <a class="underline hover:text-gray-300" href="https://nmckee.org"
           >Nicholas McKee</a
         >
       </span>

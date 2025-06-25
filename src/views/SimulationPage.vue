@@ -14,6 +14,7 @@ import {
   getParentPath,
   ArrEq2D,
   clone2DArr,
+  createJSONExport,
 } from "@/lib/utils";
 import {
   runSimulationInWorker,
@@ -80,7 +81,7 @@ const defaultTimesArray = generateDefaultTimesArray(
 );
 
 const error = ref<string>("");
-const simulation_results = ref<SimulationResult[] | null>(null);
+const simulationResults = ref<SimulationResult[] | null>(null);
 const loading = ref<boolean>(true);
 const recalculateLoading = ref<boolean>(false);
 const wcaLiveLoading = ref<boolean>(false);
@@ -97,7 +98,7 @@ const inputtedTimesState = computed(() => {
 });
 
 const sharedProps = computed(() => ({
-  data: simulation_results.value ?? [],
+  data: simulationResults.value ?? [],
   colors,
   numSimulations,
   event,
@@ -117,7 +118,7 @@ const runInitialSimulation = async () => {
     );
 
     if (results) {
-      simulation_results.value = results;
+      simulationResults.value = results;
       inputtedTimesPrev.value = clone2DArr(inputtedTimes.value);
     }
   } catch (err) {
@@ -139,7 +140,7 @@ const handleRecalculation = async () => {
     );
 
     if (results) {
-      simulation_results.value = results;
+      simulationResults.value = results;
       inputtedTimesPrev.value = clone2DArr(inputtedTimes.value);
     }
   } catch (err) {
@@ -214,6 +215,31 @@ const showWCALiveImport = () => {
 
   return competitionDate > removalCutoff;
 };
+
+const exportJson = () => {
+  const jsonText = createJSONExport({
+    eventName: name,
+    results: simulationResults.value!,
+    ids: competitorsList,
+    currentTimes: inputtedTimes.value,
+    startDate,
+    endDate,
+    simCount: numSimulations,
+    decayRate: decayHalfLife,
+    includeDnf: includeDNF,
+    event,
+  });
+
+  const blob = new Blob([jsonText], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${name}_results.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
 </script>
 
 <template>
@@ -227,11 +253,11 @@ const showWCALiveImport = () => {
     </div>
 
     <div
-      v-else-if="simulation_results"
+      v-else-if="simulationResults"
       class="lg:min-w-[1000px] md:min-w-full border-lg"
     >
       <ResultsSummary
-        :data="simulation_results || []"
+        :data="simulationResults || []"
         :colors="colors"
         :numSimulations="numSimulations"
         :event="event"
@@ -245,13 +271,24 @@ const showWCALiveImport = () => {
         <RankHistogram v-bind="sharedProps" />
       </ExpandableBox>
       <CompetitorList
-        :simulation-results="simulation_results"
+        :simulation-results="simulationResults"
         :colors
         :competitors-list="competitorsList"
         :num-simulations="numSimulations"
         :event
         v-model="inputtedTimes"
       />
+
+      <p class="text-muted-foreground m-2">
+        Export as:
+        <a
+          role="button"
+          class="underline hover:text-gray-300 me-2"
+          @click="exportJson()"
+          >json</a
+        >
+        <a role="button" class="underline hover:text-gray-300">csv</a>
+      </p>
 
       <div class="fixed bottom-4 right-2 z-50 flex">
         <Transition name="fade">
