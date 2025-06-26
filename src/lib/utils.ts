@@ -242,8 +242,8 @@ export const createJSONExport = ({
   const personResults = results.map((result, index) => ({
     id: ids[index],
     name: result.name,
-    winCount: result.win_count,
-    podiumCount: result.pod_count,
+    winChance: result.win_count / simCount,
+    podiumChance: result.pod_count / simCount,
     globalMean: result.mean_no_dnf,
     expectedRank: result.total_rank / simCount,
     rankCount: Object.fromEntries(
@@ -258,4 +258,59 @@ export const createJSONExport = ({
     config,
     results: personResults,
   });
+};
+
+export const createCSVExport = (
+  results: SimulationResult[],
+  ids: string[],
+  currentTimes: number[][],
+  simCount: number,
+) => {
+  const headers = [
+    "id",
+    "name",
+    "win_chance",
+    "podium_chance",
+    "global_mean",
+    "expected_rank",
+    "time_1",
+    "time_2",
+    "time_3",
+    "time_4",
+    "time_5",
+  ];
+
+  const rows = results.map((result, idx) => {
+    return [
+      ids[idx],
+      result.name,
+      result.win_count / simCount,
+      result.pod_count / simCount,
+      result.mean_no_dnf,
+      result.total_rank / simCount,
+      ...currentTimes[idx],
+    ].join(",");
+  });
+
+  return [headers.join(","), ...rows].join("\n");
+};
+
+export const downloadTextBlob = (
+  data: string,
+  filename: string,
+  mimeType: string,
+): void => {
+  const blob = new Blob([data], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = "none";
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+
+  URL.revokeObjectURL(url);
 };

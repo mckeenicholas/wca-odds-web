@@ -15,6 +15,8 @@ import {
   ArrEq2D,
   clone2DArr,
   createJSONExport,
+  createCSVExport,
+  downloadTextBlob,
 } from "@/lib/utils";
 import {
   runSimulationInWorker,
@@ -230,15 +232,17 @@ const exportJson = () => {
     event,
   });
 
-  const blob = new Blob([jsonText], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${name}_results.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  downloadTextBlob(jsonText, `${name}_results.json`, "application/json");
+};
+
+const exportCSV = () => {
+  const csvText = createCSVExport(
+    simulationResults.value!,
+    competitorsList,
+    inputtedTimes.value,
+    numSimulations,
+  );
+  downloadTextBlob(csvText, `${name}_results.csv`, "text/csv");
 };
 </script>
 
@@ -283,11 +287,16 @@ const exportJson = () => {
         Export as:
         <a
           role="button"
-          class="underline hover:text-gray-300 me-2"
+          class="underline hover:text-gray-300 me-1"
           @click="exportJson()"
           >json</a
         >
-        <a role="button" class="underline hover:text-gray-300">csv</a>
+        <a
+          role="button"
+          class="underline hover:text-gray-300"
+          @click="exportCSV()"
+          >csv</a
+        >
       </p>
 
       <div class="fixed bottom-4 right-2 z-50 flex">
