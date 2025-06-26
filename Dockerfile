@@ -1,5 +1,5 @@
 # Build stage for Rust/WASM
-FROM rust:1.87-slim AS wasm-builder
+FROM rust:1.88-slim AS wasm-builder
 
 # Install wasm-pack and build dependencies
 RUN apt-get update && \

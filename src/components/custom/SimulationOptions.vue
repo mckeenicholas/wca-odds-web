@@ -14,7 +14,7 @@ const endDate = defineModel<Date>("endDate");
 <template>
   <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
     <Label for="simCount">Simulation Count:</Label>
-    <Input class="max-w-24 ms-2" id="simCount" v-model.number="simCount" />
+    <Input class="max-w-24 ms-2 h-9" id="simCount" v-model.number="simCount" />
   </div>
 
   <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
@@ -26,13 +26,13 @@ const endDate = defineModel<Date>("endDate");
     />
   </div>
   <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
-    <Label for="decayRate"> Result decay half-life </Label>
+    <Label for="decayRate">Result decay half-life</Label>
     <Input
-      class="max-w-16 mx-2"
+      class="max-w-16 mx-2 h-9"
       id="decayRate"
       v-model.number="decayHalfLife"
     />
-    <Label for="decayRate"> days </Label>
+    <Label for="decayRate">days</Label>
   </div>
   <div class="flex items-center">
     <Label for="includeDNF" class="me-2">Include DNFs</Label>

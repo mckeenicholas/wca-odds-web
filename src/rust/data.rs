@@ -138,10 +138,7 @@ impl CompetitionDataManager {
         year: i32,
         time_range: &TimeRange,
     ) -> Result<HashMap<String, i32>, &'static str> {
-        let url = format!(
-            "https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/competitions/{}.json",
-            year
-        );
+        let url = format!("https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/competitions/{year}.json");
 
         let response = self.fetch::<APIRequestCompetitions>(url).await?;
         self.collect_competitions(response.items, time_range)
@@ -214,10 +211,7 @@ impl CompetitionDataManager {
         &self,
         competitor: &str,
     ) -> Result<(String, Vec<ParsedCompetitionResult>), &'static str> {
-        let url = format!(
-            "https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/persons/{}.json",
-            competitor
-        );
+        let url = format!("https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/master/api/persons/{competitor}.json");
 
         let response = self.fetch::<APIRequestPerson>(url).await?;
         let results = self.extract_competitor_results(&response);

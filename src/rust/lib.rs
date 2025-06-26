@@ -86,7 +86,7 @@ pub fn load_data(
 
         let competitors = match competitors_result {
             Ok(fetch_data) => fetch_data,
-            Err(e) => return Ok(serde_wasm_bindgen::to_value(&format!("Error: {:?}", e)).unwrap()),
+            Err(e) => return Ok(serde_wasm_bindgen::to_value(&format!("Error: {e:?}")).unwrap()),
         };
 
         let simulator = CompetitionSimulator::new(event_type, competitors);
