@@ -55,8 +55,8 @@ pub struct CompetitionDataManager {
 }
 
 struct TimeRange {
-    cutoff_timestamp: i64,
-    today_timestamp: i64,
+    start_timestamp: i64,
+    end_timestamp: i64,
     years: Vec<i32>,
 }
 
@@ -70,29 +70,33 @@ impl TimeRange {
             .timestamp_opt(start_timestamp, 0)
             .single()
             .unwrap_or_else(Utc::now);
+
+        // We take the min value with the time and now to ensure we don't query a year with no comps
+        let now = Utc::now();
         let end_datetime = Utc
             .timestamp_opt(end_timestamp, 0)
             .single()
-            .unwrap_or_else(Utc::now);
+            .unwrap_or(now)
+            .min(now);
 
         // Generate range of years from start to end
         let years: Vec<i32> = (start_datetime.year()..=end_datetime.year()).collect();
 
         Self {
-            cutoff_timestamp: start_timestamp,
-            today_timestamp: end_timestamp,
+            start_timestamp,
+            end_timestamp,
             years,
         }
     }
 
     fn in_time_range(&self, time_utc: i64) -> bool {
-        time_utc > self.cutoff_timestamp && time_utc < self.today_timestamp
+        time_utc > self.start_timestamp && time_utc < self.end_timestamp
     }
 
     fn days_from_cutoff(&self, time_utc: i64) -> i32 {
         const SECONDS_PER_DAY: i64 = 60 * 60 * 24;
 
-        ((self.today_timestamp - time_utc) / SECONDS_PER_DAY) as i32
+        ((self.end_timestamp - time_utc) / SECONDS_PER_DAY) as i32
     }
 }
 
