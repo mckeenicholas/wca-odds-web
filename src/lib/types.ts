@@ -222,3 +222,11 @@ export interface FetchRoundResultsGraphQLResponse {
   data?: WCALiveRoundDataWrapper;
   errors?: Array<{ message: string; [key: string]: string }>;
 }
+
+export interface Competitor {
+  id: string;
+  country: string;
+  name: string;
+  rank: number;
+  selected: boolean;
+}

@@ -7,7 +7,7 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 
-const versionNum = "0.6.2";
+const versionNum = "0.6.3";
 </script>
 
 <template>

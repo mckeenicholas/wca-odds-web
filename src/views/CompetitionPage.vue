@@ -1,22 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from "vue";
+import { computed, watchEffect, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { fetchWCIF, buildSimulationQuery, BREAKPOINT } from "@/lib/utils";
-import { SupportedWCAEvent, Person } from "@/lib/types";
+import { SupportedWCAEvent, Person, Competitor } from "@/lib/types";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/vue-query";
 import LoadingMessage from "@/components/custom/LoadingMessage.vue";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
 import { useWindowSize } from "@vueuse/core";
-
-interface Competitor {
-  id: string;
-  country: string;
-  name: string;
-  rank: number;
-  selected: boolean;
-}
+import { useCompSettingsStore } from "@/lib/stores/compSettings";
+import { storeToRefs } from "pinia";
 
 type EventRegistration = Partial<Record<SupportedWCAEvent, Competitor[]>>;
 
@@ -26,24 +20,36 @@ const DEFAULT_SELECTED = 16 as const;
 const route = useRoute();
 const router = useRouter();
 
-const competitorsByEvent = ref<
-  Partial<Record<SupportedWCAEvent, Competitor[]>>
->({});
-const selectedEventId = ref<SupportedWCAEvent>("333");
-const simCount = ref<number>(10000);
-const includeDnf = ref<boolean>(true);
-const decayHalfLife = ref<number>(180);
-const startDate = ref<Date>(
-  new Date(new Date().setFullYear(new Date().getFullYear() - 1)),
-);
-const endDate = ref<Date>(new Date());
+const store = useCompSettingsStore();
+const {
+  compId,
+  competitorsByEvent,
+  selectedEventId,
+  simCount,
+  includeDnf,
+  decayHalfLife,
+  startDate,
+  endDate,
+} = storeToRefs(store);
 
 const { width } = useWindowSize();
 
 const { isPending, isError, data, error } = useQuery({
   queryKey: ["competition", route.params.id],
   queryFn: () => fetchWCIF(route.params.id as string),
+  staleTime: Infinity,
 });
+
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId && newId !== compId.value) {
+      store.reset();
+      compId.value = newId as string;
+    }
+  },
+  { immediate: true },
+);
 
 const eventIds = computed(
   () => data.value?.events.map((event) => event.id) ?? [],
@@ -115,7 +121,11 @@ const getCompetitorData = () => {
 };
 
 watchEffect(() => {
-  competitorsByEvent.value = getCompetitorData();
+  // Only populate competitor data if we have data from the API
+  // and the store hasn't been populated for this competition yet.
+  if (data.value && Object.keys(competitorsByEvent.value).length === 0) {
+    competitorsByEvent.value = getCompetitorData();
+  }
 });
 
 const currentSelectedCompetitors = computed(
