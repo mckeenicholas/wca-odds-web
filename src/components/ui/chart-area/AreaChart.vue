@@ -58,7 +58,7 @@ const colors = computed(() =>
   props.colors?.length ? props.colors : defaultColors(props.categories.length),
 );
 
-const legendItems = ref<BulletLegendItemInterface[]>(
+const legendItems = computed<BulletLegendItemInterface[]>(() =>
   props.categories.map((category, i) => ({
     name: category,
     color: colors.value[i],
