@@ -11,7 +11,7 @@ import { Area, Axis, Line } from "@unovis/ts";
 import { VisArea, VisAxis, VisLine, VisXYContainer } from "@unovis/vue";
 import { useMounted } from "@vueuse/core";
 import { useId } from "radix-vue";
-import { type Component, computed, ref } from "vue";
+import { type Component, computed } from "vue";
 
 const props = withDefaults(
   defineProps<
