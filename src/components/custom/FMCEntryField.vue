@@ -57,7 +57,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-  {{ model }}
   <Input
     class="min-w-[50vw] lg:min-w-0"
     v-model="inputValue"
