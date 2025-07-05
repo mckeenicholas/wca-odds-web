@@ -1,22 +1,12 @@
 <script setup lang="ts">
 import { Input } from "@/components/ui/input";
-import { SupportedWCAEvent } from "@/lib/types";
 import { toClockFormat } from "@/lib/utils";
 import { onMounted, ref, watch } from "vue";
 
-const { event } = defineProps<{
-  event: SupportedWCAEvent;
-}>();
 const model = defineModel<number>({ required: true });
 const inputValue = ref<string>("");
 
-const isFMC = event === "333fm";
-
 const formatInput = (input: string): string => {
-  if (isFMC) {
-    return input.replace(/\D/g, "");
-  }
-
   const number = parseInt(input.replace(/\D/g, ""));
   if (isNaN(number) || number === 0) return "";
 
@@ -33,11 +23,6 @@ const formatInput = (input: string): string => {
 const toCentiseconds = (input: string): number => {
   if (input === "") return 0;
   if (input.toLowerCase() === "dnf") return -1;
-
-  if (isFMC) {
-    const moves = parseInt(input.replace(/\D/g, "")) || 0;
-    return moves * 100;
-  }
 
   const digits = input.replace(/\D/g, "");
   if (!digits) return 0;
@@ -56,8 +41,6 @@ const updateInputFromModel = (value: number) => {
     inputValue.value = "DNF";
   } else if (value === 0) {
     inputValue.value = "";
-  } else if (isFMC) {
-    inputValue.value = Math.floor(value / 100).toString();
   } else {
     const formatted = toClockFormat(value);
     inputValue.value = formatted;

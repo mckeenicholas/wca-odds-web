@@ -80,7 +80,7 @@ export const runSimulationInWorker = (
     numSimulations,
     includeDNF,
     decayHalfLife,
-    inputtedTimes: toRaw(inputtedTimes),
+    inputtedTimes,
   };
   const message: WorkerMessage = {
     type: "RUN_SIMULATION",

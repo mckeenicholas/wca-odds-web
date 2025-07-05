@@ -67,6 +67,7 @@ self.onmessage = async (event: MessageEvent<WorkerMessage>) => {
 
       console.time("Simulation Runtime");
       dataLoaded = true;
+
       const results = run_simulation(numSimulations, includeDNF, inputtedTimes);
       console.timeEnd("Simulation Runtime");
 
