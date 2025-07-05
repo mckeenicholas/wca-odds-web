@@ -18,7 +18,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export const fetchWCIF = async (id: string): Promise<wcif> => {
   const cachedComps = [
-    // "WC2025",
+    "WC2025",
     "RubiksUKChampionship2025",
     "NorthCarolinaChampionship2025",
   ];
