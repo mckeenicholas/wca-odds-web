@@ -19,9 +19,10 @@ import {
 } from "@/components/ui/tooltip";
 import { CircleAlert } from "lucide-vue-next";
 import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
-import ResultEntryField from "./ResultEntryField.vue";
+import ResultEntryField from "./TimeEntryField.vue";
 import { formatPercentage } from "@/lib/utils";
 import Chevron from "./RotatableChevron.vue";
+import FMCEntryField from "./FMCEntryField.vue";
 
 const lowDataWarningThreshold = 12 as const;
 
@@ -108,7 +109,11 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
         >
           <span class="whitespace-nowrap">Attempt {{ attemptIdx }}:</span>
           <div class="lg:max-w-24">
-            <ResultEntryField :event v-model="model[attemptIdx - 1]" />
+            <ResultEntryField
+              v-if="event != '333fm'"
+              v-model="model[attemptIdx - 1]"
+            />
+            <FMCEntryField v-else v-model="model[attemptIdx - 1]" />
           </div>
         </div>
       </div>

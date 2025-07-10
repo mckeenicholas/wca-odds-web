@@ -1,4 +1,4 @@
-import { computed, h } from "vue";
+import { computed, h, toRaw } from "vue";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
@@ -313,4 +313,17 @@ export const downloadTextBlob = (
   document.body.removeChild(anchor);
 
   URL.revokeObjectURL(url);
+};
+
+export const formatInputtedTimes = (
+  inputtedTimes: number[][],
+  event: SupportedWCAEvent,
+) => {
+  const timesArray = toRaw(inputtedTimes);
+
+  if (event != "333fm") {
+    return timesArray;
+  }
+
+  return timesArray.map((person) => person.map((time) => time * 100));
 };

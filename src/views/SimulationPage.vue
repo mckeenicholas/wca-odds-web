@@ -17,6 +17,7 @@ import {
   createJSONExport,
   createCSVExport,
   downloadTextBlob,
+  formatInputtedTimes,
 } from "@/lib/utils";
 import {
   runSimulationInWorker,
@@ -116,7 +117,7 @@ const runInitialSimulation = async () => {
       numSimulations,
       includeDNF,
       decayHalfLife,
-      inputtedTimes.value,
+      formatInputtedTimes(inputtedTimes.value, event),
     );
 
     if (results) {
@@ -138,7 +139,7 @@ const handleRecalculation = async () => {
     const results = await recalculateSimulationInWorker(
       numSimulations,
       includeDNF,
-      inputtedTimes.value,
+      formatInputtedTimes(inputtedTimes.value, event),
     );
 
     if (results) {
@@ -188,6 +189,7 @@ const syncResultsWithWCALive = async () => {
       event,
       competitorsList,
     );
+
     inputtedTimes.value = results;
     await recalculate();
   } catch (err) {
