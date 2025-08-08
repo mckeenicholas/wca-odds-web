@@ -9,7 +9,7 @@ const { up, animate = true } = defineProps<{
 
 <template>
   <ChevronUp
-    class="scale-75 duration-450"
+    class="duration-450 scale-75"
     :class="{ '-rotate-180': up, 'transition-transform': animate }"
   />
 </template>

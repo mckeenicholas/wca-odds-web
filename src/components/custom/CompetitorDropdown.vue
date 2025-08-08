@@ -1,28 +1,28 @@
 <script setup lang="ts">
+import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   eventAttempts,
   SimulationResult,
   SupportedWCAEvent,
 } from "@/lib/types";
+import { formatPercentage } from "@/lib/utils";
+import { CircleAlert } from "lucide-vue-next";
 import { computed, ref } from "vue";
 import {
   Collapsible,
-  CollapsibleTrigger,
   CollapsibleContent,
+  CollapsibleTrigger,
 } from "../ui/collapsible";
 import ColoredCircle from "./ColoredCircle.vue";
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
-import { CircleAlert } from "lucide-vue-next";
-import IndividualHistogram from "@/components/charts/IndividualHistogram.vue";
-import ResultEntryField from "./TimeEntryField.vue";
-import { formatPercentage } from "@/lib/utils";
-import Chevron from "./RotatableChevron.vue";
 import FMCEntryField from "./FMCEntryField.vue";
+import Chevron from "./RotatableChevron.vue";
+import ResultEntryField from "./TimeEntryField.vue";
 
 const lowDataWarningThreshold = 12 as const;
 
@@ -51,11 +51,11 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
   <Collapsible v-model:open="isOpen">
     <CollapsibleTrigger as-child>
       <div
-        class="flex justify-between p-2 ps-1 cursor-pointer hover:bg-secondary rounded-md"
+        class="flex cursor-pointer justify-between rounded-md p-2 ps-1 hover:bg-secondary"
       >
         <div class="flex-1 text-left">
           <div class="flex flex-row">
-            <div class="flex flex-col justify-center mx-2">
+            <div class="mx-2 flex flex-col justify-center">
               <ColoredCircle :color />
             </div>
             <a
@@ -70,7 +70,7 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
                 <TooltipTrigger>
                   <CircleAlert
                     v-show="result.sample_size < lowDataWarningThreshold"
-                    class="scale-75 ms-1 text-red-600"
+                    class="ms-1 scale-75 text-red-600"
                   />
                 </TooltipTrigger>
                 <TooltipContent>
@@ -101,11 +101,11 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
         :simulations="numSimulations * eventAttempts[event]"
         :event
       />
-      <div class="flex flex-col lg:flex-row items-center px-2 lg:gap-4 lg:ms-2">
+      <div class="flex flex-col items-center px-2 lg:ms-2 lg:flex-row lg:gap-4">
         <div
           v-for="attemptIdx in eventAttempts[event]"
           v-bind:key="attemptIdx"
-          class="flex mb-2 lg:mb-0 items-center gap-2"
+          class="mb-2 flex items-center gap-2 lg:mb-0"
         >
           <span class="whitespace-nowrap">Attempt {{ attemptIdx }}:</span>
           <div class="lg:max-w-24">

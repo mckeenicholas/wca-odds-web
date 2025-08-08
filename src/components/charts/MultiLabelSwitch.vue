@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Switch } from "../ui/switch";
-import { Label } from "../ui/label";
 import { useId } from "vue";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
 
 const { left, right } = defineProps<{ left: string; right: string }>();
 const model = defineModel<boolean>();

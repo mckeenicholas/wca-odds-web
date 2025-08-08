@@ -1,6 +1,17 @@
 <script setup lang="ts">
-import { useRouter, RouteParams, useRoute } from "vue-router";
-import { onMounted, ref, onUnmounted, computed } from "vue";
+import FullHistogram from "@/components/charts/FullHistogram.vue";
+import RankHistogram from "@/components/charts/RankHistogram.vue";
+import CompetitorList from "@/components/custom/CompetitorList.vue";
+import ErrorDisplay from "@/components/custom/ErrorPanel.vue";
+import ExpandableBox from "@/components/custom/ExpandableBox.vue";
+import LoadingMessage from "@/components/custom/LoadingMessage.vue";
+import ResultsSummary from "@/components/custom/ResultsSummary.vue";
+import { Button } from "@/components/ui/button";
+import {
+  recalculateSimulationInWorker,
+  runSimulationInWorker,
+  terminateSimulationWorker,
+} from "@/lib/simulationWorkerService";
 import {
   eventAttempts,
   eventNames,
@@ -9,31 +20,20 @@ import {
   SupportedWCAEvent,
 } from "@/lib/types";
 import {
+  ArrEq2D,
+  clone2DArr,
+  createCSVExport,
+  createJSONExport,
+  downloadTextBlob,
+  formatInputtedTimes,
   generateColors,
   generateDefaultTimesArray,
   getParentPath,
-  ArrEq2D,
-  clone2DArr,
-  createJSONExport,
-  createCSVExport,
-  downloadTextBlob,
-  formatInputtedTimes,
 } from "@/lib/utils";
-import {
-  runSimulationInWorker,
-  recalculateSimulationInWorker,
-  terminateSimulationWorker,
-} from "@/lib/simulationWorkerService";
-import ExpandableBox from "@/components/custom/ExpandableBox.vue";
-import FullHistogram from "@/components/charts/FullHistogram.vue";
-import RankHistogram from "@/components/charts/RankHistogram.vue";
-import LoadingMessage from "@/components/custom/LoadingMessage.vue";
-import ErrorDisplay from "@/components/custom/ErrorPanel.vue";
-import CompetitorList from "@/components/custom/CompetitorList.vue";
-import ResultsSummary from "@/components/custom/ResultsSummary.vue";
-import { Button } from "@/components/ui/button";
-import { LoaderCircle } from "lucide-vue-next";
 import fetchWCALiveResults from "@/lib/wcaLive";
+import { LoaderCircle } from "lucide-vue-next";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import { RouteParams, useRoute, useRouter } from "vue-router";
 
 const router = useRouter();
 const currentVueRoute = useRoute();
@@ -249,8 +249,8 @@ const exportCSV = () => {
 </script>
 
 <template>
-  <div class="content-main flex flex-col items-center justify-center mx-2">
-    <h1 class="text-center text-2xl font-bold mt-4 mb-4">
+  <div class="content-main mx-2 flex flex-col items-center justify-center">
+    <h1 class="mb-4 mt-4 text-center text-2xl font-bold">
       Results for {{ name }}
     </h1>
 
@@ -260,7 +260,7 @@ const exportCSV = () => {
 
     <div
       v-else-if="simulationResults"
-      class="lg:min-w-[1000px] md:min-w-full border-lg"
+      class="border-lg md:min-w-full lg:min-w-[1000px]"
     >
       <ResultsSummary
         :data="simulationResults || []"
@@ -285,11 +285,11 @@ const exportCSV = () => {
         v-model="inputtedTimes"
       />
 
-      <p class="text-muted-foreground m-2">
+      <p class="m-2 text-muted-foreground">
         Export as:
         <a
           role="button"
-          class="underline hover:text-gray-300 me-1"
+          class="me-1 underline hover:text-gray-300"
           @click="exportJson()"
           >json</a
         >

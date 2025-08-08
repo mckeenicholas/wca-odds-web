@@ -23,7 +23,7 @@ const names = data.map((person) => person.name) as "name"[];
 </script>
 
 <template>
-  <div class="mb-4 mt-2 mx-4">
+  <div class="mx-4 mb-4 mt-2">
     <BarChart
       :data="chartData"
       index="name"

@@ -11,7 +11,7 @@ const { mean, stdDev, gamma, mu, sigma, tau, dnfRate } = defineProps<{
 </script>
 
 <template>
-  <div class="my-10 mx-6 text-lg flex flex-row space-x-4">
+  <div class="mx-6 my-10 flex flex-row space-x-4 text-lg">
     <div>m = {{ mean }}</div>
     <div>s = {{ stdDev }}</div>
     <div>&gamma; = {{ gamma }}</div>

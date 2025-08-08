@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { eventNames, SupportedWCAEvent } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 import {
   Select,
-  SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { eventNames, SupportedWCAEvent } from "@/lib/types";
+import { BREAKPOINT } from "@/lib/utils";
 import { useWindowSize } from "@vueuse/core";
 import ExpandableBox from "./ExpandableBox.vue";
 import SimulationOptions from "./SimulationOptions.vue";
-import { BREAKPOINT } from "@/lib/utils";
 
 const selectedEventId = defineModel<string>("selectedEventId");
 const simCount = defineModel<number>("simCount");
@@ -45,7 +45,7 @@ const { width } = useWindowSize();
   </Select>
   <div
     v-if="width >= BREAKPOINT"
-    class="border rounded-md my-2 p-2 flex items-center space-x-4"
+    class="my-2 flex items-center space-x-4 rounded-md border p-2"
   >
     <SimulationOptions
       v-model:simCount="simCount"
@@ -63,7 +63,7 @@ const { width } = useWindowSize();
   <div v-else>
     <ExpandableBox title="Options" class="my-2">
       <hr class="mx-2" />
-      <div class="flex flex-col items-stretch p-4 space-y-4">
+      <div class="flex flex-col items-stretch space-y-4 p-4">
         <SimulationOptions
           v-model:simCount="simCount"
           v-model:includeDnf="includeDnf"
@@ -73,7 +73,7 @@ const { width } = useWindowSize();
         />
       </div>
     </ExpandableBox>
-    <div class="flex flex-col mb-2">
+    <div class="mb-2 flex flex-col">
       <Button @click="() => emit('runSimulation')" :disabled="disableRun"
         >Run Simulation</Button
       >

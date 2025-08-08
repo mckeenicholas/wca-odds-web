@@ -33,10 +33,10 @@ const expectedAvg = computed(() =>
 </script>
 
 <template>
-  <div class="flex flex-col md:flex-row gap-2 mb-2 h-full">
+  <div class="mb-2 flex h-full flex-col gap-2 md:flex-row">
     <div class="flex-grow">
-      <div class="border rounded-md p-4 h-full">
-        <h3 class="font-bold text-lg mb-2">
+      <div class="h-full rounded-md border p-4">
+        <h3 class="mb-2 text-lg font-bold">
           {{ eventNames[event] }} Statistics
         </h3>
         <div class="space-y-2">
@@ -44,7 +44,7 @@ const expectedAvg = computed(() =>
             <span class="font-semibold">{{ topCompetitor.name }}</span> has the
             highest odds of winning with:
           </p>
-          <ul class="list-disc list-inside text-sm ml-4">
+          <ul class="ml-4 list-inside list-disc text-sm">
             <li>{{ winChance }} chance of winning</li>
             <li>{{ podiumChance }} chance of podium finish</li>
             <li>Average rank of {{ avgRank }}</li>
@@ -53,7 +53,7 @@ const expectedAvg = computed(() =>
         </div>
       </div>
     </div>
-    <div class="border rounded-md p-2">
+    <div class="rounded-md border p-2">
       <PieChart :data :num-simulations :colors />
     </div>
   </div>

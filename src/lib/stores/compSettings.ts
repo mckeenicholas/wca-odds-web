@@ -1,6 +1,6 @@
+import type { Competitor, SupportedWCAEvent } from "@/lib/types";
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { SupportedWCAEvent, Competitor } from "@/lib/types";
 
 export const useCompSettingsStore = defineStore("compSettings", () => {
   const compId = ref<string>();

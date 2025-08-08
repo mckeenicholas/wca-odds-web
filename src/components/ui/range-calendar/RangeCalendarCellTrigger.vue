@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import type { HTMLAttributes } from "vue";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { reactiveOmit } from "@vueuse/core";
 import {
   RangeCalendarCellTrigger,
   type RangeCalendarCellTriggerProps,
   useForwardProps,
 } from "reka-ui";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import type { HTMLAttributes } from "vue";
 
 const props = defineProps<
   RangeCalendarCellTriggerProps & { class?: HTMLAttributes["class"] }

@@ -13,11 +13,11 @@ const open = ref<boolean>(false);
 </script>
 
 <template>
-  <div class="border rounded-md">
+  <div class="rounded-md border">
     <Collapsible v-model:open="open">
       <CollapsibleTrigger as-child>
         <div
-          class="py-2 ps-4 pe-3 hover:bg-secondary cursor-pointer flex flex-row rounded-sm"
+          class="flex cursor-pointer flex-row rounded-sm py-2 pe-3 ps-4 hover:bg-secondary"
         >
           <div class="flex-grow">
             {{ title }}

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import ColoredCircle from "../custom/ColoredCircle.vue";
 import { formatPercentage } from "@/lib/utils";
+import ColoredCircle from "../custom/ColoredCircle.vue";
 
 const { title, data } = defineProps<{
   title?: string;
@@ -25,16 +25,16 @@ const toPlaceString = (place: number): string => {
 </script>
 
 <template>
-  <div class="match-background p-2 rounded-md border-2">
+  <div class="match-background rounded-md border-2 p-2">
     <p v-if="title" class="font-bold">{{ toPlaceString(parseInt(title)) }}</p>
     <div v-for="(item, key) in data" :key class="flex justify-between text-sm">
       <div class="flex items-center">
-        <span class="w-2.5 h-2.5 mr-2">
+        <span class="mr-2 h-2.5 w-2.5">
           <ColoredCircle :color="item.color" />
         </span>
         <span>{{ item.name }}</span>
       </div>
-      <span class="font-semibold ml-4">{{ formatPercentage(item.value) }}</span>
+      <span class="ml-4 font-semibold">{{ formatPercentage(item.value) }}</span>
     </div>
   </div>
 </template>

@@ -6,14 +6,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Moon, Sun } from "lucide-vue-next";
 import { useColorMode } from "@vueuse/core";
+import { Moon, Sun } from "lucide-vue-next";
 
 const mode = useColorMode();
 </script>
 
 <template>
-  <div class="flex flex-row w-full justify-end">
+  <div class="flex w-full flex-row justify-end">
     <DropdownMenu>
       <DropdownMenuTrigger as-child class="m-2">
         <Button variant="outline" class="px-2.5">

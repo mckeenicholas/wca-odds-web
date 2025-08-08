@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
-import { fetchWCAInfo, buildSimulationQuery } from "@/lib/utils";
-import { useQuery } from "@tanstack/vue-query";
+import ControlPanel from "@/components/custom/ControlPanel.vue";
+import FlagIcon from "@/components/custom/FlagIcon.vue";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, X } from "lucide-vue-next";
-import ControlPanel from "@/components/custom/ControlPanel.vue";
 import { supportedWCAEvents } from "@/lib/types";
-import FlagIcon from "@/components/custom/FlagIcon.vue";
-import { useRouter } from "vue-router";
+import { buildSimulationQuery, fetchWCAInfo } from "@/lib/utils";
+import { useQuery } from "@tanstack/vue-query";
 import { useDebounceFn } from "@vueuse/core";
+import { Search, X } from "lucide-vue-next";
+import { ref, watch } from "vue";
+import { useRouter } from "vue-router";
 
 interface Person {
   name: string;
@@ -97,8 +97,8 @@ const runSimulation = () => {
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
-      <h1 class="text-center text-xl m-4">Add a competitor</h1>
-      <div class="flex flex-row min-w-[70vw] relative">
+      <h1 class="m-4 text-center text-xl">Add a competitor</h1>
+      <div class="relative flex min-w-[70vw] flex-row">
         <Input
           v-model="input"
           @keyup.enter="refetch()"
@@ -109,7 +109,7 @@ const runSimulation = () => {
           aria-label="Search for competitors"
         />
         <span
-          class="absolute end-0 inset-y-0 flex items-center justify-center px-2"
+          class="absolute inset-y-0 end-0 flex items-center justify-center px-2"
         >
           <Search class="size-6 text-muted-foreground" />
         </span>
@@ -117,16 +117,16 @@ const runSimulation = () => {
         <!-- Popover Content -->
         <div
           v-if="input"
-          class="absolute top-full left-0 z-50 w-full bg-[hsl(var(--popover))] shadow-md border border-t-0 rounded-b-md mt-0 overflow-y-scroll max-h-[40vh]"
+          class="absolute left-0 top-full z-50 mt-0 max-h-[40vh] w-full overflow-y-scroll rounded-b-md border border-t-0 bg-[hsl(var(--popover))] shadow-md"
         >
           <div v-if="isFetching" class="px-3">
-            <Skeleton v-for="index in 3" class="h-6 my-4" :key="index" />
+            <Skeleton v-for="index in 3" class="my-4 h-6" :key="index" />
           </div>
-          <div v-else-if="isError" class="text-center m-4">
+          <div v-else-if="isError" class="m-4 text-center">
             Error fetching data:
             {{ error?.message || "Unknown error occurred" }}
           </div>
-          <div v-else-if="!data?.length" class="text-center m-4">
+          <div v-else-if="!data?.length" class="m-4 text-center">
             No Results found
           </div>
           <div v-else>
@@ -134,10 +134,10 @@ const runSimulation = () => {
               <li
                 v-for="person in data"
                 :key="person.wca_id"
-                class="p-2 hover:bg-secondary hover:cursor-pointer rounded-md"
+                class="rounded-md p-2 hover:cursor-pointer hover:bg-secondary"
                 @click="() => addCompetitor(person)"
               >
-                <div class="flex justify-between items-center">
+                <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <FlagIcon :code="person.country.iso2" />
                     <span>{{ person.name }}</span>
@@ -166,22 +166,22 @@ const runSimulation = () => {
 
       <div
         v-if="competitors.length"
-        class="mt-4 border rounded-md max-h-[75vh]"
+        class="mt-4 max-h-[75vh] rounded-md border"
       >
         <ol>
           <li
             v-for="competitor of competitors"
             :key="competitor.wca_id"
-            class="flex justify-between items-center"
+            class="flex items-center justify-between"
           >
             <a
               :href="`https://worldcubeassociation.org/persons/${competitor.wca_id}`"
-              class="hover:underline p-2"
+              class="p-2 hover:underline"
             >
               {{ competitor.name }}
             </a>
             <a
-              class="rounded-md hover:bg-secondary p-1 me-1 hover:cursor-pointer"
+              class="me-1 rounded-md p-1 hover:cursor-pointer hover:bg-secondary"
               @click="() => removeCompetitor(competitor.wca_id)"
             >
               <X :size="24" />

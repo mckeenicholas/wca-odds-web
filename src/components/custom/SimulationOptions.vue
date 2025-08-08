@@ -12,12 +12,12 @@ const endDate = defineModel<Date>("endDate");
 </script>
 
 <template>
-  <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
+  <div class="flex items-center min-[1255px]:border-r min-[1255px]:pe-4">
     <Label for="simCount">Simulation Count:</Label>
-    <Input class="max-w-24 ms-2 h-9" id="simCount" v-model.number="simCount" />
+    <Input class="ms-2 h-9 max-w-24" id="simCount" v-model.number="simCount" />
   </div>
 
-  <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
+  <div class="flex items-center min-[1255px]:border-r min-[1255px]:pe-4">
     <Label for="resultCutoff" class="me-2">Use results from:</Label>
     <DateRangePicker
       id="resultCutoff"
@@ -25,10 +25,10 @@ const endDate = defineModel<Date>("endDate");
       v-model:end-date="endDate"
     />
   </div>
-  <div class="flex items-center min-[1255px]:pe-4 min-[1255px]:border-r">
+  <div class="flex items-center min-[1255px]:border-r min-[1255px]:pe-4">
     <Label for="decayRate">Result decay half-life</Label>
     <Input
-      class="max-w-16 mx-2 h-9"
+      class="mx-2 h-9 max-w-16"
       id="decayRate"
       v-model.number="decayHalfLife"
     />

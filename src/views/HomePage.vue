@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref, watch, nextTick, useTemplateRef } from "vue";
-import { RouterLink, useRoute, useRouter } from "vue-router";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchWCAInfo, formatDate } from "@/lib/utils";
 import { useQuery } from "@tanstack/vue-query";
 import { useDebounceFn } from "@vueuse/core";
+import { nextTick, onMounted, ref, useTemplateRef, watch } from "vue";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 
 interface Competition {
   start_date: string;
@@ -124,11 +124,11 @@ const handleKeydown = (event: KeyboardEvent) => {
 <template>
   <div class="flex flex-col items-center justify-center">
     <div>
-      <h1 class="text-center text-3xl font-bold m-6">
+      <h1 class="m-6 text-center text-3xl font-bold">
         WCA Competition Predictor
       </h1>
-      <h1 class="text-center text-xl m-4">Find a competition</h1>
-      <div class="flex flex-row space-x-4 min-w-[70vw]">
+      <h1 class="m-4 text-center text-xl">Find a competition</h1>
+      <div class="flex min-w-[70vw] flex-row space-x-4">
         <Input
           id="input-field"
           v-model="input"
@@ -149,10 +149,10 @@ const handleKeydown = (event: KeyboardEvent) => {
         </Button>
       </div>
       <div v-if="isFetching && input" class="mt-2">
-        <div class="border rounded-md px-3 pt-1 max-h-[75vh] overflow-y-scroll">
+        <div class="max-h-[75vh] overflow-y-scroll rounded-md border px-3 pt-1">
           <div v-for="index in 12" :key="index">
-            <Skeleton class="h-6 my-2" />
-            <Skeleton class="h-5 w-24 my-2" />
+            <Skeleton class="my-2 h-6" />
+            <Skeleton class="my-2 h-5 w-24" />
           </div>
         </div>
       </div>
@@ -161,7 +161,7 @@ const handleKeydown = (event: KeyboardEvent) => {
       </div>
       <div
         v-else-if="data?.length"
-        class="mt-4 border rounded-md max-h-[75vh] overflow-y-scroll"
+        class="mt-4 max-h-[75vh] overflow-y-scroll rounded-md border"
         ref="listContainer"
         role="listbox"
         aria-label="Competition search results"
@@ -176,7 +176,7 @@ const handleKeydown = (event: KeyboardEvent) => {
           >
             <RouterLink
               :to="`/competition/${result.id}`"
-              class="block p-2 rounded-md"
+              class="block rounded-md p-2"
               :class="[
                 index === selectedResult ? 'bg-muted' : 'hover:bg-secondary',
               ]"
@@ -189,7 +189,7 @@ const handleKeydown = (event: KeyboardEvent) => {
           </li>
         </ol>
       </div>
-      <div v-else-if="input" class="text-center m-4">No competitions found</div>
+      <div v-else-if="input" class="m-4 text-center">No competitions found</div>
     </div>
     <div class="mt-8 items-center justify-center">
       <RouterLink to="/custom">

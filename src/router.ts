@@ -1,4 +1,4 @@
-import { createWebHistory, createRouter } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 
 const HomePage = () => import("./views/HomePage.vue");
 const CompetitionPage = () => import("./views/CompetitionPage.vue");

@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { AreaChart } from "@/components/ui/chart-area";
+import { Select, SelectContent, SelectTrigger } from "@/components/ui/select";
 import {
   SimulationResult,
-  SupportedWCAEvent,
   SimulationResultProps,
+  SupportedWCAEvent,
 } from "@/lib/types";
-import { totalSolves, renderTime, createFMCTooltip } from "@/lib/utils";
-import { ref, computed } from "vue";
-import MultiLabelSwitch from "./MultiLabelSwitch.vue";
-import Checkbox from "../ui/checkbox/Checkbox.vue";
-import { Select, SelectTrigger, SelectContent } from "@/components/ui/select";
-import { Label } from "../ui/label";
-import ColoredCircle from "../custom/ColoredCircle.vue";
+import { createFMCTooltip, renderTime, totalSolves } from "@/lib/utils";
 import { useMemoize } from "@vueuse/core";
+import { computed, ref } from "vue";
+import ColoredCircle from "../custom/ColoredCircle.vue";
+import Checkbox from "../ui/checkbox/Checkbox.vue";
+import { Label } from "../ui/label";
+import MultiLabelSwitch from "./MultiLabelSwitch.vue";
 
 const { data, event, colors } =
   defineProps<Omit<SimulationResultProps, "numSimulations">>();
@@ -205,7 +205,7 @@ const names = data.map((person) => person.name) as unknown as "time"[];
 </script>
 
 <template>
-  <div class="mb-4 mt-2 ms-4 -me-6">
+  <div class="-me-6 mb-4 ms-4 mt-2">
     <AreaChart
       class="-ms-6"
       :data="chartData"
@@ -223,13 +223,13 @@ const names = data.map((person) => person.name) as unknown as "time"[];
       <MultiLabelSwitch left="Probability" right="Cumulative" v-model="isCDF" />
       <div class="ms-4 flex flex-grow justify-end">
         <Select>
-          <SelectTrigger class="min-w-36 mt-2"> Competitors </SelectTrigger>
+          <SelectTrigger class="mt-2 min-w-36"> Competitors </SelectTrigger>
           <SelectContent>
             <ul class="min-w-7xl">
               <li
                 v-for="(result, idx) in data"
                 :key="idx"
-                class="mx-2 flex items-center flex-grow"
+                class="mx-2 flex flex-grow items-center"
               >
                 <Checkbox
                   :id="`checkbox-${idx}`"
@@ -237,7 +237,7 @@ const names = data.map((person) => person.name) as unknown as "time"[];
                 />
                 <Label
                   :for="`checkbox-${idx}`"
-                  class="flex items-center text-md font-normal"
+                  class="text-md flex items-center font-normal"
                 >
                   <ColoredCircle class="mx-2" :color="colors[idx]" />
                   {{ result.name }}

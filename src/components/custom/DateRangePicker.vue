@@ -8,9 +8,6 @@ import {
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-vue-next";
 import { type DateRange, RangeCalendarRoot, useDateFormatter } from "reka-ui";
 
-import { createMonth, type Grid, toDate } from "reka-ui/date";
-import { type Ref, ref, watch, computed } from "vue";
-import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Popover,
@@ -26,6 +23,9 @@ import {
   RangeCalendarGridRow,
   RangeCalendarHeadCell,
 } from "@/components/ui/range-calendar";
+import { cn } from "@/lib/utils";
+import { createMonth, type Grid, toDate } from "reka-ui/date";
+import { computed, type Ref, ref, watch } from "vue";
 
 const props = defineProps<{ startDate?: Date; endDate?: Date }>();
 
@@ -161,7 +161,7 @@ watch(
         variant="outline"
         :class="
           cn(
-            'justify-start text-left font-normal px-3',
+            'justify-start px-3 text-left font-normal',
             !value && 'text-muted-foreground',
           )
         "
@@ -201,7 +201,7 @@ watch(
         class="p-3"
       >
         <div
-          class="flex flex-col gap-y-4 mt-4 sm:flex-row sm:gap-x-4 sm:gap-y-0"
+          class="mt-4 flex flex-col gap-y-4 sm:flex-row sm:gap-x-4 sm:gap-y-0"
         >
           <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between">

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { AreaChart } from "@/components/ui/chart-area";
-import { totalSolves, renderTime, createFMCTooltip } from "@/lib/utils";
-import { computed, ref } from "vue";
 import { SupportedWCAEvent } from "@/lib/types";
+import { createFMCTooltip, renderTime, totalSolves } from "@/lib/utils";
+import { computed, ref } from "vue";
 import MultiLabelSwitch from "./MultiLabelSwitch.vue";
 
 interface DataPoint {
@@ -108,7 +108,7 @@ const xFormatter = (value: number | Date) =>
 </script>
 
 <template>
-  <div class="mb-4 mt-2 ms-4 -me-6">
+  <div class="-me-6 mb-4 ms-4 mt-2">
     <AreaChart
       class="-ms-6"
       :data

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { SimulationResult, SupportedWCAEvent } from "@/lib/types";
+import { computed, ref } from "vue";
 import CompetitorDropdown from "./CompetitorDropdown.vue";
 import Chevron from "./RotatableChevron.vue";
-import { ref, computed } from "vue";
 
 type sortCol = "name" | "win" | "pod" | "rank";
 
@@ -84,13 +84,13 @@ const model = defineModel<number[][]>({ required: true });
 </script>
 
 <template>
-  <div class="border rounded-md mt-2">
-    <div class="flex justify-between p-1 me-8">
+  <div class="mt-2 rounded-md border">
+    <div class="me-8 flex justify-between p-1">
       <button
         v-for="option in headerOptions"
         :key="option.id"
         @click="setSortBy(option.id)"
-        class="flex-1 hover:bg-secondary rounded-md py-1 px-2"
+        class="flex-1 rounded-md px-2 py-1 hover:bg-secondary"
         :class="option.padding"
       >
         <div class="flex items-center" :class="option.justify">
@@ -109,7 +109,7 @@ const model = defineModel<number[][]>({ required: true });
       <li
         v-for="(person, idx) in groupedProps"
         :key="idx"
-        class="p-1 rounded-md"
+        class="rounded-md p-1"
       >
         <CompetitorDropdown
           :result="person.results"

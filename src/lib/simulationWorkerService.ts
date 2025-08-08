@@ -1,12 +1,12 @@
+import { toRaw } from "vue";
 import type {
+  MainThreadMessage,
+  RecalculateSimulationPayload,
+  RunSimulationPayload,
   SimulationResult,
   SupportedWCAEvent,
   WorkerMessage,
-  MainThreadMessage,
-  RunSimulationPayload,
-  RecalculateSimulationPayload,
 } from "./types"; // Ensure RecalculateSimulationPayload is imported
-import { toRaw } from "vue";
 
 let worker: Worker | null = null;
 

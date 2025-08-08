@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import "flag-icons/css/flag-icons.min.css";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import "flag-icons/css/flag-icons.min.css";
 import { computed } from "vue";
 
 const props = defineProps<{
@@ -29,7 +29,7 @@ const countryName = computed(() => {
       <TooltipTrigger>
         <span
           :class="[
-            `shadow-md fi fi-${code.toLowerCase()}`,
+            `fi shadow-md fi-${code.toLowerCase()}`,
             { 'opacity-50': muted },
           ]"
         >

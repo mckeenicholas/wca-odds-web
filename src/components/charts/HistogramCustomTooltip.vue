@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { renderTime } from "@/lib/utils";
-import { ChartTooltipProps } from "@/lib/types";
 import ColoredCircle from "@/components/custom/ColoredCircle.vue";
+import { ChartTooltipProps } from "@/lib/types";
+import { renderTime } from "@/lib/utils";
 
 const { title, data, isFmc = false } = defineProps<ChartTooltipProps>();
 
@@ -10,16 +10,16 @@ const timeDisplayValue = renderTime(timeRawValue, isFmc);
 </script>
 
 <template>
-  <div class="match-background p-2 rounded-md border-2">
+  <div class="match-background rounded-md border-2 p-2">
     <p class="font-bold">{{ timeDisplayValue }}</p>
     <div v-for="(item, key) in data" :key class="flex justify-between text-sm">
       <div class="flex items-center">
-        <span class="w-2.5 h-2.5 mr-2">
+        <span class="mr-2 h-2.5 w-2.5">
           <ColoredCircle :color="item.color" />
         </span>
         <span>{{ item.name }}</span>
       </div>
-      <span class="font-semibold ml-4"
+      <span class="ml-4 font-semibold"
         >{{ item.value >= 0.01 ? item.value.toFixed(2) : "<0.01" }}%</span
       >
     </div>

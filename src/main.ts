@@ -1,9 +1,9 @@
-import { createApp } from "vue";
-import { createPinia } from "pinia";
-import router from "./router";
-import "./assets/index.css";
-import App from "./App.vue";
 import { VueQueryPlugin, VueQueryPluginOptions } from "@tanstack/vue-query";
+import { createPinia } from "pinia";
+import { createApp } from "vue";
+import App from "./App.vue";
+import "./assets/index.css";
+import router from "./router";
 
 const vueQueryPluginOptions: VueQueryPluginOptions = {
   queryClientConfig: {

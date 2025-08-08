@@ -1,9 +1,9 @@
 import init, { load_data, run_simulation } from "../../wasm/odds_web";
 import type {
-  WorkerMessage,
   MainThreadMessage,
-  RunSimulationPayload,
   RecalculateSimulationPayload,
+  RunSimulationPayload,
+  WorkerMessage,
 } from "./types";
 
 let wasmInitialized = false;

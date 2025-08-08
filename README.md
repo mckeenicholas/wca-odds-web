@@ -4,7 +4,7 @@ A WebAssembly port of the WCA odds calculator.
 
 You can visit the deployed website here: **[odds.nmckee.org](https://odds.nmckee.org/)**
 
-***
+---
 
 ## Running Locally
 
@@ -13,9 +13,10 @@ This guide will help you set up the project on your local machine for developmen
 ### Prerequisites
 
 First, ensure you have the following tools installed:
-* [Rust](https://www.rust-lang.org/tools/install) and `cargo`
-* [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/)
-* [`bun`](https://bun.sh/docs/installation)
+
+- [Rust](https://www.rust-lang.org/tools/install) and `cargo`
+- [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/)
+- [`bun`](https://bun.sh/docs/installation)
 
 ### Development Server
 
@@ -37,6 +38,7 @@ bun dev
 ```
 
 ### Production Build
+
 You can create and run a production-ready build using either Docker (recommended) or by building manually.
 
 #### Using Docker (Recommended)
@@ -68,4 +70,4 @@ bun run build
 bun preview
 ```
 
-*Note: This project uses bun for local development. The Docker configuration uses NodeJS due to some build compatibility issues in the Docker environment.
+\*Note: This project uses bun for local development. The Docker configuration uses NodeJS due to some build compatibility issues in the Docker environment.

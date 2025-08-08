@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import type { HTMLAttributes } from "vue";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { reactiveOmit } from "@vueuse/core";
 import { ChevronLeft } from "lucide-vue-next";
 import {
@@ -7,8 +8,7 @@ import {
   type RangeCalendarPrevProps,
   useForwardProps,
 } from "reka-ui";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import type { HTMLAttributes } from "vue";
 
 const props = defineProps<
   RangeCalendarPrevProps & { class?: HTMLAttributes["class"] }

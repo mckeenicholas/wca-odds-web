@@ -1,6 +1,7 @@
-import { computed, h, toRaw } from "vue";
+import HistogramCustomTooltip from "@/components/charts/HistogramCustomTooltip.vue";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { computed, h, toRaw } from "vue";
 import {
   ChartTooltipProps,
   SimulationResult,
@@ -8,7 +9,6 @@ import {
   SupportedWCAEvent,
   wcif,
 } from "./types";
-import HistogramCustomTooltip from "@/components/charts/HistogramCustomTooltip.vue";
 
 export const BREAKPOINT = 1255 as const;
 

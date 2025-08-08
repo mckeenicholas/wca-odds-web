@@ -1,11 +1,11 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import type { BaseChartProps } from ".";
 import { ChartSingleTooltip, defaultColors } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
 import { Donut } from "@unovis/ts";
 import { VisDonut, VisSingleContainer } from "@unovis/vue";
 import { useMounted } from "@vueuse/core";
 import { type Component, computed, ref } from "vue";
+import type { BaseChartProps } from ".";
 
 const props = withDefaults(
   defineProps<
@@ -84,7 +84,7 @@ const totalValue = computed(() =>
 </script>
 
 <template>
-  <div :class="cn('w-full h-48 flex flex-col items-end', $attrs.class ?? '')">
+  <div :class="cn('flex h-48 w-full flex-col items-end', $attrs.class ?? '')">
     <VisSingleContainer
       :style="{ height: isMounted ? '100%' : 'auto' }"
       :margin="{ left: 20, right: 20 }"

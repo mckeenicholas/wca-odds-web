@@ -1,12 +1,11 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
-import type { BulletLegendItemInterface } from "@unovis/ts";
-import type { BaseChartProps } from ".";
 import {
   ChartCrosshair,
   ChartLegend,
   defaultColors,
 } from "@/components/ui/chart";
 import { cn } from "@/lib/utils";
+import type { BulletLegendItemInterface } from "@unovis/ts";
 import { Axis, GroupedBar, StackedBar } from "@unovis/ts";
 import {
   VisAxis,
@@ -16,6 +15,7 @@ import {
 } from "@unovis/vue";
 import { useMounted } from "@vueuse/core";
 import { type Component, computed, ref } from "vue";
+import type { BaseChartProps } from ".";
 
 const props = withDefaults(
   defineProps<
@@ -85,7 +85,7 @@ const selectorsBar = computed(() =>
 
 <template>
   <div
-    :class="cn('w-full h-[400px] flex flex-col items-end', $attrs.class ?? '')"
+    :class="cn('flex h-[400px] w-full flex-col items-end', $attrs.class ?? '')"
   >
     <ChartLegend
       v-if="showLegend"

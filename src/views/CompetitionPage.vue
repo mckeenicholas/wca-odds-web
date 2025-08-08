@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { computed, watchEffect, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { fetchWCIF, buildSimulationQuery, BREAKPOINT } from "@/lib/utils";
-import { SupportedWCAEvent, Person, Competitor } from "@/lib/types";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useQuery } from "@tanstack/vue-query";
-import LoadingMessage from "@/components/custom/LoadingMessage.vue";
 import ControlPanel from "@/components/custom/ControlPanel.vue";
 import FlagIcon from "@/components/custom/FlagIcon.vue";
-import { useWindowSize } from "@vueuse/core";
+import LoadingMessage from "@/components/custom/LoadingMessage.vue";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCompSettingsStore } from "@/lib/stores/compSettings";
+import { Competitor, Person, SupportedWCAEvent } from "@/lib/types";
+import { BREAKPOINT, buildSimulationQuery, fetchWCIF } from "@/lib/utils";
+import { useQuery } from "@tanstack/vue-query";
+import { useWindowSize } from "@vueuse/core";
 import { storeToRefs } from "pinia";
+import { computed, watch, watchEffect } from "vue";
+import { useRoute, useRouter } from "vue-router";
 
 type EventRegistration = Partial<Record<SupportedWCAEvent, Competitor[]>>;
 
@@ -167,7 +167,7 @@ const toggleSelection = (person: Competitor) => {
 <template>
   <div class="flex flex-col items-center justify-center">
     <div v-if="isPending">
-      <LoadingMessage message="Loading WCA Data" class="text-2xl m-4" />
+      <LoadingMessage message="Loading WCA Data" class="m-4 text-2xl" />
     </div>
 
     <div v-else-if="isError || !data?.name" class="text-red-500">
@@ -175,7 +175,7 @@ const toggleSelection = (person: Competitor) => {
     </div>
 
     <template v-else>
-      <h1 class="text-center text-2xl font-bold m-4">{{ data.name }}</h1>
+      <h1 class="m-4 text-center text-2xl font-bold">{{ data.name }}</h1>
 
       <div>
         <ControlPanel
@@ -192,14 +192,14 @@ const toggleSelection = (person: Competitor) => {
 
         <div
           v-if="!competitorsByEvent[selectedEventId]?.length"
-          class="text-center m-6 text-lg"
+          class="m-6 text-center text-lg"
         >
           No one is registered for this event
         </div>
 
         <ol
           v-else
-          class="flex-1 rounded-md border overflow-y-auto"
+          class="flex-1 overflow-y-auto rounded-md border"
           :class="{
             'max-h-[72vh]': width > BREAKPOINT,
             'max-h-[64vh]': width <= BREAKPOINT,
@@ -209,13 +209,13 @@ const toggleSelection = (person: Competitor) => {
             v-for="person in competitorsByEvent[selectedEventId]"
             :key="person.id"
             @click="toggleSelection(person)"
-            class="p-2 hover:bg-secondary rounded-md flex justify-between items-center"
+            class="flex items-center justify-between rounded-md p-2 hover:bg-secondary"
           >
             <span :class="{ 'text-muted-foreground': !person.selected }">
               <FlagIcon :code="person.country" :muted="!person.selected" />
               <a
                 :href="`https://worldcubeassociation.org/persons/${person.id}?event=${selectedEventId}`"
-                class="hover:underline ms-2"
+                class="ms-2 hover:underline"
                 @click.stop
               >
                 {{ person.name }}
