@@ -34,7 +34,7 @@ const { width } = useWindowSize();
 
 <template>
   <Select v-model="selectedEventId">
-    <SelectTrigger class="ms-0 min-h-[42px]">
+    <SelectTrigger class="ms-0 min-h-[42px]" aria-label="Event select dropdown">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>

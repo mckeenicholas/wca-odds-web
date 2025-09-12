@@ -45,13 +45,17 @@ const podiumPercentage = computed(() =>
   formatPercentage((result.pod_count * 100) / numSimulations),
 );
 const expectedRank = computed(() => result.total_rank / numSimulations);
+
+const ariaId = computed(() => `dropdown-${wcaId}`);
 </script>
 
 <template>
   <Collapsible v-model:open="isOpen">
-    <CollapsibleTrigger as-child>
-      <div
-        class="flex cursor-pointer justify-between rounded-md p-2 ps-1 hover:bg-secondary"
+    <CollapsibleTrigger as-child :aria-controls="ariaId">
+      <button
+        type="button"
+        :aria-label="`Details for ${wcaId}`"
+        class="flex w-full cursor-pointer justify-between rounded-md border-0 bg-transparent p-2 ps-1 text-left hover:bg-secondary focus:outline-none focus-visible:bg-secondary"
       >
         <div class="flex-1 text-left">
           <div class="flex flex-row">
@@ -65,13 +69,13 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
             >
               {{ result.name }}
             </a>
-            <TooltipProvider :delayDuration="250">
+            <TooltipProvider
+              :delayDuration="250"
+              v-if="result.sample_size < lowDataWarningThreshold"
+            >
               <Tooltip>
-                <TooltipTrigger>
-                  <CircleAlert
-                    v-show="result.sample_size < lowDataWarningThreshold"
-                    class="ms-1 scale-75 text-red-600"
-                  />
+                <TooltipTrigger aria-label="Low result warning tooltip">
+                  <CircleAlert class="ms-1 scale-75 text-red-600" />
                 </TooltipTrigger>
                 <TooltipContent>
                   Competitor only has performed
@@ -91,9 +95,9 @@ const expectedRank = computed(() => result.total_rank / numSimulations);
           {{ expectedRank }}
         </div>
         <Chevron :up="isOpen" />
-      </div>
+      </button>
     </CollapsibleTrigger>
-    <CollapsibleContent class="space-y-2">
+    <CollapsibleContent class="space-y-2" :id="ariaId">
       <IndividualHistogram
         :color="color"
         :histSingle="result.hist_values_single"

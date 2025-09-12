@@ -7,7 +7,7 @@ import BackButton from "./components/custom/BackButton.vue";
 
 const route = useRoute();
 
-const versionNum = "0.6.4";
+const versionNum = "0.6.5";
 </script>
 
 <template>

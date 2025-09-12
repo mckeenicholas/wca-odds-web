@@ -36,9 +36,7 @@ const expectedAvg = computed(() =>
   <div class="mb-2 flex h-full flex-col gap-2 md:flex-row">
     <div class="flex-grow">
       <div class="h-full rounded-md border p-4">
-        <h3 class="mb-2 text-lg font-bold">
-          {{ eventNames[event] }} Statistics
-        </h3>
+        <p class="mb-2 text-lg font-bold">{{ eventNames[event] }} Statistics</p>
         <div class="space-y-2">
           <p class="text-sm">
             <span class="font-semibold">{{ topCompetitor.name }}</span> has the

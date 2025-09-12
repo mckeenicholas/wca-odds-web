@@ -17,14 +17,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const fetchWCIF = async (id: string): Promise<wcif> => {
-  const cachedComps = [
-    "WC2025",
-    "RubiksUKChampionship2025",
-    "NorthCarolinaChampionship2025",
-  ];
+  const cachedComps = ["WC2025", "CubingUSAAllStars2025"];
+
   const wcaURL = cachedComps.includes(id)
     ? `/wcif/${id}.json`
     : `https://api.worldcubeassociation.org/competitions/${id}/wcif/public`;
+
   return fetchWCAInfo<wcif>(wcaURL);
 };
 

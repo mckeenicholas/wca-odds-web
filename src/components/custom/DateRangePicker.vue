@@ -84,6 +84,7 @@ const firstMonth = ref<Grid<DateValue>>(
     weekStartsOn: 0,
   }),
 );
+
 const secondMonth = ref<Grid<DateValue>>(
   createMonth({
     dateObj: secondMonthPlaceholder.value,

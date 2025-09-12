@@ -180,12 +180,13 @@ const runSimulation = () => {
             >
               {{ competitor.name }}
             </a>
-            <a
+            <button
               class="me-1 rounded-md p-1 hover:cursor-pointer hover:bg-secondary"
+              aria-label="remove competitor"
               @click="() => removeCompetitor(competitor.wca_id)"
             >
               <X :size="24" />
-            </a>
+            </button>
           </li>
         </ol>
       </div>

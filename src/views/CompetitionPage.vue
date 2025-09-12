@@ -158,10 +158,6 @@ const runSimulation = () => {
     query: query as Record<string, string>,
   });
 };
-
-const toggleSelection = (person: Competitor) => {
-  person.selected = !person.selected;
-};
 </script>
 
 <template>
@@ -208,25 +204,33 @@ const toggleSelection = (person: Competitor) => {
           <li
             v-for="person in competitorsByEvent[selectedEventId]"
             :key="person.id"
-            @click="toggleSelection(person)"
             class="flex items-center justify-between rounded-md p-2 hover:bg-secondary"
           >
-            <span :class="{ 'text-muted-foreground': !person.selected }">
-              <FlagIcon :code="person.country" :muted="!person.selected" />
-              <a
-                :href="`https://worldcubeassociation.org/persons/${person.id}?event=${selectedEventId}`"
-                class="ms-2 hover:underline"
-                @click.stop
+            <label
+              class="flex w-full cursor-pointer items-center justify-between"
+              :for="`select-${person.id}`"
+            >
+              <span
+                :class="{ 'text-muted-foreground': !person.selected }"
+                class="flex items-center"
               >
-                {{ person.name }}
-              </a>
-            </span>
-            <Checkbox
-              v-model:checked="person.selected"
-              @click.stop
-              class="me-2"
-              aria-label="Select competitor {{ person.name }}"
-            />
+                <FlagIcon :code="person.country" :muted="!person.selected" />
+                <a
+                  :href="`https://worldcubeassociation.org/persons/${person.id}?event=${selectedEventId}`"
+                  class="mx-2 hover:underline"
+                  @click.stop
+                >
+                  {{ person.name }}
+                </a>
+              </span>
+
+              <Checkbox
+                v-model:checked="person.selected"
+                class="me-2"
+                :id="`select-${person.id}`"
+                :aria-label="`Select competitor ${person.name}`"
+              />
+            </label>
           </li>
         </ol>
       </div>

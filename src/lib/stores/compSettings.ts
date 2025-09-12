@@ -7,7 +7,7 @@ export const useCompSettingsStore = defineStore("compSettings", () => {
 
   // Default values
   const defaultValues = {
-    competitorsByEvent: () => ({}),
+    competitorsByEvent: () => ({}) as Record<string, Competitor[]>,
     selectedEventId: () => "333" as SupportedWCAEvent,
     simCount: () => 10000,
     includeDnf: () => true,

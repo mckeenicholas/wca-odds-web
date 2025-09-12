@@ -4,10 +4,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { ref } from "vue";
+import { ref, useId } from "vue";
 import Chevron from "./RotatableChevron.vue";
 
-const { title = "" } = defineProps<{ title?: string }>();
+const { title = "", id = useId() } = defineProps<{
+  title?: string;
+  id?: string;
+}>();
 
 const open = ref<boolean>(false);
 </script>
@@ -15,9 +18,10 @@ const open = ref<boolean>(false);
 <template>
   <div class="rounded-md border">
     <Collapsible v-model:open="open">
-      <CollapsibleTrigger as-child>
-        <div
-          class="flex cursor-pointer flex-row rounded-sm py-2 pe-3 ps-4 hover:bg-secondary"
+      <CollapsibleTrigger as-child :aria-controls="id">
+        <button
+          type="button"
+          class="flex w-full cursor-pointer flex-row rounded-sm border-none bg-transparent py-2 pe-3 ps-4 text-left text-inherit hover:bg-secondary"
         >
           <div class="flex-grow">
             {{ title }}
@@ -25,9 +29,9 @@ const open = ref<boolean>(false);
           <div class="flex flex-col place-content-center">
             <Chevron :up="open" />
           </div>
-        </div>
+        </button>
       </CollapsibleTrigger>
-      <CollapsibleContent>
+      <CollapsibleContent :id="id">
         <slot></slot>
       </CollapsibleContent>
     </Collapsible>

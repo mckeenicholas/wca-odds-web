@@ -26,7 +26,7 @@ const countryName = computed(() => {
 <template>
   <TooltipProvider :delayDuration="250">
     <Tooltip>
-      <TooltipTrigger>
+      <TooltipTrigger :aria-label="`${countryName} flag`">
         <span
           :class="[
             `fi shadow-md fi-${code.toLowerCase()}`,
